@@ -164,7 +164,7 @@ private :
 // ============= various draw related utility functions ===============
 
     void drawStrand(const Strand &strand);
-    void drawHairStrand(const HairStrand& strand);
+    void drawHairStrand(const ElasticRod& strand);
 };
 
 #endif

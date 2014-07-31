@@ -61,7 +61,7 @@ GLWindow::~GLWindow()
 void GLWindow::initializeGL()
 {
     m_cameraTransform.m_phi = 0;
-    m_cameraTransform.m_theta = 10;
+    m_cameraTransform.m_theta = 30;
     m_cameraTransform.m_translation.set(0,0,-6);
 
     ngl::NGLInit::instance();
@@ -261,7 +261,7 @@ void GLWindow::drawStrand(const Strand &strand)
     m_strandVAO->unbind();
 }
 
-void GLWindow::drawHairStrand(const HairStrand& strand)
+void GLWindow::drawHairStrand(const ElasticRod& strand)
 {
     if (m_strandVAO != NULL)
     {
@@ -375,8 +375,8 @@ void GLWindow::paintGL()
     m_transform.reset();
     loadMatricesToHairShader();
 
-    const std::vector<HairStrand*>& strands = m_scene->getStrands();
-    typedef std::vector<HairStrand*>::const_iterator SIter;
+    const std::vector<ElasticRod*>& strands = m_scene->getStrands();
+    typedef std::vector<ElasticRod*>::const_iterator SIter;
     for (SIter it = strands.begin(); it != strands.end(); ++it)
     {
         drawHairStrand(**it);

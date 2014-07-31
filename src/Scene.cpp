@@ -15,7 +15,7 @@ Scene::~Scene()
 {
 
 //    delete hair strands
-    typedef std::vector<HairStrand*>::const_iterator SIter;
+    typedef std::vector<ElasticRod*>::const_iterator SIter;
     for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
     {
         delete (*it);
@@ -68,8 +68,36 @@ void Scene::initialize()
 //    m_hairs.push_back(hair);
 //    hairyBall->attachHair(hair, 1);
 
-    HairStrand* strand = new HairStrand();
-    strand->init();
+//    TODO: create HairStrand object and move initialization there
+//    init vertices, velocities, mass, isFixed
+    unsigned nVertices = 5;
+    ngl::Vec4 start(0, 3, 0, 1);
+    ngl::Vec4 end(3, 3, 0, 1);
+
+    std::vector<ngl::Vec4> pos(nVertices);
+    std::vector<ngl::Vec4> vel(nVertices);
+    std::vector<ngl::Real> mass(nVertices);
+    std::vector<ngl::Real> twistAngle(nVertices - 1, 0.0);
+    std::vector<bool> isFixed(nVertices);
+
+    ngl::Real t = 0.0;
+    for (unsigned i = 0; i < pos.size(); ++i)
+    {
+        t = (ngl::Real)(i) / (nVertices - 1);
+        pos[i] = (1 - t) * start + t * end + utils::randf(-1, 1) * utils::EZ;
+        if (i > 1)
+        {
+            pos[i] += utils::randf(-1, 1) * utils::EY;
+        }
+        vel[i].set(0, 0, 0, 0);
+        mass[i] = 1.0;
+        isFixed[i] = 0;
+    }
+    isFixed[0] = 1;
+//    isFixed[nVertices - 1] = 1;
+
+    ElasticRod* strand = new ElasticRod();
+    strand->init(pos, utils::EY, pos, vel, mass, twistAngle, isFixed);
     m_strands.push_back(strand);
 }
 
@@ -82,7 +110,7 @@ void Scene::update(ngl::Real dt)
 //        (*it)->update(dt);
 //    }
 
-    typedef std::vector<HairStrand*>::const_iterator SIter;
+    typedef std::vector<ElasticRod*>::const_iterator SIter;
     for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
     {
         (*it)->update(dt);

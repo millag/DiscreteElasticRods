@@ -24,7 +24,7 @@ SOURCES += src/main.cpp \
     src/AABB.cpp \
     src/Hair.cpp \
     src/VoxelGrid.cpp \
-    src/HairStrand.cpp
+    src/ElasticRod.cpp
 
 INCLUDEPATH+=./include
 HEADERS += include/MainWindow.h \
@@ -42,7 +42,7 @@ HEADERS += include/MainWindow.h \
     include/HairyObject.h \
     include/IServant.h \
     include/VoxelGrid.h \
-    include/HairStrand.h
+    include/ElasticRod.h
 
 
 FORMS += \

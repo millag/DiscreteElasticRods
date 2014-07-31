@@ -37,10 +37,11 @@ vec4 catmull_rom(float t)
 
 void main ()
 {
-    float step = 1.0 / 9.0;
+    const int nVertices = 2;
     int i, prev, next;
     vec4 viewPos, worldPos;
-    for (i = 0; i < 10; i++)
+    float step = 1.0 / (nVertices - 1);
+    for (i = 0; i < nVertices; i++)
     {
         gl_Position = catmull_rom(i * step);
 
