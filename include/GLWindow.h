@@ -154,7 +154,7 @@ private :
 /// inherited from QObject and overridden here.
 /// @param _event the Qt Event structure
 //----------------------------------------------------------------------------------------------------------------------
-	void mouseReleaseEvent (QMouseEvent *_event );
+    void mouseReleaseEvent (QMouseEvent *_event );
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief timer event trigered by startTimer
 //----------------------------------------------------------------------------------------------------------------------

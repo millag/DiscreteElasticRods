@@ -80,7 +80,10 @@ private:
 /// #kb = #edges - defines rotation from e[i-1] to e[i],
 /// NOTE: there is no kb[0] => kb[0] = (0, 0, 0, 0);
     std::vector<ngl::Vec4> m_kb;
-
+/// #restWprev = #edges - restWprev[i] defines rest material curvatures at e[i -1]
+    std::vector<ngl::Vec2> m_Wprev;
+/// #restWnext = #edges - restWnext[i] defines rest material curvatures at e[i]
+    std::vector<ngl::Vec2> m_Wnext;
 
 
 
@@ -137,8 +140,21 @@ private:
                                   std::vector<ngl::Vec2>& o_Wprev,
                                   std::vector<ngl::Vec2>& o_Wnext) const;
 
+    void integrate(ngl::Real dt);
+
+    void solveConstraints(ngl::Real dt);
+
     void computeForces(const std::vector<ngl::Vec4>& vertices,
-                       std::vector<ngl::Vec4>& o_forces) const;
+                       std::vector<ngl::Vec4>& o_forces);
+
+    void computeExternalForces(const std::vector<ngl::Vec4>& vertices,
+                                std::vector<ngl::Vec4>& o_forces) const;
+
+    void computeElasticForces(const std::vector<ngl::Vec4>& vertices,
+                              std::vector<ngl::Vec4>& o_forces);
+
+
+
     void computeBendForces(const std::vector<ngl::Vec4>& vertices,
                             const std::vector<ngl::Vec4>& edges,
                             const std::vector<ngl::Vec4>& kb,

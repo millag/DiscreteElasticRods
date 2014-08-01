@@ -44,7 +44,6 @@ void ElasticRod::init(const std::vector<ngl::Vec4>& restpos,
     computeLengths(m_edges, m_restEdgeL, m_restRegionL, m_totalL);
 //    compute kb and material frame for rest shape
     computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
-
 //    precompute material curvature for rest shape
     computeMaterialCurvature(m_kb, m_m1, m_m2, m_restWprev,  m_restWnext);
 }
@@ -214,12 +213,12 @@ void ElasticRod::computeMaterialCurvature(const std::vector<ngl::Vec4>& kb,
     o_Wprev.resize(kb.size());
     o_Wnext.resize(kb.size());
 
-    o_wprev[0].set(0, 0);
-    o_wnext[0].set(0, 0);
+    o_Wprev[0].set(0, 0);
+    o_Wnext[0].set(0, 0);
     for (unsigned i = 1; i < kb.size(); ++i)
     {
-        o_Wprev.set(kb[i].dot(m2[i - 1]), -kb[i].dot(m1[i - 1]));
-        o_Wnext.set(kb[i].dot(m2[i])    , -kb[i].dot(m1[i])    );
+        o_Wprev[i].set(kb[i].dot(m2[i - 1]), -kb[i].dot(m1[i - 1]));
+        o_Wnext[i].set(kb[i].dot(m2[i])    , -kb[i].dot(m1[i])    );
     }
 }
 
@@ -262,7 +261,8 @@ void ElasticRod::computeMaterialCurvature(const std::vector<ngl::Vec4>& kb,
 /* Use Verlet integration. */
 void ElasticRod::update(ngl::Real dt)
 {
-    std::vector<ngl::Vec4> forces;
+//    integrate centerline
+    std::vector<ngl::Vec4> forces(m_ppos.size(), 0);
     computeForces(m_ppos, forces);
 
     std::vector<ngl::Vec4> prevPos(m_ppos.size());
@@ -273,8 +273,8 @@ void ElasticRod::update(ngl::Real dt)
         m_ppos[i] += m_pvel[i] * dt;
     }
 
-    // solve constraints:
-    // need FIX: check which ponts on the rod are with fixed position
+//    solve constraints
+//    need FIX: check which ponts on the rod are with fixed position
     const unsigned nIter = 4;
     for (unsigned k = 0; k < nIter; ++k)
     {
@@ -301,16 +301,27 @@ void ElasticRod::update(ngl::Real dt)
         }
     }
 
-    // update velocities:
+//    update velocities:
     for (unsigned i = 0; i < m_ppos.size(); ++i)
     {
         m_pvel[i] = (m_ppos[i] - prevPos[i]) / dt;
     }
 }
 
-void ElasticRod::computeForces(const std::vector<ngl::Vec4>& vertices, std::vector<ngl::Vec4>& o_forces) const
+void ElasticRod::integrate(ngl::Real dt)
 {
-    o_forces.resize(vertices.size());
+//TODO: implement
+}
+
+void ElasticRod::solveConstraints(ngl::Real dt)
+{
+//TODO: implement
+}
+
+void ElasticRod::computeForces(const std::vector<ngl::Vec4>& vertices, std::vector<ngl::Vec4>& o_forces)
+{
+//    computeExternalForces(vertices, o_forces);
+//    computeElasticForces(vertices, o_forces);
 
     std::vector<ngl::Vec4> edges;
     computeEdges(vertices, edges);
@@ -327,10 +338,37 @@ void ElasticRod::computeForces(const std::vector<ngl::Vec4>& vertices, std::vect
     {
         if (!m_pIsFixed[i])
         {
-            o_forces[i] = (bendForces[i] + twistForces[i] + utils::G);//bendForces[i] + twistForces[i] + stretchScale * stretchForces[i]
+            o_forces[i] += (bendForces[i] + twistForces[i] + utils::G);//bendForces[i] + twistForces[i] + stretchScale * stretchForces[i]
         }
     }
 }
+
+
+void ElasticRod::computeExternalForces(const std::vector<ngl::Vec4>& vertices,
+                                       std::vector<ngl::Vec4>& o_forces) const
+{
+    for (unsigned i = 1; i < o_forces.size(); ++i)
+    {
+        o_forces[i] += utils::G;
+    }
+}
+
+
+void ElasticRod::computeElasticForces(const std::vector<ngl::Vec4>& vertices,
+                          std::vector<ngl::Vec4>& o_forces)
+{
+//    TODO: need to implement minimization of energy for twistAngles here
+
+    computeEdges(m_ppos, m_edges);
+    computeMaterialFrame(m_u0, m_edges, m_twistAngle, m_kb, m_m1, m_m2);
+    computeMaterialCurvature(m_kb, m_m1, m_m2, m_Wprev,  m_Wnext);
+
+    for (unsigned i = 1; i < o_forces.size(); ++i)
+    {
+        o_forces[i] += utils::G;
+    }
+}
+
 
 /**
  * Compute the forces acting on the vertices as a result of the

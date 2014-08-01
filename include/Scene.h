@@ -21,7 +21,7 @@ public:
 
     const AABB& getBoundingVolume() const { return m_boundingVolume; }
     const std::vector<ElasticRod*>& getStrands() const { return m_strands; }
-    const std::vector<Hair*>& getHairs() const { return m_hairs; }
+//    const std::vector<Hair*>& getHairs() const { return m_hairs; }
     const std::vector<RenderObject*>& getRenderObjects() const { return m_renderObjects; }
     const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
     void findObjectsWithinDistance(const ngl::Vec4& pos, ngl::Real dist, std::vector<RenderObject*>& o_objects);
