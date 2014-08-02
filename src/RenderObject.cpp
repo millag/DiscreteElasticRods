@@ -100,9 +100,9 @@ bool RenderObject::isInsideObject(const ngl::Vec4& p, ngl::Vec4 &o_p, ngl::Vec4 
         return false;
     }
 
-    if (distSqr < utils::ERR)
+    if (distSqr < mg::ERR)
     {
-        o_n = utils::genRandPointOnSphere() ;
+        o_n = mg::genRandPointOnSphere() ;
         o_n.m_w = 0;
     }
     o_n.normalize();

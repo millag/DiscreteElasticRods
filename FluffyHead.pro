@@ -1,4 +1,4 @@
-TARGET=FluffyHead
+TARGET=Curly
 OBJECTS_DIR=obj
 # as I want to support 4.8 and 5 this will set a flag for some of the mac stuff
 # mainly in the types.h file for the setMacVisual which is native in Qt5
@@ -26,7 +26,9 @@ SOURCES += src/main.cpp \
     src/VoxelGrid.cpp \
     src/ElasticRod.cpp
 
-INCLUDEPATH+=./include
+INCLUDEPATH += ./include
+INCLUDEPATH += ./libs/cml-1_0_2/
+
 HEADERS += include/MainWindow.h \
            include/GLWindow.h \
             include/AbstractRK4Integrator.h \
@@ -42,7 +44,9 @@ HEADERS += include/MainWindow.h \
     include/HairyObject.h \
     include/IServant.h \
     include/VoxelGrid.h \
-    include/ElasticRod.h
+    include/ElasticRod.h \
+    include/Types.h \
+    include/cml_config.h
 
 
 FORMS += \
@@ -55,10 +59,6 @@ OTHER_FILES+= shaders/Phong.fs \
     shaders/ColourFrag.glsl \
     shaders/ColourVert.glsl \
     shaders/ColourGeom.glsl
-
-
-
-INCLUDEPATH +=./include
 
 DESTDIR=./
 CONFIG += console

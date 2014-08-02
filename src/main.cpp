@@ -2,6 +2,10 @@
 #include "MainWindow.h"
 #include <cmath>
 
+#include <vector>
+#include <iostream>
+#include "Types.h"
+
 /* this code runs the basic main window and is created by the Qt Creator app */
 int main(int argc, char *argv[])
 {
@@ -14,13 +18,10 @@ int main(int argc, char *argv[])
     // hand control over to Qt framework
     return a.exec();
 
-    // this is bullshit
-//    ngl::Mat4 m1;
-//    m1.rotateZ(90);
-//    ngl::Mat4 m2;
-//    m2.rotateX(90);
-//    ngl::Mat4 m = m1 * m2;
-//    m1 *= m2;
-//    std::cout << "m = \n" << m <<std::endl;
-//    std::cout << "m1 = \n" << m1 <<std::endl;
+//    std::vector<mg::Vec4D> verts(3);
+
+//    for (unsigned i = 0; i < verts.size(); ++i)
+//    {
+//        std::cout << verts[i] << std::endl;
+//    }
 }

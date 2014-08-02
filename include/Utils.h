@@ -1,9 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "Types.h"
 #include "ngl/Vec4.h"
 
-namespace utils
+namespace mg
 {
     template<class T>
     T clamp(T v, T a, T b)
@@ -19,21 +20,22 @@ namespace utils
     const static unsigned short UPDATERATE = SEC / UPS;
     const static unsigned short REFRESHRATE = SEC / FPS;
 
-    const static ngl::Real ERR = 1e-6f;
+    const static Real ERR = 1e-6f;
     const static ngl::Vec4 EX(1, 0, 0, 0);
     const static ngl::Vec4 EY(0, 1, 0, 0);
     const static ngl::Vec4 EZ(0, 0, 1, 0);
     const static ngl::Vec4 EW(0, 0, 0, 1);
 
     const static ngl::Vec4 G(0, -9.81, 0, 0);
+    const static mg::Vec4D GRAVITY(0, -9.81, 0, 0);
 
-    ngl::Real getSign(ngl::Real value);
-    ngl::Real randf(ngl::Real min = 0.0, ngl::Real max = 1.0);
-    ngl::Vec4 genRandPointInBox(ngl::Real bBoxMin = -1.0, ngl::Real bBoxMax = 1.0);
-    ngl::Vec4 genRandPointOnSphere(ngl::Real radius = 1.0, const ngl::Vec4& center = ngl::Vec4());
-    ngl::Vec4 genRandPointOnDisk(ngl::Real radius = 1.0, const ngl::Vec4& center = ngl::Vec4());
+    mg::Real getSign(mg::Real value);
+    mg::Real randf(mg::Real min = 0.0, mg::Real max = 1.0);
+    ngl::Vec4 genRandPointInBox(mg::Real bBoxMin = -1.0, mg::Real bBoxMax = 1.0);
+    ngl::Vec4 genRandPointOnSphere(mg::Real radius = 1.0, const ngl::Vec4& center = ngl::Vec4());
+    ngl::Vec4 genRandPointOnDisk(mg::Real radius = 1.0, const ngl::Vec4& center = ngl::Vec4());
 
-    void truncate(ngl::Vec4& io_v, ngl::Real maxLength);
+    void truncate(ngl::Vec4& io_v, mg::Real maxLength);
     ngl::Vec4 faceforward(const ngl::Vec4& n, const ngl::Vec4& v);
     ngl::Vec4 reflect(const ngl::Vec4& v, const ngl::Vec4& n);
 }

@@ -1,26 +1,24 @@
 #include "ElasticRod.h"
-#include "ngl/Mat4.h"
-#include "ngl/Quaternion.h"
 #include "Utils.h"
-
 
 
 ElasticRod::ElasticRod()
 {
     m_bendStiffnes = 0.6;
     m_twistStiffness = 1.0;
+    m_nIterations = 3;
 }
 
 ElasticRod::~ElasticRod()
 { }
 
 
-void ElasticRod::init(const std::vector<ngl::Vec4>& restpos,
-          const ngl::Vec4 u0,
-          const std::vector<ngl::Vec4>& pos,
-          const std::vector<ngl::Vec4>& vel,
-          const std::vector<ngl::Real>& mass,
-          const std::vector<ngl::Real>& twistAngle,
+void ElasticRod::init(const std::vector<mg::Vec4D>& restpos,
+          const mg::Vec4D u0,
+          const std::vector<mg::Vec4D>& pos,
+          const std::vector<mg::Vec4D>& vel,
+          const std::vector<mg::Real>& mass,
+          const std::vector<mg::Real>& twistAngle,
           const std::vector<bool>& isFixed)
 {
     assert( pos.size() > 2 );
@@ -39,6 +37,19 @@ void ElasticRod::init(const std::vector<ngl::Vec4>& restpos,
     m_pIsFixed = isFixed;
 
     m_totalTwist = 8.;
+
+    m_edges.resize(restpos.size() - 1);
+    m_restEdgeL.resize(m_edges.size());
+    m_restRegionL.resize(m_edges.size());
+    m_restWprev.resize(m_edges.size());
+    m_restWnext.resize(m_edges.size());
+
+    m_kb.resize(m_edges.size());
+    m_m1.resize(m_edges.size());
+    m_m2.resize(m_edges.size());
+    m_Wprev.resize(m_edges.size());
+    m_Wnext.resize(m_edges.size());
+
 //    compute edges & lengths for rest shape
     computeEdges(restpos, m_edges);
     computeLengths(m_edges, m_restEdgeL, m_restRegionL, m_totalL);
@@ -49,27 +60,21 @@ void ElasticRod::init(const std::vector<ngl::Vec4>& restpos,
 }
 
 
-void ElasticRod::computeEdges(const std::vector<ngl::Vec4>& vertices,
-                              std::vector<ngl::Vec4>& o_edges) const
+void ElasticRod::computeEdges(const std::vector<mg::Vec4D>& vertices,
+                              std::vector<mg::Vec4D>& o_edges) const
 {
-    o_edges.resize(vertices.size() - 1);
     for (unsigned i = 0; i < vertices.size() - 1; ++i)
     {
         o_edges[i] = vertices[i + 1] - vertices[i];
     }
 }
 
-void ElasticRod::computeLengths(const std::vector<ngl::Vec4>& edges,
-                                std::vector<ngl::Real> &o_edgeL,
-                                std::vector<ngl::Real> &o_regionL,
-                                ngl::Real& o_totalL) const
+void ElasticRod::computeLengths(const std::vector<mg::Vec4D>& edges,
+                                std::vector<mg::Real> &o_edgeL,
+                                std::vector<mg::Real> &o_regionL,
+                                mg::Real& o_totalL) const
 {
-    assert( edges.size() > 0 );
-
-    o_edgeL.resize(edges.size());
-    o_regionL.resize(edges.size());
-
-    for (unsigned i = 0; i < o_edgeL.size(); ++i)
+    for (unsigned i = 0; i < edges.size(); ++i)
     {
         o_edgeL[i] = edges[i].length();
     }
@@ -84,70 +89,71 @@ void ElasticRod::computeLengths(const std::vector<ngl::Vec4>& edges,
     o_totalL *= 0.5;
 }
 
-void ElasticRod::computeKB(const std::vector<ngl::Vec4>& edges,
-                           std::vector<ngl::Vec4>& o_kb) const
+void ElasticRod::computeKB(const std::vector<mg::Vec4D>& edges,
+                           std::vector<mg::Vec4D>& o_kb) const
 {
-    assert( edges.size() > 0 );
-    assert( edges.size() == m_restEdgeL.size() );
-
-    o_kb.resize(edges.size());
     o_kb[0].set(0, 0, 0, 0);
 
-    ngl::Real magnitude;
-    ngl::Real sinPhi, cosPhi;
+    double magnitude;
+    double sinPhi, cosPhi;
     for (unsigned i = 1; i < edges.size(); ++i)
     {
 ///     NOTE: as metioned in the paper the following formula produces |kb| = 2 * tan(phi / 2),
 ///     where phi is the angle of rotation defined by the 2 edges
-        o_kb[i] = 2 * edges[i - 1].cross(edges[i]) /
-                (m_restEdgeL[i - 1] * m_restEdgeL[i] + edges[i - 1].dot(edges[i]));
+        mg::Vec3D e1, e2;
+        e1.set(edges[i - 1][0], edges[i - 1][1], edges[i - 1][2]);
+        e2.set(edges[i][0], edges[i][1], edges[i][2]);
+        e1 = 2 * cml::cross(e1, e2) /
+                (m_restEdgeL[i - 1] * m_restEdgeL[i] + dot(edges[i - 1], edges[i]));
+
+        o_kb[i].set(e1[0], e1[1], e1[2], 0);
+//        o_kb[i] = 2 * cml::cross(mg::Vec3D(edges[i - 1]), mg::Vec3D(edges[i])) /
+//                (m_restEdgeL[i - 1] * m_restEdgeL[i] + dot(edges[i - 1], edges[i]));
 
 //      need to assert that |kb| = 2 * tan(phi / 2)
-        magnitude = o_kb[i].lengthSquared();
+        magnitude = length_squared(o_kb[i]);
         extractSinAndCos(magnitude, sinPhi, cosPhi);
-        assert( fabs(o_kb[i].dot(edges[i - 1])) < utils::ERR );
-        assert( fabs(o_kb[i].dot(edges[i])) < utils::ERR );
-        assert( fabs(magnitude - 4 * sinPhi * sinPhi / (cosPhi * cosPhi)) < utils::ERR );
     }
 }
 
-void ElasticRod::extractSinAndCos(const ngl::Real& magnitude,
-                      ngl::Real& o_sinPhi, ngl::Real& o_cosPhi) const
+void ElasticRod::extractSinAndCos(const double &magnitude,
+                                  double &o_sinPhi, double &o_cosPhi) const
 {
     o_cosPhi = sqrt(4.0 / (4.0 + magnitude));
     o_sinPhi = sqrt(magnitude / (4.0 + magnitude));
 
-    assert( fabs((o_sinPhi * o_sinPhi + o_cosPhi * o_cosPhi) - 1) < utils::ERR );
-    assert( fabs(magnitude - 4.0 * o_sinPhi * o_sinPhi / (o_cosPhi * o_cosPhi)) < utils::ERR );
+    assert( fabs((o_sinPhi * o_sinPhi + o_cosPhi * o_cosPhi) - 1.0) < mg::ERR );
+    assert( fabs(magnitude - 4.0 * o_sinPhi * o_sinPhi / (o_cosPhi * o_cosPhi)) < mg::ERR );
 }
 
-void ElasticRod::computeBishopFrame(const ngl::Vec4& u0,
-                        const std::vector<ngl::Vec4>& edges,
-                        std::vector<ngl::Vec4>& o_kb,
-                        std::vector<ngl::Vec4>& o_u,
-                        std::vector<ngl::Vec4>& o_v) const
+void ElasticRod::computeBishopFrame(const mg::Vec4D& u0,
+                        const std::vector<mg::Vec4D>& edges,
+                        std::vector<mg::Vec4D>& o_kb,
+                        std::vector<mg::Vec4D>& o_u,
+                        std::vector<mg::Vec4D>& o_v) const
 {
-    assert( edges.size() == (m_ppos.size() - 1) );
 //    check if Bishop frame is correctly defined
-    assert( fabs(u0.lengthSquared() - 1) < utils::ERR );
-    assert( fabs(u0.dot(edges[0])) < utils::ERR );
-
-    o_u.resize(edges.size());
-    o_v.resize(edges.size());
+    assert( fabs(length_squared(u0) - 1) < mg::ERR );
+    assert( fabs(dot(u0, edges[0])) < mg::ERR );
 
     computeKB(edges, o_kb);
+
     o_u[0] = u0;
-    o_v[0] = edges[0].cross(o_u[0]);
+    mg::Vec3D e, u;
+    e.set(edges[0][0], edges[0][1], edges[0][2]);
+    u.set(o_u[0][0], o_u[0][1], o_u[0][2]);
+    u = cml::cross(e, u);
+
+    o_v[0].set(u[0], u[1], u[2], 0);
     o_v[0].normalize();
 
-    ngl::Real magnitude;
-    ngl::Real sinPhi, cosPhi;
-    ngl::Quaternion q, p;
+    double magnitude;
+    double sinPhi, cosPhi;
 //    compute Bishop frame for current configuration given u0 and edges
-    for (unsigned i = 1; i < o_u.size(); ++i)
+    for (unsigned i = 1; i < edges.size(); ++i)
     {
-        magnitude = o_kb[i].lengthSquared();
-        if (magnitude < utils::ERR)
+        magnitude = length_squared(o_kb[i]);
+        if (magnitude < mg::ERR)
         {
             o_u[i] = o_u[i - 1];
             o_v[i] = o_v[i - 1];
@@ -155,40 +161,41 @@ void ElasticRod::computeBishopFrame(const ngl::Vec4& u0,
         }
 //        here sinPhi and cosPhi are derived from the length of kb |kb| = 2 * tan( phi/2 )
         extractSinAndCos(magnitude, sinPhi, cosPhi);
-        magnitude = 1.0 / sqrt(magnitude);
 //        rotate frame u axis around kb
-        q.set(cosPhi, sinPhi * o_kb[i].m_x * magnitude, sinPhi * o_kb[i].m_y * magnitude, sinPhi * o_kb[i].m_z * magnitude);
-        p.set(0, o_u[i - 1].m_x, o_u[i - 1].m_y, o_u[i - 1].m_z);
-        p = (q * p * q.conjugate());
+        mg::Quaternion q(cosPhi, sinPhi * normalize(o_kb[i]));
+        mg::Quaternion p(0, o_u[i - 1][0], o_u[i - 1][1], o_u[i - 1][2]);
+        p = q * p * conjugate(q);
 
-        o_u[i] = p.getVector();
-        o_v[i] = edges[i].cross(o_u[i]);
+        o_u[i].set(p[1], p[2], p[3], 0);
+
+        e.set(edges[i][0], edges[i][1], edges[i][2]);
+        u.set(o_u[i][0], o_u[i][1], o_u[i][2]);
+        u = cml::cross(e, u);
+
+        o_v[i].set(u[0], u[1], u[2], 0);
         o_v[i].normalize();
 
-        assert( fabs(p.getS()) <  utils::ERR );
-        assert( fabs(o_u[i].dot(edges[i])) < utils::ERR );
-        assert( fabs(o_u[i].lengthSquared() - 1) < utils::ERR );
+        assert( fabs(p[0]) <  mg::ERR );
+        assert( fabs(dot(o_u[i], edges[i])) < mg::ERR );
+        assert( fabs(length_squared(o_u[i]) - 1) < mg::ERR );
     }
 }
 
-void ElasticRod::computeMaterialFrame(const ngl::Vec4& u0,
-                          const std::vector<ngl::Vec4>& edges,
-                          const std::vector<ngl::Real>& twistAngle,
-                          std::vector<ngl::Vec4> &o_kb,
-                          std::vector<ngl::Vec4>& o_m1,
-                          std::vector<ngl::Vec4>& o_m2) const
+void ElasticRod::computeMaterialFrame(const mg::Vec4D& u0,
+                          const std::vector<mg::Vec4D>& edges,
+                          const std::vector<mg::Real>& twistAngle,
+                          std::vector<mg::Vec4D> &o_kb,
+                          std::vector<mg::Vec4D>& o_m1,
+                          std::vector<mg::Vec4D>& o_m2) const
 {
     assert( edges.size() == (m_ppos.size() - 1) );
     assert( twistAngle.size() == edges.size() );
 
-    o_m1.resize(edges.size());
-    o_m2.resize(edges.size());
-
     computeBishopFrame(u0, edges, o_kb, o_m1, o_m2);
 
-    ngl::Real sinPhi, cosPhi;
-    ngl::Vec4 m1, m2;
-    for (unsigned i = 0; i < o_m1.size(); ++i)
+    mg::Real sinPhi, cosPhi;
+    mg::Vec4D m1, m2;
+    for (unsigned i = 0; i < edges.size(); ++i)
     {
         sinPhi = sin(twistAngle[i]);
         cosPhi = cos(twistAngle[i]);
@@ -198,35 +205,32 @@ void ElasticRod::computeMaterialFrame(const ngl::Vec4& u0,
         o_m1[i] = m1;
         o_m2[i] = m2;
 
-        assert( fabs(o_m1[i].dot(o_m2[i])) < utils::ERR );
-        assert( fabs(o_m1[i].dot(edges[i])) < utils::ERR );
-        assert( fabs(o_m2[i].dot(edges[i])) < utils::ERR );
+        assert( fabs( dot(o_m1[i], o_m2[i])) < mg::ERR );
+        assert( fabs( dot(o_m1[i], edges[i])) < mg::ERR );
+        assert( fabs( dot(o_m2[i], edges[i])) < mg::ERR );
     }
 }
 
-void ElasticRod::computeMaterialCurvature(const std::vector<ngl::Vec4>& kb,
-                                        const std::vector<ngl::Vec4>& m1,
-                                        const std::vector<ngl::Vec4>& m2,
-                                        std::vector<ngl::Vec2>& o_Wprev,
-                                        std::vector<ngl::Vec2>& o_Wnext) const
+void ElasticRod::computeMaterialCurvature(const std::vector<mg::Vec4D>& kb,
+                                        const std::vector<mg::Vec4D>& m1,
+                                        const std::vector<mg::Vec4D>& m2,
+                                        std::vector<mg::Vec2D>& o_Wprev,
+                                        std::vector<mg::Vec2D>& o_Wnext) const
 {
-    o_Wprev.resize(kb.size());
-    o_Wnext.resize(kb.size());
-
     o_Wprev[0].set(0, 0);
     o_Wnext[0].set(0, 0);
     for (unsigned i = 1; i < kb.size(); ++i)
     {
-        o_Wprev[i].set(kb[i].dot(m2[i - 1]), -kb[i].dot(m1[i - 1]));
-        o_Wnext[i].set(kb[i].dot(m2[i])    , -kb[i].dot(m1[i])    );
+        o_Wprev[i].set( dot( kb[i], m2[i - 1] ), -dot( kb[i], m1[i - 1] ));
+        o_Wnext[i].set( dot( kb[i], m2[i] )    , -dot( kb[i], m1[i] )    );
     }
 }
 
 /* Use Runge-Kutta integration. */
-//void HairStrand::update(ngl::Real dt)
+//void HairStrand::update(mg::Real dt)
 //{
-//    std::vector<ngl::Vec4> k1, k2, k3, k4;
-//    std::vector<ngl::Vec4> vertexScratch;
+//    std::vector<mg::Vec4D> k1, k2, k3, k4;
+//    std::vector<mg::Vec4D> vertexScratch;
 
 //    vertexScratch.resize(m_vertices.size());
 
@@ -259,13 +263,13 @@ void ElasticRod::computeMaterialCurvature(const std::vector<ngl::Vec4>& kb,
 //}
 
 /* Use Verlet integration. */
-void ElasticRod::update(ngl::Real dt)
+void ElasticRod::update(mg::Real dt)
 {
 //    integrate centerline
-    std::vector<ngl::Vec4> forces(m_ppos.size(), 0);
+    std::vector<mg::Vec4D> forces(m_ppos.size(), mg::Vec4D(0,0,0,0));
     computeForces(m_ppos, forces);
 
-    std::vector<ngl::Vec4> prevPos(m_ppos.size());
+    std::vector<mg::Vec4D> prevPos(m_ppos.size());
     for (unsigned i = 0; i < m_ppos.size(); ++i)
     {
         prevPos[i] = m_ppos[i];
@@ -275,14 +279,13 @@ void ElasticRod::update(ngl::Real dt)
 
 //    solve constraints
 //    need FIX: check which ponts on the rod are with fixed position
-    const unsigned nIter = 4;
-    for (unsigned k = 0; k < nIter; ++k)
+    for (unsigned k = 0; k < m_nIterations; ++k)
     {
         for (unsigned i = 1; i < m_ppos.size(); ++i)
         {
-            ngl::Vec4 e = m_ppos[i - 1] - m_ppos[i];
-            ngl::Real l = e.length();
-            if (l > utils::ERR)
+            mg::Vec4D e = m_ppos[i - 1] - m_ppos[i];
+            mg::Real l = e.length();
+            if (l > mg::ERR)
             {
                 e.normalize();
             }
@@ -308,54 +311,52 @@ void ElasticRod::update(ngl::Real dt)
     }
 }
 
-void ElasticRod::integrate(ngl::Real dt)
+void ElasticRod::integrate(mg::Real dt)
 {
 //TODO: implement
 }
 
-void ElasticRod::solveConstraints(ngl::Real dt)
+void ElasticRod::solveConstraints(mg::Real dt)
 {
 //TODO: implement
 }
 
-void ElasticRod::computeForces(const std::vector<ngl::Vec4>& vertices, std::vector<ngl::Vec4>& o_forces)
+void ElasticRod::computeForces(const std::vector<mg::Vec4D>& vertices, std::vector<mg::Vec4D>& o_forces)
 {
 //    computeExternalForces(vertices, o_forces);
 //    computeElasticForces(vertices, o_forces);
 
-    std::vector<ngl::Vec4> edges;
-    computeEdges(vertices, edges);
-    std::vector<ngl::Vec4> kb;
-    computeKB(edges, kb);
+    computeEdges(vertices, m_edges);
+    computeKB(m_edges, m_kb);
 
-    std::vector<ngl::Vec4> bendForces(vertices.size());
-    std::vector<ngl::Vec4> twistForces(vertices.size());
+    std::vector<mg::Vec4D> bendForces(vertices.size(), mg::Vec4D(0,0,0,0));
+    std::vector<mg::Vec4D> twistForces(vertices.size(), mg::Vec4D(0,0,0,0));
 
-    computeBendForces(vertices, edges, kb, bendForces);
-    computeTwistForces(vertices, edges, kb, twistForces);
+    computeBendForces(vertices, m_edges, m_kb, bendForces);
+    computeTwistForces(vertices, m_edges, m_kb, twistForces);
 
     for (unsigned i = 0; i < o_forces.size(); ++i)
     {
         if (!m_pIsFixed[i])
         {
-            o_forces[i] += (bendForces[i] + twistForces[i] + utils::G);//bendForces[i] + twistForces[i] + stretchScale * stretchForces[i]
+            o_forces[i] += (bendForces[i] + twistForces[i] + mg::GRAVITY);//bendForces[i] + twistForces[i] + stretchScale * stretchForces[i]
         }
     }
 }
 
 
-void ElasticRod::computeExternalForces(const std::vector<ngl::Vec4>& vertices,
-                                       std::vector<ngl::Vec4>& o_forces) const
+void ElasticRod::computeExternalForces(const std::vector<mg::Vec4D>& vertices,
+                                       std::vector<mg::Vec4D>& o_forces) const
 {
     for (unsigned i = 1; i < o_forces.size(); ++i)
     {
-        o_forces[i] += utils::G;
+        o_forces[i] += mg::GRAVITY;
     }
 }
 
 
-void ElasticRod::computeElasticForces(const std::vector<ngl::Vec4>& vertices,
-                          std::vector<ngl::Vec4>& o_forces)
+void ElasticRod::computeElasticForces(const std::vector<mg::Vec4D>& vertices,
+                          std::vector<mg::Vec4D>& o_forces)
 {
 //    TODO: need to implement minimization of energy for twistAngles here
 
@@ -365,7 +366,7 @@ void ElasticRod::computeElasticForces(const std::vector<ngl::Vec4>& vertices,
 
     for (unsigned i = 1; i < o_forces.size(); ++i)
     {
-        o_forces[i] += utils::G;
+        o_forces[i] += mg::GRAVITY;
     }
 }
 
@@ -374,32 +375,31 @@ void ElasticRod::computeElasticForces(const std::vector<ngl::Vec4>& vertices,
  * Compute the forces acting on the vertices as a result of the
  * bending of the strand.
  **/
-void ElasticRod::computeBendForces(const std::vector<ngl::Vec4>& vertices,
-                                    const std::vector<ngl::Vec4>& edges,
-                                    const std::vector<ngl::Vec4>& kb,
-                                    std::vector<ngl::Vec4>& o_bendForces) const
+void ElasticRod::computeBendForces(const std::vector<mg::Vec4D>& vertices,
+                                    const std::vector<mg::Vec4D>& edges,
+                                    const std::vector<mg::Vec4D>& kb,
+                                    std::vector<mg::Vec4D>& o_bendForces) const
 {
-    o_bendForces.resize(vertices.size());
-
-    std::vector<ngl::Mat4> edgeMatrices;
+    std::vector<mg::Matrix4D> edgeMatrices(edges.size());
     computeEdgeMatrices(edges, edgeMatrices);
 
-    std::vector<ngl::Vec4> jminus_term(vertices.size());
-    std::vector<ngl::Vec4> jplus_term(vertices.size());
-    std::vector<ngl::Vec4> jequal_term(vertices.size());
+    std::vector<mg::Vec4D> jminus_term(vertices.size(), mg::Vec4D(0,0,0,0));
+    std::vector<mg::Vec4D> jplus_term(vertices.size(), mg::Vec4D(0,0,0,0));
+    std::vector<mg::Vec4D> jequal_term(vertices.size(), mg::Vec4D(0,0,0,0));
 
-    ngl::Mat4 minus_kbGradient, plus_kbGradient;
+    mg::Real scalarFactor;
+    mg::Matrix4D minus_kbGradient, plus_kbGradient;
     for (unsigned int i = 1; i < o_bendForces.size() - 1; ++i)
     {
-        double scalarFactor = 1.0 / (m_restEdgeL[i - 1] * m_restEdgeL[i] + edges[i - 1].dot(edges[i]));
+        scalarFactor = 1.0 / (m_restEdgeL[i - 1] * m_restEdgeL[i] + dot( edges[i - 1], edges[i]) );
 
 //        calculate  gradient of the curvature binormal kb for j = i - 1 and the corresponding force term
-        computeMatrixMult(kb[i], edges[i], minus_kbGradient);
+        minus_kbGradient = outer(edges[i], kb[i]);
         minus_kbGradient = (edgeMatrices[i] * 2.0 + minus_kbGradient) * scalarFactor;
         jminus_term[i] = minus_kbGradient * kb[i] * (-2 * m_bendStiffnes / m_restRegionL[i]);
 
 //        calculate  gradient of the curvature binormal kb for j = i + 1 and the corresponding force term
-        computeMatrixMult(kb[i], edges[i - 1], plus_kbGradient);
+        plus_kbGradient = outer(edges[i - 1], kb[i]);
         plus_kbGradient = (edgeMatrices[i - 1] * 2.0 + plus_kbGradient * (-1.0)) * scalarFactor;
         jplus_term[i] = plus_kbGradient * kb[i] * (-2 * m_bendStiffnes / m_restRegionL[i]);
 
@@ -422,20 +422,18 @@ void ElasticRod::computeBendForces(const std::vector<ngl::Vec4>& vertices,
         }
     }
 
-    o_bendForces[0] = jminus_term[1];
-    o_bendForces[o_bendForces.size() - 1] = jplus_term[o_bendForces.size() - 2];
+    o_bendForces[0] += jminus_term[1];
+    o_bendForces[o_bendForces.size() - 1] += jplus_term[o_bendForces.size() - 2];
 }
 
-void ElasticRod::computeTwistForces(const std::vector<ngl::Vec4>& vertices,
-                                    const std::vector<ngl::Vec4>& edges,
-                                    const std::vector<ngl::Vec4>& kb,
-                                    std::vector<ngl::Vec4>& o_twistForces) const
+void ElasticRod::computeTwistForces(const std::vector<mg::Vec4D>& vertices,
+                                    const std::vector<mg::Vec4D>& edges,
+                                    const std::vector<mg::Vec4D>& kb,
+                                    std::vector<mg::Vec4D>& o_twistForces) const
 {
-    o_twistForces.resize(vertices.size());
-
-    std::vector<ngl::Vec4> jminus_term(vertices.size());
-    std::vector<ngl::Vec4> jplus_term(vertices.size());
-    std::vector<ngl::Vec4> jequal_term(vertices.size());
+    std::vector<mg::Vec4D> jminus_term(vertices.size(), mg::Vec4D(0,0,0,0));
+    std::vector<mg::Vec4D> jplus_term(vertices.size(), mg::Vec4D(0,0,0,0));
+    std::vector<mg::Vec4D> jequal_term(vertices.size(), mg::Vec4D(0,0,0,0));
 
     double twistCoeff = m_twistStiffness * m_totalTwist / m_totalL;
     for (unsigned i = 1; i < o_twistForces.size() - 1; ++i)
@@ -460,66 +458,38 @@ void ElasticRod::computeTwistForces(const std::vector<ngl::Vec4>& vertices,
         }
     }
 
-    o_twistForces[0] = jminus_term[1];
-    o_twistForces[o_twistForces.size() - 1] = jplus_term[o_twistForces.size() - 2];
+    o_twistForces[0] += jminus_term[1];
+    o_twistForces[o_twistForces.size() - 1] += jplus_term[o_twistForces.size() - 2];
 }
 
 
 /**
- * Computes skew-symmetric matrix 4x4 [e], such that [e] * x = e.cross(x)
+ * Computes skew-symmetric matrix 4x4 transpose( [e] ), such that [e] * x = cross( e, x )
  **/
-void ElasticRod::computeEdgeMatrices(const std::vector<ngl::Vec4>& edges, std::vector<ngl::Mat4>& o_edgeMatrices) const
+void ElasticRod::computeEdgeMatrices(const std::vector<mg::Vec4D>& edges, std::vector<mg::Matrix4D>& o_edgeMatrices) const
 {
-    assert(edges.size() == m_restEdgeL.size());
-
-    o_edgeMatrices.resize(edges.size());
-
     for (unsigned i = 0; i < edges.size(); ++i)
     {
-        ngl::Mat4& em = o_edgeMatrices[i];
-//        set 1st column (xaxis)
-        em.m_00 = 0;
-        em.m_01 = edges[i].m_z;
-        em.m_02 = -edges[i].m_y;
-        em.m_03 = 0;
-//        set 2nd column (yaxis)
-        em.m_10 = -edges[i].m_z;
-        em.m_11 = 0;
-        em.m_12 = edges[i].m_x;
-        em.m_13 = 0;
-//        set 3rd column (zaxis)
-        em.m_20 = edges[i].m_y;
-        em.m_21 = -edges[i].m_x;
-        em.m_22 = 0;
-        em.m_23 = 0;
+        mg::Matrix4D& em = o_edgeMatrices[i];
+//        set 1st row
+        em(0, 0) = 0;
+        em(0, 1) = edges[i][2];
+        em(0, 2) = -edges[i][1];
+        em(0, 3) = 0;
+//        set 2nd row
+        em(1, 0) = -edges[i][2];
+        em(1, 1) = 0;
+        em(1, 2) = edges[i][0];
+        em(1, 3) = 0;
+//        set 3rd row
+        em(2, 0) = edges[i][1];
+        em(2, 1) = -edges[i][0];
+        em(2, 2) = 0;
+        em(2, 3) = 0;
 //        set 4th column (translation)
-        em.m_30 = 0;
-        em.m_31 = 0;
-        em.m_32 = 0;
-        em.m_33 = 1;
+        em(3, 0) = 0;
+        em(3, 1) = 0;
+        em(3, 2) = 0;
+        em(3, 3) = 1;
     }
-}
-
-void ElasticRod::computeMatrixMult(const ngl::Vec4& kb, const ngl::Vec4& e, ngl::Mat4& o_matrix) const
-{
-//        set 1st column (xaxis)
-        o_matrix.m_00 = kb.m_x * e.m_x;
-        o_matrix.m_01 = kb.m_y * e.m_x;
-        o_matrix.m_02 = kb.m_z * e.m_x;
-        o_matrix.m_03 = 0;
-//        set 2nd column (yaxis)
-        o_matrix.m_10 = kb.m_x * e.m_y;
-        o_matrix.m_11 = kb.m_y * e.m_y;
-        o_matrix.m_12 = kb.m_z * e.m_y;
-        o_matrix.m_13 = 0;
-//        set 3rd column (zaxis)
-        o_matrix.m_20 = kb.m_x * e.m_z;
-        o_matrix.m_21 = kb.m_y * e.m_z;
-        o_matrix.m_22 = kb.m_z * e.m_z;
-        o_matrix.m_23 = 0;
-//        set 4th column (translation)
-        o_matrix.m_30 = 0;
-        o_matrix.m_31 = 0;
-        o_matrix.m_32 = 0;
-        o_matrix.m_33 = 1;
 }

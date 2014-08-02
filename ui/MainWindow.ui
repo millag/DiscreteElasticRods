@@ -83,12 +83,12 @@
        <item row="2" column="0">
         <widget class="QLabel" name="label_5">
          <property name="text">
-          <string/>
+          <string>move</string>
          </property>
         </widget>
        </item>
        <item row="2" column="1">
-        <widget class="QDoubleSpinBox" name="m_length">
+        <widget class="QDoubleSpinBox" name="m_move">
          <property name="minimum">
           <double>-10.000000000000000</double>
          </property>
@@ -96,7 +96,7 @@
           <double>10.000000000000000</double>
          </property>
          <property name="singleStep">
-          <double>0.010000000000000</double>
+          <double>0.500000000000000</double>
          </property>
          <property name="value">
           <double>0.000000000000000</double>

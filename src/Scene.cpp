@@ -71,24 +71,25 @@ void Scene::initialize()
 //    TODO: create HairStrand object and move initialization there
 //    init vertices, velocities, mass, isFixed
     unsigned nVertices = 5;
-    ngl::Vec4 start(0, 3, 0, 1);
-    ngl::Vec4 end(3, 3, 0, 1);
+    mg::Vec4D start(0, 3, 0, 1);
+    mg::Vec4D end(3, 3, 0, 1);
 
-    std::vector<ngl::Vec4> pos(nVertices);
-    std::vector<ngl::Vec4> vel(nVertices);
-    std::vector<ngl::Real> mass(nVertices);
-    std::vector<ngl::Real> twistAngle(nVertices - 1, 0.0);
+    std::vector<mg::Vec4D> pos(nVertices, mg::Vec4D(0,0,0,1));
+    std::vector<mg::Vec4D> vel(nVertices, mg::Vec4D(0,0,0,0));
+    std::vector<mg::Real> mass(nVertices);
+    std::vector<mg::Real> twistAngle(nVertices - 1, 0.0);
     std::vector<bool> isFixed(nVertices);
 
-    ngl::Real t = 0.0;
+    mg::Real t = 0.0;
     for (unsigned i = 0; i < pos.size(); ++i)
     {
-        t = (ngl::Real)(i) / (nVertices - 1);
-        pos[i] = (1 - t) * start + t * end + utils::randf(-1, 1) * utils::EZ;
+        t = (mg::Real)(i) / (nVertices - 1);
+        pos[i] = (1 - t) * start + t * end;// + mg::randf(-1, 1) * mg::Vec4D(0,0,1,0);
         if (i > 1)
         {
-            pos[i] += utils::randf(-1, 1) * utils::EY;
+            pos[i] += mg::Vec4D(0,0,1,0);
         }
+
         vel[i].set(0, 0, 0, 0);
         mass[i] = 1.0;
         isFixed[i] = 0;
@@ -97,12 +98,12 @@ void Scene::initialize()
 //    isFixed[nVertices - 1] = 1;
 
     ElasticRod* strand = new ElasticRod();
-    strand->init(pos, utils::EY, pos, vel, mass, twistAngle, isFixed);
+    strand->init(pos, mg::Vec4D(0,1,0,0), pos, vel, mass, twistAngle, isFixed);
     m_strands.push_back(strand);
 }
 
 
-void Scene::update(ngl::Real dt)
+void Scene::update(mg::Real dt)
 {
 //    typedef std::vector<Hair*>::const_iterator Iter;
 //    for (Iter it = m_hairs.begin(); it != m_hairs.end(); ++it)

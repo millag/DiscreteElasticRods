@@ -123,13 +123,13 @@ unsigned VoxelGrid::findVoxel(const ngl::Vec4 &pos, unsigned& o_i, unsigned& o_j
 {
     ngl::Vec4 origin = m_volume.getVMin();
     o_voxelPos = (pos - origin).toVec3();
-    o_i = utils::clamp(std::floor(o_voxelPos.m_x / m_voxelSize), (ngl::Real)0.0, (ngl::Real)(m_divisions - 2));
-    o_j = utils::clamp(std::floor(o_voxelPos.m_y / m_voxelSize), (ngl::Real)0.0, (ngl::Real)(m_divisions - 2));
-    o_k = utils::clamp(std::floor(o_voxelPos.m_z / m_voxelSize), (ngl::Real)0.0, (ngl::Real)(m_divisions - 2));
+    o_i = mg::clamp(std::floor(o_voxelPos.m_x / m_voxelSize), (ngl::Real)0.0, (ngl::Real)(m_divisions - 2));
+    o_j = mg::clamp(std::floor(o_voxelPos.m_y / m_voxelSize), (ngl::Real)0.0, (ngl::Real)(m_divisions - 2));
+    o_k = mg::clamp(std::floor(o_voxelPos.m_z / m_voxelSize), (ngl::Real)0.0, (ngl::Real)(m_divisions - 2));
 
-    o_voxelPos.m_x = utils::clamp((ngl::Real)fmod(o_voxelPos.m_x, m_voxelSize), (ngl::Real)0, (ngl::Real)1);
-    o_voxelPos.m_y = utils::clamp((ngl::Real)fmod(o_voxelPos.m_y, m_voxelSize), (ngl::Real)0, (ngl::Real)1);
-    o_voxelPos.m_z = utils::clamp((ngl::Real)fmod(o_voxelPos.m_z, m_voxelSize), (ngl::Real)0, (ngl::Real)1);
+    o_voxelPos.m_x = mg::clamp((ngl::Real)fmod(o_voxelPos.m_x, m_voxelSize), (ngl::Real)0, (ngl::Real)1);
+    o_voxelPos.m_y = mg::clamp((ngl::Real)fmod(o_voxelPos.m_y, m_voxelSize), (ngl::Real)0, (ngl::Real)1);
+    o_voxelPos.m_z = mg::clamp((ngl::Real)fmod(o_voxelPos.m_z, m_voxelSize), (ngl::Real)0, (ngl::Real)1);
 
     return getVoxelIdx(o_i, o_j, o_k);
 }

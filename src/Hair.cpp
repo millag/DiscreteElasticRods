@@ -65,12 +65,12 @@ void Hair::initialize(const RenderObject& object, unsigned nMaxStrands)
     typedef std::vector<Strand>::iterator Iter;
     for (Iter it = m_strands.begin(); it != m_strands.end(); it++)
     {
-        dir = utils::genRandPointOnSphere();
+        dir = mg::genRandPointOnSphere();
         dir.m_w = 0;
         initPos = object.getMeshAABB().getCenter() + dir * object.getMeshBoundingRadius();
         dir = dir * t;
 
-        ngl::Real length = (m_length + utils::randf(-m_lengthVariance, m_lengthVariance));
+        ngl::Real length = (m_length + mg::randf(-m_lengthVariance, m_lengthVariance));
 //          mass = density * volume = circle area * length = (0.25 * ngl::PI * m_thickness * m_thickness * length)
         ngl::Real strandMass = m_density * (0.25 * ngl::PI * m_thickness * m_thickness * length);
         ngl::Real pmass = strandMass / (m_nParticles - 1) + (m_nParticles - 2) * 0.5 * m_pmassFalloff;
@@ -249,7 +249,7 @@ void Hair::calculateAcceleration(Strand& strand, unsigned pindex, ngl::Real dt)
 //    TODO: add other forces - wind, ect.
 //    air drag force is computed by the formula 1/2 * airDensity * v^2 * areaCrossSecction * dragCoefficient
 //    everything but the velocity term has been calculated and initialized in m_airDrag property in ctor
-    strand.m_pacc[pindex] = utils::G - m_airDrag * strand.m_pvel[pindex].length() * strand.m_pvel[pindex] / strand.m_pmass[pindex] ;
+    strand.m_pacc[pindex] = mg::G - m_airDrag * strand.m_pvel[pindex].length() * strand.m_pvel[pindex] / strand.m_pmass[pindex] ;
 }
 
 void Hair::integrate(Strand &strand, unsigned pindex, ngl::Real dt)
@@ -273,7 +273,7 @@ void Hair::solveConstraints(Strand &strand, ngl::Real dt)
             unsigned previ = i - 1;
             v = strand.m_ppos[previ] - strand.m_ppos[i];
             dist = v.length();
-            if ( dist < utils::ERR)
+            if ( dist < mg::ERR)
                 continue;
 
             v.normalize();
@@ -288,7 +288,7 @@ void Hair::solveConstraints(Strand &strand, ngl::Real dt)
             unsigned nexti = i + 1;
             v = strand.m_ppos[nexti] - strand.m_ppos[i];
             dist = v.length();
-            if ( dist < utils::ERR)
+            if ( dist < mg::ERR)
                 continue;
 
             v.normalize();
@@ -309,7 +309,7 @@ void Hair::solveConstraintsDFTL(Strand &strand, ngl::Real dt)
         unsigned previ = i - 1;
         v = strand.m_ppos[previ] - strand.m_ppos[i];
         dist = v.length();
-        if ( dist < utils::ERR)
+        if ( dist < mg::ERR)
             continue;
 
         v.normalize();
@@ -359,7 +359,7 @@ void Hair::resolveCollisions(Strand &strand, ngl::Real dt)
             vn = n.dot(strand.m_pvel[i]) * n;
             vt = strand.m_pvel[i] + vn;
 
-            if (vt.lengthSquared() > utils::ERR)
+            if (vt.lengthSquared() > mg::ERR)
             {
                 strand.m_pvel[i] -= std::max(1 - m_collisionFriction * vn.length() / vt.length(), (ngl::Real)0) * vt;
             }

@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "ElasticRod.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainWindow)
@@ -26,10 +27,11 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainW
 
     // now we wire up the UI components to the slots
     connect(m_ui->m_selected, SIGNAL(currentIndexChanged(int)), this, SLOT(selectRenderObject(int)));
+    connect(m_ui->m_move, SIGNAL(valueChanged(double)), this, SLOT(setPosition(double)));
     connect(m_ui->m_sim, SIGNAL(clicked(bool)), this, SLOT(toggleSim(bool)));
     connect(m_ui->m_timerValue, SIGNAL(valueChanged(int)), m_gl, SLOT(setTimerDuration(int)));
 
-    toggleSim(false);
+//    toggleSim(false);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -37,6 +39,13 @@ MainWindow::~MainWindow()
 {
     delete m_scene;
     delete m_ui;
+}
+
+void MainWindow::setPosition(double _v)
+{
+    std::cout << "Move position" << std::endl;
+    ElasticRod* strand = m_scene->getStrands()[0];
+    strand->m_ppos[0][0] += 1.;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

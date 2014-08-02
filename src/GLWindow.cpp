@@ -267,8 +267,8 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
     {
         m_strandVAO->bind();
 
-        m_strandVAO->updateIndexedData(strand.m_ppos.size() * sizeof(ngl::Vec4),
-                                       strand.m_ppos[0].m_x);
+        m_strandVAO->updateIndexedData(strand.m_ppos.size() * sizeof(mg::Vec4D),
+                                       strand.m_ppos[0][0]);
 
         m_strandVAO->setVertexAttributePointer(0, 4, GL_FLOAT, 0, 0);
 
@@ -289,8 +289,8 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
     m_strandVAO = ngl::VertexArrayObject::createVOA(GL_LINE_STRIP_ADJACENCY);
     m_strandVAO->bind();
 
-    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(ngl::Vec4),
-                               strand.m_ppos[0].m_x,
+    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec4D),
+                                strand.m_ppos[0][0],
                                indices.size(),
                                &indices[0],
                                GL_UNSIGNED_INT);
@@ -425,7 +425,7 @@ void GLWindow::mouseMoveEvent ( QMouseEvent * _event )
         {
             dirz = dirz * m_cameraTransform.getTransform().inverse();
             dirz.normalize();
-            ngl::Vec4 dirx = utils::EY.cross(dirz);
+            ngl::Vec4 dirx = mg::EY.cross(dirz);
             dirx.normalize();
             ngl::Vec4 diry = dirz.cross(dirx);
             diry.normalize();
@@ -493,7 +493,7 @@ void GLWindow::mouseReleaseEvent ( QMouseEvent * _event )
 
 void GLWindow::timerEvent( QTimerEvent *_event)
 {
-    m_scene->update(1.0 / utils::UPS);
+    m_scene->update(1.0 / mg::UPS);
     updateGL();
 }
 
