@@ -42,7 +42,7 @@ public:
     QLabel *label_4;
     QDoubleSpinBox *m_b;
     QLabel *label_5;
-    QDoubleSpinBox *m_length;
+    QDoubleSpinBox *m_move;
     QGroupBox *s_transformGB;
     QGridLayout *gridLayout;
     QLabel *label;
@@ -108,14 +108,14 @@ public:
 
         gridLayout_3->addWidget(label_5, 2, 0, 1, 1);
 
-        m_length = new QDoubleSpinBox(groupBox);
-        m_length->setObjectName(QStringLiteral("m_length"));
-        m_length->setMinimum(-10);
-        m_length->setMaximum(10);
-        m_length->setSingleStep(0.01);
-        m_length->setValue(0);
+        m_move = new QDoubleSpinBox(groupBox);
+        m_move->setObjectName(QStringLiteral("m_move"));
+        m_move->setMinimum(-10);
+        m_move->setMaximum(10);
+        m_move->setSingleStep(0.5);
+        m_move->setValue(0);
 
-        gridLayout_3->addWidget(m_length, 2, 1, 1, 1);
+        gridLayout_3->addWidget(m_move, 2, 1, 1, 1);
 
 
         s_mainWindowGridLayout->addWidget(groupBox, 1, 1, 1, 1);
@@ -203,7 +203,7 @@ public:
         groupBox->setTitle(QApplication::translate("MainWindow", "Hair Properties", 0));
         label_3->setText(QString());
         label_4->setText(QString());
-        label_5->setText(QString());
+        label_5->setText(QApplication::translate("MainWindow", "move", 0));
         s_transformGB->setTitle(QApplication::translate("MainWindow", "Select Object", 0));
         label->setText(QApplication::translate("MainWindow", "Selected Object", 0));
         groupBox_2->setTitle(QApplication::translate("MainWindow", "Simulation", 0));
