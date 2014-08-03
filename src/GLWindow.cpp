@@ -267,10 +267,10 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
     {
         m_strandVAO->bind();
 
-        m_strandVAO->updateIndexedData(strand.m_ppos.size() * sizeof(mg::Vec4D),
+        m_strandVAO->updateIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
                                        strand.m_ppos[0][0]);
 
-        m_strandVAO->setVertexAttributePointer(0, 4, GL_FLOAT, 0, 0);
+        m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
 
         m_strandVAO->draw();
         m_strandVAO->unbind();
@@ -289,13 +289,13 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
     m_strandVAO = ngl::VertexArrayObject::createVOA(GL_LINE_STRIP_ADJACENCY);
     m_strandVAO->bind();
 
-    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec4D),
+    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
                                 strand.m_ppos[0][0],
                                indices.size(),
                                &indices[0],
                                GL_UNSIGNED_INT);
 
-    m_strandVAO->setVertexAttributePointer(0, 4, GL_FLOAT, 0, 0);
+    m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
     m_strandVAO->setNumIndices(indices.size());
 
     m_strandVAO->draw();

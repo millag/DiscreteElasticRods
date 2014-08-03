@@ -6,21 +6,25 @@
 
 namespace mg
 {
+    using  namespace cml;
+
     typedef float Real;
 
-    typedef cml::constantsf Constants;
+    typedef constantsf Constants;
 
-    typedef cml::vector2f Vec2D;
-    typedef cml::vector3f Vec3D;
-    typedef cml::vector4f Vec4D;
+    typedef vector2f Vec2D;
+    typedef vector3f Vec3D;
+    typedef vector4f Vec4D;
 
-    typedef cml::matrix22f_c Matrix2D;
-    typedef cml::matrix33f_c Matrix3D;
-    typedef cml::matrix44f_c Matrix4D;
+    typedef matrix22f_c Matrix2D;
+    typedef matrix33f_c Matrix3D;
+    typedef matrix44f_c Matrix4D;
 
-    typedef cml::matrix<Real, cml::dynamic<>, cml::col_basis> MatrixND;
+    typedef matrix32f_r Matrix32D;
 
-    typedef cml::quaternion<Real, cml::fixed<>, cml::scalar_first> Quaternion;
+    typedef matrix<Real, dynamic<>, col_basis> MatrixND;
+
+    typedef quaternion<Real, fixed<>, scalar_first> Quaternion;
 }
 
 
