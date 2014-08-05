@@ -10,6 +10,7 @@ ElasticRod::ElasticRod()
     m_bendStiffnes = 0.7;
     m_twistStiffness = 1.0;
     m_nIterations = 4;
+    m_maxElasticForceThreshold = 100;
 
     m_B.identity();
     m_B *= m_bendStiffnes;
@@ -117,7 +118,6 @@ void ElasticRod::computeKB(const std::vector<mg::Vec3D>& edges,
 
 //      need to assert that |kb| = 2 * tan(phi / 2)
         magnitude = mg::length_squared(o_kb[i]);
-        assert( std::isfinite(magnitude) );
         extractSinAndCos(magnitude, sinPhi, cosPhi);
     }
 }
@@ -125,11 +125,11 @@ void ElasticRod::computeKB(const std::vector<mg::Vec3D>& edges,
 void ElasticRod::extractSinAndCos(const double &magnitude,
                                   double &o_sinPhi, double &o_cosPhi) const
 {
-    assert( std::isfinite(magnitude) && magnitude >= 0.0 );
 
     o_cosPhi = mg::sqrt_safe(4.0 / (4.0 + magnitude));
     o_sinPhi = mg::sqrt_safe(magnitude / (4.0 + magnitude));
 
+    assert( std::isfinite(magnitude) && magnitude >= 0.0  && std::isfinite(o_sinPhi) && std::isfinite(o_cosPhi) );
     assert( fabs((o_sinPhi * o_sinPhi + o_cosPhi * o_cosPhi) - 1.0) < mg::ERR );
     assert( fabs(magnitude - 4.0 * o_sinPhi * o_sinPhi / (o_cosPhi * o_cosPhi)) < mg::ERR );
 }
@@ -141,8 +141,9 @@ void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
                         std::vector<mg::Vec3D>& o_v) const
 {
 //    check if Bishop frame is correctly defined
-    assert( fabs(mg::length_squared( u0 ) - 1) < mg::THRESHODL );
+    assert( fabs(mg::length_squared( u0 ) - 1) < mg::ERR );
 //    assert( fabs(mg::dot( u0, mg::normalize(edges[0]) )) < mg::ERR );
+//    std::cout << "ANGLE u0 edge[0] " << mg::deg( std::acos( mg::dot( u0, mg::normalize(edges[0]) ) ) ) << std::endl;
 
     computeKB(edges, o_kb);
 
@@ -158,35 +159,30 @@ void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
         magnitude = mg::length_squared(o_kb[i]);
         assert( std::isfinite(magnitude) );
 
-        mg::Real dotp = mg::dot(mg::normalize(m_edges[i - 1]), mg::normalize(m_edges[i]));
-        if (fabs(dotp - 1) < mg::ERR )
+        if (magnitude < mg::ERR )
         {
             o_u[i] = o_u[i - 1];
             o_v[i] = o_v[i - 1];
             continue;
         }
-        if (fabs(dotp + 1) < mg::ERR)
-        {
-            o_u[i] = -o_u[i - 1];
-            o_v[i] = -o_v[i - 1];
-            continue;
-        }
 
 //        here sinPhi and cosPhi are derived from the length of kb |kb| = 2 * tan( phi/2 )
         extractSinAndCos(magnitude, sinPhi, cosPhi);
-        assert( mg::length_squared(o_kb[i]) > mg::ERR );
 
 //        rotate frame u axis around kb
         mg::Quaternion q(cosPhi, sinPhi * mg::normalize(o_kb[i]));
         mg::Quaternion p(0, o_u[i - 1]);
         p = q * p * mg::conjugate(q);
-
         o_u[i].set(p[1], p[2], p[3]);
+        o_u[i].normalize();
+
         o_v[i] = mg::cross(edges[i], o_u[i]);
         o_v[i].normalize();
 
+        assert( mg::length_squared(o_kb[i]) > mg::ERR );
         assert( fabs(p[0]) <  mg::ERR );
-        assert( fabs(mg::length_squared(o_u[i]) - 1) < mg::THRESHODL );
+        assert( fabs(mg::length_squared(o_u[i]) - 1) < mg::ERR );
+        assert( fabs(mg::length_squared(o_v[i]) - 1) < mg::ERR );
 //        std::cout << "LENGTH u[" << i << "] " << mg::length_squared(o_u[i]) << std::endl;
 //        std::cout << "ANGLE u edge[" << i << "] " << mg::deg( std::acos( mg::dot( o_u[i], mg::normalize(edges[i]) ) ) ) << std::endl;
 //        std::cout << "ANGLE v edge[" << i << "] " << mg::deg( std::acos( mg::dot( o_v[i], mg::normalize(edges[i]) ) ) ) << std::endl;
@@ -220,8 +216,8 @@ void ElasticRod::computeMaterialFrame(const mg::Vec3D& u0,
         o_m1[i] = m1;
         o_m2[i] = m2;
 
-        assert( fabs( mg::length_squared( m1 ) - 1 ) < mg::THRESHODL );
-        assert( fabs( mg::length_squared( m2 ) - 1 ) < mg::THRESHODL );
+        assert( fabs( mg::length_squared( m1 ) - 1 ) < mg::ERR );
+        assert( fabs( mg::length_squared( m2 ) - 1 ) < mg::ERR);
         assert( fabs( mg::dot( m1, m2 )) < mg::ERR );
 //        std::cout << "ANGLE m1 edge[" << i << "] " << mg::deg( std::acos( mg::dot( m1, mg::normalize(edges[i]) ) ) ) << std::endl;
 //        std::cout << "ANGLE m2 edge[" << i << "] " << mg::deg( std::acos( mg::dot( m2, mg::normalize(edges[i]) ) ) ) << std::endl;
@@ -308,10 +304,10 @@ void ElasticRod::update(mg::Real dt)
     }
 
 //    parallel transport first frame in time
-    mg::Vec3D t0 = mg::normalize(m_edges[0]);
+    mg::Vec3D e0 = m_edges[0];
     computeEdges(m_ppos, m_edges);
-    mg::Vec3D t1 = mg::normalize(m_edges[0]);
-    parallelTransportFrame(t0, t1, m_u0);
+    mg::Vec3D e1 = m_edges[0];
+    parallelTransportFrame(e0, e1, m_u0);
 
 //    std::cout << "ANGLE u0 edge[0] " << mg::deg( std::acos( mg::dot(m_u0, t1) ) ) << std::endl;
 
@@ -419,14 +415,14 @@ void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
         o_forces[i] += (mg::dot(m_Wnext[n], J * m_B * (m_Wnext[n] - m_restWnext[n])) +
                         2 * m_twistStiffness * mn / m_restRegionL[n]) * GH;
 
-        mg::Real maxForce = 100;
-        if (mg::length_squared(o_forces[i]) > maxForce * maxForce)
+        assert( std::isfinite(mg::length_squared(o_forces[i])) );
+
+        if (mg::length_squared(o_forces[i]) > m_maxElasticForceThreshold * m_maxElasticForceThreshold)
         {
             o_forces[i].normalize();
-            o_forces[i] *= maxForce;
+            o_forces[i] *= m_maxElasticForceThreshold;
         }
 
-        assert( std::isfinite(mg::length_squared(o_forces[i])) );
     }
 }
 
@@ -548,30 +544,52 @@ void ElasticRod::computeEdgeMatrices(const std::vector<mg::Vec3D>& edges,
     }
 }
 
-void ElasticRod::parallelTransportFrame(const mg::Vec3D& t0, const mg::Vec3D& t1,
+void ElasticRod::parallelTransportFrame(const mg::Vec3D& e0, const mg::Vec3D& e1,
                                         mg::Vec3D& io_u) const
 {
-    mg::Vec3D axis = mg::cross(t0, t1);
-    if (mg::length_squared(axis) > mg::ERR)
-    {
-        axis.normalize();
-        mg::Quaternion q;
-        mg::quaternion_rotation_axis_angle( q, axis, mg::acos_safe( mg::dot(t0, t1) ) );
-        mg::Quaternion p(0, io_u);
-        p = q * p * mg::conjugate(q);
+    mg::Vec3D axis = 2 * mg::cross(e0, e1) /
+            (m_restEdgeL[0] * m_restEdgeL[0] + mg::dot(e0, e1));
 
-        io_u.set(p[1], p[2], p[3]);
-    }
-    else
+    double magnitude = mg::length_squared(axis);
+    if (magnitude < mg::ERR)
     {
-        axis = mg::cross(t1, io_u);
-        io_u = mg::cross(axis, t1);
+        axis = mg::cross(e1, io_u);
+        io_u = mg::cross(axis, e1);
+        io_u.normalize();
+        return;
     }
-    if (mg::length_squared(io_u) < mg::ERR)
-    {
-        std::cout << "Something is really wrong!" << std::endl;
-    }
+
+    double sinPhi, cosPhi;
+    extractSinAndCos(magnitude, sinPhi, cosPhi);
+
+    mg::Quaternion q(cosPhi, sinPhi * mg::normalize(axis));
+    mg::Quaternion p(0, io_u);
+    p = q * p * mg::conjugate(q);
+
+    io_u.set(p[1], p[2], p[3]);
     io_u.normalize();
+    assert(fabs(mg::length_squared(io_u) - 1) < mg::ERR);
+
+//    if (mg::length_squared(axis) > mg::ERR)
+//    {
+//        axis.normalize();
+//        mg::Quaternion q;
+//        mg::quaternion_rotation_axis_angle( q, axis, mg::acos_safe( mg::dot(t0, t1) ) );
+//        mg::Quaternion p(0, io_u);
+//        p = q * p * mg::conjugate(q);
+
+//        io_u.set(p[1], p[2], p[3]);
+//    }
+//    else
+//    {
+//        axis = mg::cross(t1, io_u);
+//        io_u = mg::cross(axis, t1);
+//    }
+//    if (mg::length_squared(io_u) < mg::ERR)
+//    {
+//        std::cout << "Something is really wrong!" << std::endl;
+//    }
+//    io_u.normalize();
 }
 
 

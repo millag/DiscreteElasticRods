@@ -43,6 +43,8 @@ public:
 
     unsigned m_nIterations;
 
+    mg::Real m_maxElasticForceThreshold;
+
 //    ========= should be private ========
 
 /// #vertices = n + 1
@@ -178,7 +180,7 @@ private:
     void computeElasticForces(const std::vector<mg::Vec3D>& vertices,
                               std::vector<mg::Vec3D>& o_forces);
 
-    void parallelTransportFrame(const mg::Vec3D& t0, const mg::Vec3D& t1,
+    void parallelTransportFrame(const mg::Vec3D& e0, const mg::Vec3D& e1,
                                 mg::Vec3D& io_u) const;
 /// Compute the forces acting on the vertices as a result of the
 /// bending of the strand.
