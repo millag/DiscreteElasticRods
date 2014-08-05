@@ -56,15 +56,13 @@ public:
 /// unit length vector - defines the Bishop frame of the first edge
     mg::Vec3D m_u0;
 
-
-
 private:
 /// #twistAngle = #edges = n
     std::vector<mg::Real> m_twistAngle;
 
 /// #restEdgeL = #edges = n edge length
     std::vector<mg::Real> m_restEdgeL;
-/// #restEdgeL = #edges = n
+/// #restRegionL = #edges = n defines integrated length of voronoi region
 /// NOTE: there is no restRegionL[0] => restRegionL[0] = 0
     std::vector<mg::Real> m_restRegionL;
 /// #restWprev = #edges - restWprev[i] defines rest material curvatures at e[i -1]
@@ -159,7 +157,8 @@ private:
                                 const std::vector<mg::Vec3D>& minusGH,
                                 const std::vector<mg::Vec3D>& plusGH,
                                 const std::vector<mg::Vec3D>& eqGH,
-                                mg::MatrixND& o_GW) const;
+                                const std::vector<mg::Vec2D>& wj,
+                                mg::Matrix23D &o_GW) const;
 
 /// Computes skew-symmetric matrix 4x4 transpose( [e] ), such that [e] * x = cross( e, x )
     void computeEdgeMatrices(const std::vector<mg::Vec3D>& edges,

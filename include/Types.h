@@ -20,9 +20,9 @@ namespace mg
     typedef matrix33f_c Matrix3D;
     typedef matrix44f_c Matrix4D;
 
-    typedef matrix32f_r Matrix32D;
+    typedef matrix23f_c Matrix23D;
 
-    typedef matrix<Real, dynamic<>, col_basis> MatrixND;
+    typedef matrix<Real, dynamic<>, col_basis, col_major> MatrixND;
 
     typedef quaternion<Real, fixed<>, scalar_first> Quaternion;
 }

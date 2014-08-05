@@ -45,7 +45,7 @@ void MainWindow::setPosition(double _v)
 {
     std::cout << "Move position" << std::endl;
     ElasticRod* strand = m_scene->getStrands()[0];
-    strand->m_ppos[0][0] += 1.;
+    strand->m_ppos[0][0] += _v;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -70,10 +70,11 @@ void Scene::initialize()
 
 //    TODO: create HairStrand object and move initialization there
 //    init vertices, velocities, mass, isFixed
-    unsigned nVertices = 5;
+    unsigned nVertices = 9;
     mg::Vec3D start(0, 3, 0);
     mg::Vec3D end(3, 3, 0);
 
+    std::vector<mg::Vec3D> restpos(nVertices);
     std::vector<mg::Vec3D> pos(nVertices);
     std::vector<mg::Vec3D> vel(nVertices);
     std::vector<mg::Real> mass(nVertices);
@@ -84,21 +85,25 @@ void Scene::initialize()
     for (unsigned i = 0; i < pos.size(); ++i)
     {
         t = (mg::Real)(i) / (nVertices - 1);
-        pos[i] = (1 - t) * start + t * end;// + mg::randf(-1, 1) * mg::Vec3D(0,0,1,0);
-        if (i > 1)
-        {
-            pos[i] += mg::Vec3D(0,0,1);
-        }
+        pos[i] = (1 - t) * start + t * end;
 
         vel[i].zero();
-        mass[i] = 100;
+        mass[i] = 1;
+    }
+
+    mg::Real step = mg::length( end - start ) / (nVertices - 1);
+    restpos[0] = start;
+    for (unsigned i = 1; i < restpos.size(); ++i)
+    {
+        restpos[i] = restpos[i - 1] + step * mg::normalize(mg::Vec3D(1, std::pow(-1, i % 2) * 1, 0));
     }
     isFixed[0] = 1;
 //    isFixed[nVertices - 1] = 1;
 
     ElasticRod* strand = new ElasticRod();
-    strand->init(pos, mg::Vec3D(0,1,0), pos, vel, mass, twistAngle, isFixed);
+    strand->init(restpos, mg::Vec3D(0,1,0), pos, vel, mass, twistAngle, isFixed);
     m_strands.push_back(strand);
+
 }
 
 
