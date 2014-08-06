@@ -84,16 +84,7 @@ private:
 /// #m2 = #edges - m2[i] defines material axis m2 at e[i]
     std::vector<mg::Vec3D> m_m2;
 
-/// #restWprev = #edges - restWprev[i] defines rest material curvatures at e[i -1]
-    std::vector<mg::Vec2D> m_Wprev;
-/// #restWnext = #edges - restWnext[i] defines rest material curvatures at e[i]
-    std::vector<mg::Vec2D> m_Wnext;
-
-
     mg::Real m_totalTwist;
-    mg::Real m_totalL;
-
-
 
 
 /// Computes the edge vectors between each consequent pair of vertices.
@@ -104,10 +95,11 @@ private:
 /// Computes rest edge lengths the li scalars:
 /// l[i] = |e[i - 1]| + |e[i + 1]|
 /// NOTE: there is no l_0
-    void computeLengths(const std::vector<mg::Vec3D> &edges,
+    void computeLengths(const std::vector<mg::Vec3D> &vertices,
                         std::vector<mg::Real> &o_edgeL,
-                        std::vector<mg::Real> &o_regionL,
-                        mg::Real &o_totalL) const;
+                        std::vector<mg::Real> &o_regionL) const;
+
+    void computeW(const mg::Vec3D &kb, const mg::Vec3D &m1, const mg::Vec3D &m2, mg::Vec2D& o_wij) const;
 
     void extractSinAndCos(const double &magnitude,
                           double &o_sinPhi, double &o_cosPhi) const;
@@ -128,44 +120,15 @@ private:
 
 /// Computes Material frame for every edge - defining the orientation of the edge
 /// the method internally computes kb 3-vectors, Bishop frame and rotates Bishop frame with twist angle
-    void computeMaterialFrame(const mg::Vec3D& u0,
-                              const std::vector<mg::Vec3D>& edges,
-                              const std::vector<mg::Real>& twistAngle,
-                              std::vector<mg::Vec3D>& o_kb,
-                              std::vector<mg::Vec3D>& o_m1,
-                              std::vector<mg::Vec3D>& o_m2) const;
+    void computeMaterialFrame(const std::vector<mg::Real>& twistAngle,
+                              std::vector<mg::Vec3D>& io_m1,
+                              std::vector<mg::Vec3D>& io_m2) const;
 
     void computeMaterialCurvature(const std::vector<mg::Vec3D> &kb,
                                   const std::vector<mg::Vec3D>& m1,
                                   const std::vector<mg::Vec3D>& m2,
                                   std::vector<mg::Vec2D>& o_Wprev,
                                   std::vector<mg::Vec2D>& o_Wnext) const;
-
-    void computeGradientKB(const std::vector<mg::Vec3D> &kb,
-                           const std::vector<mg::Vec3D> &edges,
-                           std::vector<mg::Matrix3D>& o_minusGKB,
-                           std::vector<mg::Matrix3D>& o_plusGKB,
-                           std::vector<mg::Matrix3D>& o_eqGKB) const;
-
-    void computeGradientHolonomy(const std::vector<mg::Vec3D> &kb,
-                           std::vector<mg::Vec3D>& o_minusGH,
-                           std::vector<mg::Vec3D>& o_plusGH,
-                           std::vector<mg::Vec3D>& o_eqGH) const;
-
-    void computeGradientCurvature(int i, int k, int j,
-                                const std::vector<mg::Matrix3D>& minusGKB,
-                                const std::vector<mg::Matrix3D>& plusGKB,
-                                const std::vector<mg::Matrix3D>& eqGKB,
-                                const std::vector<mg::Vec3D>& minusGH,
-                                const std::vector<mg::Vec3D>& plusGH,
-                                const std::vector<mg::Vec3D>& eqGH,
-                                const std::vector<mg::Vec2D>& wj,
-                                mg::Matrix23D &o_GW) const;
-
-/// Computes skew-symmetric matrix 4x4 transpose( [e] ), such that [e] * x = cross( e, x )
-    void computeEdgeMatrices(const std::vector<mg::Vec3D>& edges,
-                             std::vector<mg::Matrix3D>& o_edgeMatrices) const;
-
 
     void integrate(mg::Real dt);
 
@@ -180,23 +143,35 @@ private:
     void computeElasticForces(const std::vector<mg::Vec3D>& vertices,
                               std::vector<mg::Vec3D>& o_forces);
 
+    void computeGradientKB(const std::vector<mg::Vec3D> &kb,
+                           const std::vector<mg::Vec3D> &edges,
+                           std::vector<mg::Matrix3D>& o_minusGKB,
+                           std::vector<mg::Matrix3D>& o_plusGKB,
+                           std::vector<mg::Matrix3D>& o_eqGKB) const;
+
+/// Computes skew-symmetric matrix 4x4 transpose( [e] ), such that [e] * x = cross( e, x )
+    void computeEdgeMatrices(const std::vector<mg::Vec3D>& edges,
+                             std::vector<mg::Matrix3D>& o_edgeMatrices) const;
+
+
+    void computeGradientHolonomy(const std::vector<mg::Vec3D> &kb,
+                           std::vector<mg::Vec3D>& o_minusGH,
+                           std::vector<mg::Vec3D>& o_plusGH,
+                           std::vector<mg::Vec3D>& o_eqGH) const;
+
+    void computeGradientCurvature(int i, int k, int j,
+                                const std::vector<mg::Matrix3D>& minusGKB,
+                                const std::vector<mg::Matrix3D>& plusGKB,
+                                const std::vector<mg::Matrix3D>& eqGKB,
+                                const std::vector<mg::Vec3D>& minusGH,
+                                const std::vector<mg::Vec3D>& plusGH,
+                                const std::vector<mg::Vec3D>& eqGH,
+                                const mg::Vec2D& wkj,
+                                mg::Matrix23D &o_GW) const;
+
+    void computeTwist();
     void parallelTransportFrame(const mg::Vec3D& e0, const mg::Vec3D& e1,
                                 mg::Vec3D& io_u) const;
-/// Compute the forces acting on the vertices as a result of the
-/// bending of the strand.
-    void computeBendForces(const std::vector<mg::Vec3D>& vertices,
-                            const std::vector<mg::Vec3D>& edges,
-                            const std::vector<mg::Vec3D>& kb,
-                            std::vector<mg::Vec3D>& o_bendForces) const;
-
-/// Compute the forces acting on the vertices as a result of the
-/// twisting of the strand.
-    void computeTwistForces(const std::vector<mg::Vec3D>& vertices,
-                            const std::vector<mg::Vec3D>& edges,
-                            const std::vector<mg::Vec3D>& kb,
-                            std::vector<mg::Vec3D>& o_twistForces) const;
-
-
 
 };
 
