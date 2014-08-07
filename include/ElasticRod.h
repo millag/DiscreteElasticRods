@@ -84,6 +84,10 @@ private:
 /// #m2 = #edges - m2[i] defines material axis m2 at e[i]
     std::vector<mg::Vec3D> m_m2;
 
+
+/// #u = #edges - u[i] defines Bishop axis u at e[i]
+//    std::vector<mg::Vec3D> m_u;
+
     mg::Real m_totalTwist;
 
 
@@ -159,7 +163,13 @@ private:
                            std::vector<mg::Vec3D>& o_plusGH,
                            std::vector<mg::Vec3D>& o_eqGH) const;
 
-    void computeGradientCurvature(int i, int k, int j,
+    void computeGradientHolonomySum(unsigned i , unsigned j,
+                                     const std::vector<mg::Vec3D>& minusGH,
+                                     const std::vector<mg::Vec3D>& plusGH,
+                                     const std::vector<mg::Vec3D>& eqGH,
+                                     mg::Vec3D& o_GH) const;
+
+    void computeGradientCurvature(unsigned i, unsigned k, unsigned j,
                                 const std::vector<mg::Matrix3D>& minusGKB,
                                 const std::vector<mg::Matrix3D>& plusGKB,
                                 const std::vector<mg::Matrix3D>& eqGKB,
@@ -167,10 +177,18 @@ private:
                                 const std::vector<mg::Vec3D>& plusGH,
                                 const std::vector<mg::Vec3D>& eqGH,
                                 const mg::Vec2D& wkj,
+                                const mg::Matrix2D J,
                                 mg::Matrix23D &o_GW) const;
 
-    void computeTwist();
-    void parallelTransportFrame(const mg::Vec3D& e0, const mg::Vec3D& e1,
+
+    void computedEdQj(unsigned j,
+                    const mg::Matrix2D JB,
+                    mg::Real &o_dEQj) const;
+
+    void updateCurrentState();
+
+    void parallelTransportFrame(const mg::Vec3D& e0,
+                                const mg::Vec3D& e1,
                                 mg::Vec3D& io_u) const;
 
 };

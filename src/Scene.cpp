@@ -71,8 +71,8 @@ void Scene::initialize()
 //    TODO: create HairStrand object and move initialization there
 //    init vertices, velocities, mass, isFixed
     unsigned nVertices = 9;
-    mg::Vec3D start(0, 3, 0);
-    mg::Vec3D end(3, 3, 0);
+    mg::Vec3D start(-1.5, 3, 0);
+    mg::Vec3D end(1.5, 3, 0);
 
     std::vector<mg::Vec3D> restpos(nVertices);
     std::vector<mg::Vec3D> pos(nVertices);
