@@ -199,7 +199,7 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "Hairy", 0));
+        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "ElasticRods", 0));
         groupBox->setTitle(QApplication::translate("MainWindow", "Hair Properties", 0));
         label_3->setText(QString());
         label_4->setText(QString());

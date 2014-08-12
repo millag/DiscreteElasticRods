@@ -37,7 +37,7 @@ vec4 catmull_rom(float t)
 
 void main ()
 {
-    const int nVertices = 10;
+    const int nVertices = 2;
     int i, prev, next;
     vec4 viewPos, worldPos;
     float step = 1.0 / (nVertices - 1);

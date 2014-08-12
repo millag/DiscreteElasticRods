@@ -1,4 +1,4 @@
-TARGET=Curly
+TARGET=ElasticRods
 OBJECTS_DIR=obj
 # as I want to support 4.8 and 5 this will set a flag for some of the mac stuff
 # mainly in the types.h file for the setMacVisual which is native in Qt5
@@ -16,7 +16,6 @@ QT+=gui opengl core
 SOURCES += src/main.cpp \
            src/MainWindow.cpp \
            src/GLWindow.cpp \
-        src/AbstractRK4Integrator.cpp \
     src/Utils.cpp \
     src/Scene.cpp \
     src/Mesh.cpp \
@@ -24,20 +23,21 @@ SOURCES += src/main.cpp \
     src/AABB.cpp \
     src/Hair.cpp \
     src/VoxelGrid.cpp \
-    src/ElasticRod.cpp
+    src/ElasticRod.cpp \
+    src/HairStrand.cpp \
+    libs/dlib-18.9/dlib/all/source.cpp \
+    src/Spiral.cpp
 
 INCLUDEPATH += ./include
 INCLUDEPATH += ./libs/cml-1_0_2/
+INCLUDEPATH += ./libs/dlib-18.9/
 
 HEADERS += include/MainWindow.h \
            include/GLWindow.h \
-            include/AbstractRK4Integrator.h \
-    include/Particle.h \
     include/Utils.h \
     include/Scene.h \
     include/Mesh.h \
     include/RenderObject.h \
-    include/Config.h \
     include/AABB.h \
     include/Hair.h \
     include/TransformTool.h \
@@ -46,7 +46,9 @@ HEADERS += include/MainWindow.h \
     include/VoxelGrid.h \
     include/ElasticRod.h \
     include/Types.h \
-    include/cml_config.h
+    include/cml_config.h \
+    include/HairStrand.h \
+    include/Spiral.h
 
 
 FORMS += \
