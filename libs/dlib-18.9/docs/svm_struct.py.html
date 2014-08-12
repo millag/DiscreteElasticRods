@@ -1,0 +1,359 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+  <title></title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <style type="text/css">
+td.linenos { background-color: #f0f0f0; padding-right: 10px; }
+span.lineno { background-color: #f0f0f0; padding: 0 5px 0 5px; }
+pre { line-height: 125%; }
+body .hll { background-color: #ffffcc }
+body  { background: #ffffff; }
+body .c { color: #008000 } /* Comment */
+body .err { border: 1px solid #FF0000 } /* Error */
+body .k { color: #0000ff } /* Keyword */
+body .cm { color: #008000 } /* Comment.Multiline */
+body .cp { color: #0000ff } /* Comment.Preproc */
+body .c1 { color: #008000 } /* Comment.Single */
+body .cs { color: #008000 } /* Comment.Special */
+body .ge { font-style: italic } /* Generic.Emph */
+body .gh { font-weight: bold } /* Generic.Heading */
+body .gp { font-weight: bold } /* Generic.Prompt */
+body .gs { font-weight: bold } /* Generic.Strong */
+body .gu { font-weight: bold } /* Generic.Subheading */
+body .kc { color: #0000ff } /* Keyword.Constant */
+body .kd { color: #0000ff } /* Keyword.Declaration */
+body .kn { color: #0000ff } /* Keyword.Namespace */
+body .kp { color: #0000ff } /* Keyword.Pseudo */
+body .kr { color: #0000ff } /* Keyword.Reserved */
+body .kt { color: #2b91af } /* Keyword.Type */
+body .s { color: #a31515 } /* Literal.String */
+body .nc { color: #2b91af } /* Name.Class */
+body .ow { color: #0000ff } /* Operator.Word */
+body .sb { color: #a31515 } /* Literal.String.Backtick */
+body .sc { color: #a31515 } /* Literal.String.Char */
+body .sd { color: #a31515 } /* Literal.String.Doc */
+body .s2 { color: #a31515 } /* Literal.String.Double */
+body .se { color: #a31515 } /* Literal.String.Escape */
+body .sh { color: #a31515 } /* Literal.String.Heredoc */
+body .si { color: #a31515 } /* Literal.String.Interpol */
+body .sx { color: #a31515 } /* Literal.String.Other */
+body .sr { color: #a31515 } /* Literal.String.Regex */
+body .s1 { color: #a31515 } /* Literal.String.Single */
+body .ss { color: #a31515 } /* Literal.String.Symbol */
+
+  </style>
+</head>
+<body>
+<h2></h2>
+
+<div class="highlight"><pre><span class="c">#!/usr/bin/python</span>
+<span class="c"># The contents of this file are in the public domain. See LICENSE_FOR_EXAMPLE_PROGRAMS.txt</span>
+<span class="c">#</span>
+<span class="c"># This is an example illustrating the use of the structural SVM solver from the dlib C++</span>
+<span class="c"># Library.  Therefore, this example teaches you the central ideas needed to setup a</span>
+<span class="c"># structural SVM model for your machine learning problems.  To illustrate the process, we</span>
+<span class="c"># use dlib&#39;s structural SVM solver to learn the parameters of a simple multi-class</span>
+<span class="c"># classifier.  We first discuss the multi-class classifier model and then walk through</span>
+<span class="c"># using the structural SVM tools to find the parameters of this classification model.   </span>
+<span class="c">#</span>
+<span class="c"># As an aside, dlib&#39;s C++ interface to the structural SVM solver is threaded.  So on a</span>
+<span class="c"># multi-core computer it is significantly faster than using the python interface.  So</span>
+<span class="c"># consider using the C++ interface instead if you find that running it in python is slow.</span>
+<span class="c">#</span>
+<span class="c"># COMPILING THE DLIB PYTHON INTERFACE</span>
+<span class="c">#   Dlib comes with a compiled python interface for python 2.7 on MS Windows.  If</span>
+<span class="c">#   you are using another python version or operating system then you need to</span>
+<span class="c">#   compile the dlib python interface before you can use this file.  To do this,</span>
+<span class="c">#   run compile_dlib_python_module.bat.  This should work on any operating system</span>
+<span class="c">#   so long as you have CMake and boost-python installed.  On Ubuntu, this can be</span>
+<span class="c">#   done easily by running the command:  sudo apt-get install libboost-python-dev cmake</span>
+
+
+<span class="kn">import</span> <span class="nn">dlib</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c"># In this example, we have three types of samples: class 0, 1, or 2.  That is, each of</span>
+    <span class="c"># our sample vectors falls into one of three classes.  To keep this example very</span>
+    <span class="c"># simple, each sample vector is zero everywhere except at one place.  The non-zero</span>
+    <span class="c"># dimension of each vector determines the class of the vector.  So for example, the</span>
+    <span class="c"># first element of samples has a class of 1 because samples[0][1] is the only non-zero</span>
+    <span class="c"># element of samples[0].   </span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">]];</span>
+    <span class="c"># Since we want to use a machine learning method to learn a 3-class classifier we need</span>
+    <span class="c"># to record the labels of our samples.  Here samples[i] has a class label of labels[i].</span>
+    <span class="n">labels</span> <span class="o">=</span>  <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="c"># Now that we have some training data we can tell the structural SVM to learn the</span>
+    <span class="c"># parameters of our 3-class classifier model.  The details of this will be explained</span>
+    <span class="c"># later.  For now, just note that it finds the weights (i.e. a vector of real valued</span>
+    <span class="c"># parameters) such that predict_label(weights, sample) always returns the correct label</span>
+    <span class="c"># for a sample vector. </span>
+    <span class="n">problem</span> <span class="o">=</span> <span class="n">three_class_classifier_problem</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">dlib</span><span class="o">.</span><span class="n">solve_structural_svm_problem</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+
+    <span class="c"># Print the weights and then evaluate predict_label() on each of our training samples.</span>
+    <span class="c"># Note that the correct label is predicted for each sample.</span>
+    <span class="k">print</span> <span class="n">weights</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)):</span>
+        <span class="k">print</span> <span class="s">&quot;predicted label for sample[{0}]: {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">predict_label</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">samples</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+<span class="k">def</span> <span class="nf">predict_label</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">sample</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Given the 9-dimensional weight vector which defines a 3 class classifier, predict the</span>
+<span class="sd">    class of the given 3-dimensional sample vector.   Therefore, the output of this</span>
+<span class="sd">    function is either 0, 1, or 2 (i.e. one of the three possible labels).&quot;&quot;&quot;</span>
+
+    <span class="c"># Our 3-class classifier model can be thought of as containing 3 separate linear</span>
+    <span class="c"># classifiers.  So to predict the class of a sample vector we evaluate each of these</span>
+    <span class="c"># three classifiers and then whatever classifier has the largest output &quot;wins&quot; and</span>
+    <span class="c"># predicts the label of the sample.  This is the popular one-vs-all multi-class</span>
+    <span class="c"># classifier model.  </span>
+    <span class="c">#</span>
+    <span class="c"># Keeping this in mind, the code below simply pulls the three separate weight vectors</span>
+    <span class="c"># out of weights and then evaluates each against sample.  The individual classifier</span>
+    <span class="c"># scores are stored in scores and the highest scoring index is returned as the label.</span>
+    <span class="n">w0</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">w1</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>
+    <span class="n">w2</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="mi">6</span><span class="p">:</span><span class="mi">9</span><span class="p">]</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="n">sample</span><span class="p">),</span> <span class="n">dot</span><span class="p">(</span><span class="n">w1</span><span class="p">,</span><span class="n">sample</span><span class="p">),</span> <span class="n">dot</span><span class="p">(</span><span class="n">w2</span><span class="p">,</span> <span class="n">sample</span><span class="p">)]</span>
+    <span class="n">max_scoring_label</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">max_scoring_label</span>
+
+<span class="k">def</span> <span class="nf">dot</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="s">&quot;Compute the dot product between the two vectors a and b.&quot;</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="n">j</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">))</span>
+
+<span class="c">###########################################################################################</span>
+
+<span class="k">class</span> <span class="nc">three_class_classifier_problem</span><span class="p">:</span>
+    <span class="c"># Now we arrive at the meat of this example program.  To use the</span>
+    <span class="c"># dlib.solve_structural_svm_problem() routine you need to define an object which tells</span>
+    <span class="c"># the structural SVM solver what to do for your problem.  In this example, this is done</span>
+    <span class="c"># by defining the three_class_classifier_problem object.  Before we get into the</span>
+    <span class="c"># details, we first discuss some background information on structural SVMs.  </span>
+    <span class="c"># </span>
+    <span class="c"># A structural SVM is a supervised machine learning method for learning to predict</span>
+    <span class="c"># complex outputs.  This is contrasted with a binary classifier which makes only simple</span>
+    <span class="c"># yes/no predictions.  A structural SVM, on the other hand, can learn to predict</span>
+    <span class="c"># complex outputs such as entire parse trees or DNA sequence alignments.  To do this,</span>
+    <span class="c"># it learns a function F(x,y) which measures how well a particular data sample x</span>
+    <span class="c"># matches a label y, where a label is potentially a complex thing like a parse tree.</span>
+    <span class="c"># However, to keep this example program simple we use only a 3 category label output. </span>
+    <span class="c">#</span>
+    <span class="c"># At test time, the best label for a new x is given by the y which maximizes F(x,y).</span>
+    <span class="c"># To put this into the context of the current example, F(x,y) computes the score for a</span>
+    <span class="c"># given sample and class label.  The predicted class label is therefore whatever value</span>
+    <span class="c"># of y which makes F(x,y) the biggest.  This is exactly what predict_label() does.</span>
+    <span class="c"># That is, it computes F(x,0), F(x,1), and F(x,2) and then reports which label has the</span>
+    <span class="c"># biggest value.</span>
+    <span class="c">#</span>
+    <span class="c"># At a high level, a structural SVM can be thought of as searching the parameter space</span>
+    <span class="c"># of F(x,y) for the set of parameters that make the following inequality true as often</span>
+    <span class="c"># as possible:</span>
+    <span class="c">#     F(x_i,y_i) &gt; max{over all incorrect labels of x_i} F(x_i, y_incorrect)</span>
+    <span class="c"># That is, it seeks to find the parameter vector such that F(x,y) always gives the</span>
+    <span class="c"># highest score to the correct output.  To define the structural SVM optimization</span>
+    <span class="c"># problem precisely, we first introduce some notation:</span>
+    <span class="c">#     - let PSI(x,y)    == the joint feature vector for input x and a label y.</span>
+    <span class="c">#     - let F(x,y|w)    == dot(w,PSI(x,y)).  </span>
+    <span class="c">#       (we use the | notation to emphasize that F() has the parameter vector of</span>
+    <span class="c">#       weights called w)</span>
+    <span class="c">#     - let LOSS(idx,y) == the loss incurred for predicting that the idx-th training </span>
+    <span class="c">#       sample has a label of y.  Note that LOSS() should always be &gt;= 0 and should</span>
+    <span class="c">#       become exactly 0 when y is the correct label for the idx-th sample.  Moreover,</span>
+    <span class="c">#       it should notionally indicate how bad it is to predict y for the idx&#39;th sample.</span>
+    <span class="c">#     - let x_i == the i-th training sample.</span>
+    <span class="c">#     - let y_i == the correct label for the i-th training sample.</span>
+    <span class="c">#     - The number of data samples is N.</span>
+    <span class="c">#</span>
+    <span class="c"># Then the optimization problem solved by a structural SVM using</span>
+    <span class="c"># dlib.solve_structural_svm_problem() is the following:</span>
+    <span class="c">#     Minimize: h(w) == 0.5*dot(w,w) + C*R(w)</span>
+    <span class="c">#</span>
+    <span class="c">#     Where R(w) == sum from i=1 to N: 1/N * sample_risk(i,w)</span>
+    <span class="c">#     and sample_risk(i,w) == max over all Y: LOSS(i,Y) + F(x_i,Y|w) - F(x_i,y_i|w)</span>
+    <span class="c">#     and C &gt; 0</span>
+    <span class="c">#</span>
+    <span class="c"># You can think of the sample_risk(i,w) as measuring the degree of error you would make</span>
+    <span class="c"># when predicting the label of the i-th sample using parameters w.  That is, it is zero</span>
+    <span class="c"># only when the correct label would be predicted and grows larger the more &quot;wrong&quot; the</span>
+    <span class="c"># predicted output becomes.  Therefore, the objective function is minimizing a balance</span>
+    <span class="c"># between making the weights small (typically this reduces overfitting) and fitting the</span>
+    <span class="c"># training data.  The degree to which you try to fit the data is controlled by the C</span>
+    <span class="c"># parameter.</span>
+    <span class="c">#</span>
+    <span class="c"># For a more detailed introduction to structured support vector machines you should</span>
+    <span class="c"># consult the following paper: </span>
+    <span class="c">#     Predicting Structured Objects with Support Vector Machines by </span>
+    <span class="c">#     Thorsten Joachims, Thomas Hofmann, Yisong Yue, and Chun-nam Yu</span>
+    <span class="c">#</span>
+
+    <span class="c"># Finally, we come back to the code.  To use dlib.solve_structural_svm_problem() you</span>
+    <span class="c"># need to provide the things discussed above.  This is the value of C, the number of</span>
+    <span class="c"># training samples, the dimensionality of PSI(), as well as methods for calculating the</span>
+    <span class="c"># loss values and PSI() vectors.  You will also need to write code that can compute:</span>
+    <span class="c"># max over all Y: LOSS(i,Y) + F(x_i,Y|w).  To summarize, the</span>
+    <span class="c"># three_class_classifier_problem class is required to have the following fields:</span>
+    <span class="c">#   - C</span>
+    <span class="c">#   - num_samples</span>
+    <span class="c">#   - num_dimensions</span>
+    <span class="c">#   - get_truth_joint_feature_vector()</span>
+    <span class="c">#   - separation_oracle()</span>
+
+    <span class="n">C</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c"># There are also a number of optional arguments:</span>
+    <span class="c"># epsilon is the stopping tolerance.  The optimizer will run until R(w) is within</span>
+    <span class="c"># epsilon of its optimal value. If you don&#39;t set this then it defaults to 0.001.</span>
+    <span class="c">#epsilon = 1e-13                     </span>
+
+    <span class="c"># Uncomment this and the optimizer will print its progress to standard out.  You will</span>
+    <span class="c"># be able to see things like the current risk gap.  The optimizer continues until the</span>
+    <span class="c"># risk gap is below epsilon.</span>
+    <span class="c">#be_verbose = True</span>
+
+    <span class="c"># If you want to require that the learned weights are all non-negative then set this</span>
+    <span class="c"># field to True.</span>
+    <span class="c">#learns_nonnegative_weights = True</span>
+
+    <span class="c"># The optimizer uses an internal cache to avoid unnecessary calls to your</span>
+    <span class="c"># separation_oracle() routine.  This parameter controls the size of that cache.  Bigger</span>
+    <span class="c"># values use more RAM and might make the optimizer run faster.  You can also disable it</span>
+    <span class="c"># by setting it to 0 which is good to do when your separation_oracle is very fast.  If</span>
+    <span class="c"># If you don&#39;t call this function it defaults to a value of 5.</span>
+    <span class="c">#max_cache_size = 20</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+        <span class="c"># dlib.solve_structural_svm_problem() expects the class to have num_samples and</span>
+        <span class="c"># num_dimensions fields.  These fields should contain the number of training</span>
+        <span class="c"># samples and the dimensionality of the PSI feature vector respectively.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="mi">3</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
+
+
+    <span class="k">def</span> <span class="nf">make_psi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute PSI(x,label).&quot;&quot;&quot;</span>
+        <span class="c"># All we are doing here is taking x, which is a 3 dimensional sample vector in this</span>
+        <span class="c"># example program, and putting it into one of 3 places in a 9 dimensional PSI</span>
+        <span class="c"># vector, which we then return.  So this function returns PSI(x,label).  To see why</span>
+        <span class="c"># we setup PSI like this, recall how predict_label() works.  It takes in a 9</span>
+        <span class="c"># dimensional weight vector and breaks the vector into 3 pieces.  Each piece then</span>
+        <span class="c"># defines a different classifier and we use them in a one-vs-all manner to predict</span>
+        <span class="c"># the label.  So now that we are in the structural SVM code we have to define the</span>
+        <span class="c"># PSI vector to correspond to this usage.  That is, we need to setup PSI so that</span>
+        <span class="c"># argmax_y dot(weights,PSI(x,y)) == predict_label(weights,x).  This is how we tell</span>
+        <span class="c"># the structural SVM solver what kind of problem we are trying to solve.</span>
+        <span class="c">#</span>
+        <span class="c"># It&#39;s worth emphasizing that the single biggest step in using a structural SVM is</span>
+        <span class="c"># deciding how you want to represent PSI(x,label).  It is always a vector, but</span>
+        <span class="c"># deciding what to put into it to solve your problem is often not a trivial task.</span>
+        <span class="c"># Part of the difficulty is that you need an efficient method for finding the label</span>
+        <span class="c"># that makes dot(w,PSI(x,label)) the biggest.  Sometimes this is easy, but often</span>
+        <span class="c"># finding the max scoring label turns into a difficult combinatorial optimization</span>
+        <span class="c"># problem.  So you need to pick a PSI that doesn&#39;t make the label maximization step</span>
+        <span class="c"># intractable but also still well models your problem.  </span>
+
+        <span class="c"># Create a dense vector object (note that you can also use unsorted sparse vectors</span>
+        <span class="c"># (i.e.  dlib.sparse_vector objects) to represent your PSI vector.  This is useful</span>
+        <span class="c"># if you have very high dimensional PSI vectors that are mostly zeros.  In the</span>
+        <span class="c"># context of this example, you would simply return a dlib.sparse_vector at the end</span>
+        <span class="c"># of make_psi() and the rest of the example would still work properly. ).</span>
+        <span class="n">psi</span> <span class="o">=</span> <span class="n">dlib</span><span class="o">.</span><span class="n">vector</span><span class="p">()</span>
+        <span class="c"># Set it to have 9 dimensions.  Note that the elements of the vector are 0</span>
+        <span class="c"># initialized.</span>
+        <span class="n">psi</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span><span class="p">)</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">label</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">dims</span><span class="p">):</span>
+                <span class="n">psi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">label</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dims</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">dims</span><span class="p">):</span>
+                <span class="n">psi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="n">dims</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c"># the label must be 2</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dims</span><span class="p">,</span><span class="mi">3</span><span class="o">*</span><span class="n">dims</span><span class="p">):</span>
+                <span class="n">psi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">dims</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">psi</span>
+
+
+    <span class="c"># Now we get to the two member functions that are directly called by</span>
+    <span class="c"># dlib.solve_structural_svm_problem().  </span>
+    <span class="c">#</span>
+    <span class="c"># In get_truth_joint_feature_vector(), all you have to do is return the PSI() vector</span>
+    <span class="c"># for the idx-th training sample when it has its true label.  So here it returns</span>
+    <span class="c"># PSI(self.samples[idx], self.labels[idx]).</span>
+    <span class="k">def</span> <span class="nf">get_truth_joint_feature_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_psi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+
+
+    <span class="c"># separation_oracle() is more interesting.  dlib.solve_structural_svm_problem() will</span>
+    <span class="c"># call separation_oracle() many times during the optimization.  Each time it will give</span>
+    <span class="c"># it the current value of the parameter weights and the separation_oracle() is supposed</span>
+    <span class="c"># to find the label that most violates the structural SVM objective function for the</span>
+    <span class="c"># idx-th sample.  Then the separation oracle reports the corresponding PSI vector and</span>
+    <span class="c"># loss value.  To state this more precisely, the separation_oracle() member function</span>
+    <span class="c"># has the following contract:</span>
+    <span class="c">#   requires</span>
+    <span class="c">#       - 0 &lt;= idx &lt; self.num_samples </span>
+    <span class="c">#       - len(current_solution) == self.num_dimensions </span>
+    <span class="c">#   ensures</span>
+    <span class="c">#       - runs the separation oracle on the idx-th sample.  We define this as follows: </span>
+    <span class="c">#           - let X           == the idx-th training sample.</span>
+    <span class="c">#           - let PSI(X,y)    == the joint feature vector for input X and an arbitrary label y.</span>
+    <span class="c">#           - let F(X,y)      == dot(current_solution,PSI(X,y)).  </span>
+    <span class="c">#           - let LOSS(idx,y) == the loss incurred for predicting that the idx-th sample</span>
+    <span class="c">#             has a label of y.  Note that LOSS() should always be &gt;= 0 and should</span>
+    <span class="c">#             become exactly 0 when y is the correct label for the idx-th sample.</span>
+    <span class="c">#  </span>
+    <span class="c">#               Then the separation oracle finds a Y such that: </span>
+    <span class="c">#                   Y = argmax over all y: LOSS(idx,y) + F(X,y) </span>
+    <span class="c">#                   (i.e. It finds the label which maximizes the above expression.)</span>
+    <span class="c">#  </span>
+    <span class="c">#               Finally, separation_oracle() returns LOSS(idx,Y),PSI(X,Y) </span>
+    <span class="k">def</span> <span class="nf">separation_oracle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">current_solution</span><span class="p">):</span>
+        <span class="n">samp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">samp</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c"># compute scores for each of the three classifiers</span>
+        <span class="n">scores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">current_solution</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">dims</span><span class="p">],</span> <span class="n">samp</span><span class="p">)</span>
+        <span class="n">scores</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">current_solution</span><span class="p">[</span><span class="n">dims</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">dims</span><span class="p">],</span> <span class="n">samp</span><span class="p">)</span>
+        <span class="n">scores</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">current_solution</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">dims</span><span class="p">:</span><span class="mi">3</span><span class="o">*</span><span class="n">dims</span><span class="p">],</span> <span class="n">samp</span><span class="p">)</span>
+
+        <span class="c"># Add in the loss-augmentation.  Recall that we maximize LOSS(idx,y) + F(X,y) in</span>
+        <span class="c"># the separate oracle, not just F(X,y) as we normally would in predict_label().</span>
+        <span class="c"># Therefore, we must add in this extra amount to account for the loss-augmentation.</span>
+        <span class="c"># For our simple multi-class classifier, we incur a loss of 1 if we don&#39;t predict</span>
+        <span class="c"># the correct label and a loss of 0 if we get the right label.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span> 
+            <span class="n">scores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">):</span> 
+            <span class="n">scores</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">):</span> 
+            <span class="n">scores</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># Now figure out which classifier has the largest loss-augmented score.</span>
+        <span class="n">max_scoring_label</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">))</span>
+        <span class="c"># And finally record the loss that was associated with that predicted label.</span>
+        <span class="c"># Again, the loss is 1 if the label is incorrect and 0 otherwise.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">max_scoring_label</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]):</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c"># Finally, return the loss and PSI vector corresponding to the label we just found.</span>
+        <span class="n">psi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_psi</span><span class="p">(</span><span class="n">samp</span><span class="p">,</span> <span class="n">max_scoring_label</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span><span class="n">psi</span>
+
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</body>
+</html>

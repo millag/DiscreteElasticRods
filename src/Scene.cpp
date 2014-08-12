@@ -1,5 +1,5 @@
 #include "Scene.h"
-#include "Config.h"
+#include "ngl/Util.h"
 #include "Utils.h"
 #include "HairyObject.h"
 
@@ -9,16 +9,20 @@ RenderObject* createBall(const Mesh* mesh);
 
 //===================================== Scene ===========================================
 
-Scene::Scene() { }
+Scene::Scene(): m_hair(NULL), m_spiral(NULL) { }
 
 Scene::~Scene()
 {
 
-//    delete hair strands
-    typedef std::vector<ElasticRod*>::const_iterator SIter;
-    for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
+//    delete hair
+    if (m_hair != NULL)
     {
-        delete (*it);
+        delete m_hair;
+    }
+
+    if (m_spiral != NULL)
+    {
+        delete m_spiral;
     }
 
 //    delete hair objects
@@ -50,7 +54,7 @@ void Scene::initialize()
     m_hairs.reserve(10);
 
 //    initialize scene bounding volume
-    ngl::Real size = config::sceneBoundingBoxSize / 2;
+    ngl::Real size = 30;
     m_boundingVolume.reshape(ngl::Vec4(-size, -size, -size), ngl::Vec4(size, size, size));
 
     unsigned meshId = m_meshes.size();
@@ -58,52 +62,22 @@ void Scene::initialize()
     Mesh* mesh = createSphere(meshId);
     m_meshes.push_back(mesh);
 
+    RenderObject* ball = createBall(mesh);
+    m_renderObjects.push_back(ball);
+
+//    m_hair = new HairStrand();
+//    m_hair->initialize(ball);
+
+    m_spiral = new Spiral();
+    m_spiral->init(ball);
+
 //    HairyObject* hairyBall = createHairyBall(mesh);
 //    m_renderObjects.push_back(hairyBall);
 
-//    RenderObject* ball = createBall(mesh);
-//    m_renderObjects.push_back(ball);
 
 //    Hair* hair = new Hair(this);
 //    m_hairs.push_back(hair);
 //    hairyBall->attachHair(hair, 1);
-
-//    TODO: create HairStrand object and move initialization there
-//    init vertices, velocities, mass, isFixed
-    unsigned nVertices = 9;
-    mg::Vec3D start(-1.5, 3, 0);
-    mg::Vec3D end(1.5, 3, 0);
-
-    std::vector<mg::Vec3D> restpos(nVertices);
-    std::vector<mg::Vec3D> pos(nVertices);
-    std::vector<mg::Vec3D> vel(nVertices);
-    std::vector<mg::Real> mass(nVertices);
-    std::vector<mg::Real> twistAngle(nVertices - 1, 0.0);
-    std::vector<bool> isFixed(nVertices, 0);
-
-    mg::Real t = 0.0;
-    for (unsigned i = 0; i < pos.size(); ++i)
-    {
-        t = (mg::Real)(i) / (nVertices - 1);
-        pos[i] = (1 - t) * start + t * end;
-
-        vel[i].zero();
-        mass[i] = 1;
-    }
-
-    mg::Real step = mg::length( end - start ) / (nVertices - 1);
-    restpos[0] = start;
-    for (unsigned i = 1; i < restpos.size(); ++i)
-    {
-        restpos[i] = restpos[i - 1] + step * mg::normalize(mg::Vec3D(1, std::pow(-1, i % 2) * 1, 0));
-    }
-    isFixed[0] = 1;
-//    isFixed[nVertices - 1] = 1;
-
-    ElasticRod* strand = new ElasticRod();
-    strand->init(restpos, mg::Vec3D(0,1,0), pos, vel, mass, twistAngle, isFixed);
-    m_strands.push_back(strand);
-
 }
 
 
@@ -115,11 +89,9 @@ void Scene::update(mg::Real dt)
 //        (*it)->update(dt);
 //    }
 
-    typedef std::vector<ElasticRod*>::const_iterator SIter;
-    for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
-    {
-        (*it)->update(dt);
-    }
+//    m_hair->update(dt);
+
+    m_spiral->update(dt);
 }
 
 void Scene::findObjectsWithinDistance(const ngl::Vec4& pos, ngl::Real dist, std::vector<RenderObject*>& o_objects)
@@ -217,8 +189,8 @@ HairyObject *createHairyBall(const Mesh* mesh)
 
 RenderObject *createBall(const Mesh* mesh)
 {
-    ngl::Real s = 1.5;
-    ngl::Vec4 tr = ngl::Vec4(0, -2, 0);
+    ngl::Real s = 0.1;
+    ngl::Vec4 tr = ngl::Vec4(-1.5, 2, 0);
     ngl::Mat4 t;
     t.scale(s, s, s);
     t.translate(tr.m_x, tr.m_y, tr.m_z);

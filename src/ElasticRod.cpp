@@ -1,47 +1,96 @@
 #include "ElasticRod.h"
 
 #include <cmath>
-
+#include <dlib/optimization.h>
 #include "Utils.h"
 
 
-ElasticRod::ElasticRod()
-{
-    m_bendStiffnes = 0.9;
-    m_twistStiffness = 1.0;
-    m_nIterations = 4;
-    m_maxElasticForceThreshold = 100;
+//====================================== MinimizationPImpl definition - minimize Energy with respect to twist angle theta =======================================
 
+struct ElasticRod::MinimizationPImpl
+{
+public:
+    MinimizationPImpl(const ElasticRod* rod, MINIMIZATION_STRATEGY strategy, double tolerance = 1e-6, unsigned maxIter = 1000);
+    ~MinimizationPImpl();
+
+    double minimize(ColumnVector& io_theta);
+
+public:
+
+    struct evaluate
+    {
+        double operator() (const ColumnVector& theta) const;
+        const ElasticRod* m_rod;
+    };
+
+    struct evaluateGradient
+    {
+        ColumnVector operator() (const ColumnVector& theta) const;
+        const ElasticRod* m_rod;
+    };
+
+    struct evaluateHessian
+    {
+        Hessian operator() (const ColumnVector& theta) const;
+        const ElasticRod* m_rod;
+    };
+
+    evaluate m_evaluate;
+    evaluateGradient m_evaluateGradient;
+    evaluateHessian m_evaluateHessian;
+
+///     elastic force computations relies on potential enery minimization of the rod
+///     with respect to twist angle of the material frame
+///     energy minimization is implemented using dlib numeric library
+///     the following parameters control tolerance and max iterartion of the minimization strategy
+///     consult dlib documentation for reference
+    MINIMIZATION_STRATEGY m_strategy;
+    double m_tolerance;
+    unsigned m_maxIter;
+};
+
+
+//====================================== ElasticRod implementation =======================================
+
+ElasticRod::ElasticRod(mg::Real bendStiffness,
+                       mg::Real twistStiffness,
+                       unsigned nIteratons,
+                       mg::Real maxElasticForce,
+                       MINIMIZATION_STRATEGY strategy):
+    m_beta(twistStiffness), m_nIter(nIteratons), m_maxElasticForce(maxElasticForce)
+{
     m_B.identity();
-    m_B *= m_bendStiffnes;
+    m_B *= bendStiffness;
+
+    m_minimization = new MinimizationPImpl(this, strategy);
 }
 
 ElasticRod::~ElasticRod()
-{ }
+{
+    delete m_minimization;
+}
 
 
 void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
-          const mg::Vec3D u0,
-          const std::vector<mg::Vec3D>& pos,
-          const std::vector<mg::Vec3D>& vel,
-          const std::vector<mg::Real>& mass,
-          const std::vector<mg::Real>& twistAngle,
-          const std::vector<bool>& isFixed)
+                      const mg::Vec3D& u0,
+                      const std::vector<mg::Vec3D>& pos,
+                      const std::vector<mg::Vec3D>& vel,
+                      const std::vector<mg::Real>& mass,
+                      const std::vector<double> &theta,
+                      const std::vector<bool>& isFixed)
 {
     assert( pos.size() > 2 );
     assert( pos.size() == restpos.size() );
     assert( pos.size() == vel.size() );
     assert( pos.size() == mass.size() );
     assert( pos.size() == isFixed.size() );
-    assert( twistAngle.size() == (pos.size() - 1) );
-
-    m_totalTwist = 8.;
+    assert( theta.size() == (pos.size() - 1) );
 
     m_u0 = u0;
     m_ppos = pos;
     m_pvel = vel;
     m_pmass = mass;
-    m_twistAngle = twistAngle;
+    m_theta = dlib::mat(theta);
     m_pIsFixed = isFixed;
 
     m_edges.resize(restpos.size() - 1);
@@ -61,16 +110,10 @@ void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
 //    compute kb and material frame (Bishop frame) for rest shape
     computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
 //    precompute material curvature for rest shape
-    computeMaterialCurvature(m_kb, m_m1, m_m2, m_restWprev,  m_restWnext);
-
-//    m_u = m_m1;
+    computeMaterialCurvature(m_kb, m_m1, m_m2, m_restWprev, m_restWnext);
 
 //    initialize current state
     updateCurrentState();
-
-//    computeEdges(m_ppos, m_edges);
-//    computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
-//    computeMaterialFrame(m_twistAngle, m_m1, m_m2);
 }
 
 
@@ -126,33 +169,45 @@ void ElasticRod::computeKB(const std::vector<mg::Vec3D>& edges,
 {
     o_kb[0].zero();
 
-    double magnitude;
-    double sinPhi, cosPhi;
     for (unsigned i = 1; i < edges.size(); ++i)
     {
-//     NOTE: as metioned in the paper the following formula produces |kb| = 2 * tan(phi / 2),
-//     where phi is the angle of rotation defined by the 2 edges
+///     NOTE: as metioned in the paper the following formula produces ||kb|| = 2 * tan(phi / 2),
+///     where phi is the angle of rotation defined by the 2 edges
+///     This holds only if ||edges[i]|| = ||rest_edges[i]||,
+///     otherwise errors occur in consequent frame rotations and force calculations
+///     in particular this assumption can be violated if the constraint enforcement DOES NOT GUARANTEE inextensibility,
+///     which is the case with PBD used below
+///     note that tan maps [-pi/2, pi/2] to [-inf, inf], so interestingly for arbitrary real number an arbitrary bounded angle can be extracted
         o_kb[i] = 2 * mg::cross( edges[i - 1], edges[i] ) /
                 (m_restEdgeL[i - 1] * m_restEdgeL[i] + mg::dot( edges[i - 1], edges[i]) );
-
-//      following for testing purpose only - need to assert that |kb| = 2 * tan(phi / 2)
-        magnitude = mg::length_squared(o_kb[i]);
-        extractSinAndCos(magnitude, sinPhi, cosPhi);
     }
 }
+
+
+//void ElasticRod::computeKB(const std::vector<mg::Vec3D>& edges,
+//                           std::vector<mg::Vec3D>& o_kb) const
+//{
+//    o_kb[0].zero();
+
+//    mg::Real sinQ, cosQ;
+//    for (unsigned i = 1; i < edges.size(); ++i)
+//    {
+//        cosQ = mg::dot( mg::normalize(edges[i - 1]), mg::normalize(edges[i]) );
+//        cosQ = (cosQ + 1) * 0.5;
+//        sinQ = 1 - cosQ;
+//        cosQ = sqrt(cosQ);
+//        sinQ = sqrt(sinQ);
+//        assert( fabs(cosQ) <= 1 && fabs(sinQ) <= 1 && fabs(cosQ * cosQ + sinQ * sinQ - 1) <= mg::ERR );
+
+//        o_kb[i] = mg::normalize(mg::cross( edges[i - 1], edges[i] )) * 2 * sinQ / cosQ;
+//    }
+//}
 
 void ElasticRod::extractSinAndCos(const double &magnitude,
                                   double &o_sinPhi, double &o_cosPhi) const
 {
-
     o_cosPhi = mg::sqrt_safe(4.0 / (4.0 + magnitude));
     o_sinPhi = mg::sqrt_safe(magnitude / (4.0 + magnitude));
-
-//    actually tan maps [-pi/2, pi/2] to [-inf, inf] so asserts don't check correcly
-//    interestingly for arbitrary real number a bounded angle can be extracted
-    assert( std::isfinite(magnitude) && magnitude >= 0.0  && std::isfinite(o_sinPhi) && std::isfinite(o_cosPhi) );
-    assert( fabs((o_sinPhi * o_sinPhi + o_cosPhi * o_cosPhi) - 1.0) < mg::ERR );
-    assert( fabs(magnitude - 4.0 * o_sinPhi * o_sinPhi / (o_cosPhi * o_cosPhi)) < mg::ERR );
 }
 
 void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
@@ -173,7 +228,7 @@ void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
 
     double magnitude;
     double sinPhi, cosPhi;
-//    compute Bishop frame for current configuration given u0 and edges
+//    compute Bishop frame for current configuration by parallel transporting u0
     for (unsigned i = 1; i < edges.size(); ++i)
     {
         magnitude = mg::length_squared(o_kb[i]);
@@ -184,7 +239,7 @@ void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
             continue;
         }
 
-//        here sinPhi and cosPhi are derived from the length of kb |kb| = 2 * tan( phi/2 )
+//        here sinPhi and cosPhi are derived from the length of kb ||kb|| = 2 * tan( phi/2 )
         extractSinAndCos(magnitude, sinPhi, cosPhi);
 
 //        rotate frame u axis around kb
@@ -207,7 +262,7 @@ void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
     }
 }
 
-void ElasticRod::computeMaterialFrame(const std::vector<mg::Real>& twistAngle,
+void ElasticRod::computeMaterialFrame(const ColumnVector &theta,
                                       std::vector<mg::Vec3D>& io_m1,
                                       std::vector<mg::Vec3D>& io_m2) const
 {
@@ -215,7 +270,7 @@ void ElasticRod::computeMaterialFrame(const std::vector<mg::Real>& twistAngle,
     mg::Vec3D m1, m2;
     for (unsigned i = 0; i < io_m1.size(); ++i)
     {
-        cosQ = std::cos(twistAngle[i]);
+        cosQ = std::cos(theta(i));
         sinQ = std::sqrt(1 - cosQ * cosQ);
 
         m1 = cosQ * io_m1[i] + sinQ * io_m2[i];
@@ -226,7 +281,7 @@ void ElasticRod::computeMaterialFrame(const std::vector<mg::Real>& twistAngle,
 
         assert( fabs( mg::length_squared( m1 ) - 1 ) < mg::ERR );
         assert( fabs( mg::length_squared( m2 ) - 1 ) < mg::ERR);
-        assert( fabs( mg::dot( m1, m2 )) < mg::ERR );
+//        assert( fabs( mg::dot( m1, m2 )) < mg::ERR );
 //        std::cout << "ANGLE m1 edge[" << i << "] " << mg::deg( std::acos( mg::dot( m1, mg::normalize(edges[i]) ) ) ) << std::endl;
 //        std::cout << "ANGLE m2 edge[" << i << "] " << mg::deg( std::acos( mg::dot( m2, mg::normalize(edges[i]) ) ) ) << std::endl;
 //        assert( fabs( mg::dot( m1, mg::normalize(edges[i]) )) < mg::THRESHODL );
@@ -237,10 +292,10 @@ void ElasticRod::computeMaterialFrame(const std::vector<mg::Real>& twistAngle,
 /* Use Verlet integration. */
 void ElasticRod::update(mg::Real dt)
 {
-//    integrate centerline
     std::vector<mg::Vec3D> forces(m_ppos.size(), mg::Vec3D(0,0,0));
     computeForces(m_ppos, forces);
 
+//    integrate centerline - semi- implicit Euler
     std::vector<mg::Vec3D> prevPos(m_ppos.size());
     for (unsigned i = 0; i < m_ppos.size(); ++i)
     {
@@ -252,7 +307,7 @@ void ElasticRod::update(mg::Real dt)
 //    solve constraints
     mg::Vec3D e;
     mg::Real l, l1, l2;
-    for (unsigned k = 0; k < m_nIterations; ++k)
+    for (unsigned k = 0; k < m_nIter; ++k)
     {
         for (unsigned i = 0; i < m_ppos.size() - 1; ++i)
         {
@@ -304,7 +359,7 @@ void ElasticRod::computeForces(const std::vector<mg::Vec3D>& vertices, std::vect
     std::vector<mg::Vec3D> externalForces(vertices.size(), mg::Vec3D(0,0,0));
     std::vector<mg::Vec3D> elasticForces(vertices.size(), mg::Vec3D(0,0,0));
 
-    computeExternalForces(vertices, externalForces);
+//    computeExternalForces(vertices, externalForces);
     computeElasticForces(vertices, elasticForces);
 
     for (unsigned i = 0; i < o_forces.size(); ++i)
@@ -335,7 +390,6 @@ void ElasticRod::computeExternalForces(const std::vector<mg::Vec3D>& vertices,
 void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
                                       std::vector<mg::Vec3D>& o_forces)
 {
-//    TODO: need to implement minimization of energy for twistAngles first
     std::vector<mg::Matrix3D> minusGKB(m_edges.size());
     std::vector<mg::Matrix3D> plusGKB(m_edges.size());
     std::vector<mg::Matrix3D> eqGKB(m_edges.size());
@@ -344,16 +398,16 @@ void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
     std::vector<mg::Vec3D> minusGH(m_kb.size());
     std::vector<mg::Vec3D> plusGH(m_kb.size());
     std::vector<mg::Vec3D> eqGH(m_kb.size());
-    computeGradientHolonomy(m_kb, minusGH, plusGH, eqGH);
+    computeGradientHolonomyTerms(m_kb, minusGH, plusGH, eqGH);
 
     mg::Vec2D wkj;
     mg::Matrix2D J;
     mg::matrix_rotation_2D(J, mg::Constants::pi_over_2());
 
-//    compute dE/d(theta_n)
+//    compute dE/dQn
     unsigned n = m_edges.size() - 1;
     mg::Real dEdQn;
-    computedEdQj(n, J * m_B, dEdQn);
+    computedEdQj(n, m_m1, m_m2, m_theta, J * m_B, dEdQn);
 
     mg::Matrix23D GW;
     mg::Vec3D GH;
@@ -364,7 +418,7 @@ void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
             continue;
         }
 
-        for (unsigned k = std::max((int)(i) - 1, 1); k < m_edges.size(); ++k)
+        for (unsigned k = std::max(static_cast<int>(i) - 1, 1); k < m_edges.size(); ++k)
         {
             computeW(m_kb[k], m_m1[k - 1], m_m2[k - 1], wkj);
             computeGradientCurvature(i, k, k - 1,
@@ -387,29 +441,20 @@ void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
             assert( std::isfinite(mg::length_squared(o_forces[i])) );
         }
 
-////        add  dE/d(theta_n) * gradient holonomy(GH)
-        computeGradientHolonomySum(i, n, minusGH, plusGH, eqGH, GH);
-        o_forces[i] += dEdQn * GH;
+//        add  dE/dQn * gradient holonomy(GH)
+//        computeGradientHolonomy(i, n, minusGH, plusGH, eqGH, GH);
+//        o_forces[i] += dEdQn * GH;
 
         assert( std::isfinite(mg::length_squared(o_forces[i])) );
 
-//        need to limit the force otherwise when e[i] ~ -e[i - 1] | kb | goes to infinity => force goes to infinity
-        if (mg::length_squared(o_forces[i]) > m_maxElasticForceThreshold * m_maxElasticForceThreshold)
+//        need to limit the force otherwise when e[i] ~ -e[i - 1] ||kb|| goes to infinity => force goes to infinity
+        if (mg::length_squared(o_forces[i]) > m_maxElasticForce * m_maxElasticForce)
         {
             o_forces[i].normalize();
-            o_forces[i] *= m_maxElasticForceThreshold;
+            o_forces[i] *= m_maxElasticForce;
         }
     }
 }
-
-//    mg::Real dEdQj;
-//        for (unsigned j = std::max((int)(i) - 1, 0); j < m_edges.size(); ++j)
-//        {
-//            computedEdQj(j, J * m_B, dEdQj);
-//            computeGradientHolonomySum(i, n, minusGH, plusGH, eqGH, GH);
-//            o_forces[i] += dEdQj * GH;
-//        }
-
 
 void ElasticRod::computeGradientKB(const std::vector<mg::Vec3D> &kb,
                                    const std::vector<mg::Vec3D> &edges,
@@ -417,8 +462,12 @@ void ElasticRod::computeGradientKB(const std::vector<mg::Vec3D> &kb,
                                    std::vector<mg::Matrix3D>& o_plusGKB,
                                    std::vector<mg::Matrix3D>& o_eqGKB) const
 {
+// Compute skew-symmetric matrix 3x3 [e], such that [e] * x = cross( e, x )
     std::vector<mg::Matrix3D> edgeMatrix(edges.size());
-    computeEdgeMatrices(edges, edgeMatrix);
+    for (unsigned i = 0; i < edges.size(); ++i)
+    {
+        mg::matrix_skew_symmetric(edgeMatrix[i], edges[i]);
+    }
 
     o_minusGKB[0].zero();
     o_plusGKB[0].zero();
@@ -436,16 +485,7 @@ void ElasticRod::computeGradientKB(const std::vector<mg::Vec3D> &kb,
     }
 }
 
-void ElasticRod::computeEdgeMatrices(const std::vector<mg::Vec3D>& edges,
-                                     std::vector<mg::Matrix3D>& o_edgeMatrices) const
-{
-    for (unsigned i = 0; i < edges.size(); ++i)
-    {
-        mg::matrix_skew_symmetric(o_edgeMatrices[i], edges[i]);
-    }
-}
-
-void ElasticRod::computeGradientHolonomy(const std::vector<mg::Vec3D> &kb,
+void ElasticRod::computeGradientHolonomyTerms(const std::vector<mg::Vec3D> &kb,
                                        std::vector<mg::Vec3D>& o_minusGH,
                                        std::vector<mg::Vec3D>& o_plusGH,
                                        std::vector<mg::Vec3D>& o_eqGH) const
@@ -474,7 +514,7 @@ void ElasticRod::computeGradientCurvature(unsigned i, unsigned k, unsigned j,
                                         const std::vector<mg::Vec3D>& plusGH,
                                         const std::vector<mg::Vec3D>& eqGH,
                                         const mg::Vec2D &wkj,
-                                        const mg::Matrix2D J,
+                                        const mg::Matrix2D &J,
                                         mg::Matrix23D &o_GW) const
 {
     assert(k >= (i - 1) && (j == k || j == (k - 1)) && j < m_m1.size());
@@ -492,7 +532,7 @@ void ElasticRod::computeGradientCurvature(unsigned i, unsigned k, unsigned j,
         o_GW(1,1) = -m_m1[j][1];
         o_GW(1,2) = -m_m1[j][2];
 
-        if (k == i - 1)
+        if (k == (i - 1))
         {
             o_GW = o_GW * plusGKB[k];
         } else if (k == i)
@@ -505,11 +545,11 @@ void ElasticRod::computeGradientCurvature(unsigned i, unsigned k, unsigned j,
     }
 //    compute gradient Holonomy(GH) term
     mg::Vec3D GH;
-    computeGradientHolonomySum(i, j, minusGH, plusGH, eqGH, GH);
+    computeGradientHolonomy(i, j, minusGH, plusGH, eqGH, GH);
     o_GW -= J * mg::outer(wkj, GH);
 }
 
-void ElasticRod::computeGradientHolonomySum(unsigned i , unsigned j,
+void ElasticRod::computeGradientHolonomy(unsigned i , unsigned j,
                                  const std::vector<mg::Vec3D>& minusGH,
                                  const std::vector<mg::Vec3D>& plusGH,
                                  const std::vector<mg::Vec3D>& eqGH,
@@ -529,6 +569,121 @@ void ElasticRod::computeGradientHolonomySum(unsigned i , unsigned j,
     {
         o_GH += minusGH[i + 1];
     }
+}
+
+void ElasticRod::computeEnergy(const std::vector<mg::Vec3D>& m1,
+                               const std::vector<mg::Vec3D>& m2,
+                               const ColumnVector &theta,
+                               mg::Real &o_E) const
+{
+    o_E = 0.0;
+    mg::Vec2D wij;
+    mg::Real mi;
+    for (unsigned i = 1; i < m_edges.size(); ++i)
+    {
+//        bend energy term
+        computeW(m_kb[i], m1[i - 1], m2[i - 1], wij);
+        o_E += mg::dot(wij - m_restWprev[i], m_B * (wij - m_restWprev[i])) * 0.5 / m_restRegionL[i];
+
+        computeW(m_kb[i], m1[i], m2[i], wij);
+        o_E += mg::dot(wij - m_restWnext[i], m_B * (wij - m_restWnext[i])) * 0.5 / m_restRegionL[i];
+
+//        twist energy term
+        mi = (theta(i) - theta(i - 1)) ;
+        o_E += m_beta * mi * mi / m_restRegionL[i];
+    }
+}
+
+void ElasticRod::computedEdQj(unsigned j,
+                              const std::vector<mg::Vec3D>& m1,
+                              const std::vector<mg::Vec3D>& m2,
+                              const ColumnVector &theta,
+                              const mg::Matrix2D &JB,
+                              mg::Real &o_dEQj) const
+{
+    assert( j < m_kb.size() );
+
+    o_dEQj = 0.0;
+    mg::Vec2D wij;
+    mg::Real term;
+//    compute first term dWj/dQj + 2 * beta * mj / lj
+    if (j > 0)
+    {
+        computeW(m_kb[j], m1[j], m2[j], wij);
+        term = mg::dot(wij, JB * (wij - m_restWnext[j]));
+        term += 2 * m_beta * (theta(j) - theta(j - 1));
+        term /= m_restRegionL[j];
+        o_dEQj += term;
+    }
+//    compute second term dWj+1/dQj - 2 * beta * mj+1 / lj+1
+    if (j < m_edges.size() - 1)
+    {
+        computeW(m_kb[j + 1], m1[j], m2[j], wij);
+        term = mg::dot(wij, JB * (wij - m_restWprev[j + 1]));
+        term -= 2 * m_beta * (theta(j + 1) - theta(j));
+        term /= m_restRegionL[j + 1];
+        o_dEQj += term;
+    }
+}
+
+void ElasticRod::computeHessian(const std::vector<mg::Vec3D>& m1,
+                                const std::vector<mg::Vec3D>& m2,
+                                Hessian& o_H) const
+{
+    mg::Vec2D wij;
+    double hjj;
+    mg::Matrix2D J;
+    mg::matrix_rotation_2D(J, mg::Constants::pi_over_2());
+    for (unsigned j = 0; j < m_edges.size(); ++j)
+    {
+        if (j > 0)
+        {
+            o_H(j, j - 1) = -2 * m_beta / m_restRegionL[j];
+
+            computeW(m_kb[j], m1[j], m2[j], wij);
+            hjj = 2 * m_beta;
+            hjj += mg::dot( wij, mg::transpose(J) * m_B * J * (wij - m_restWnext[j]) );
+            hjj -= mg::dot( wij, m_B * (wij - m_restWnext[j]) );
+            hjj /= m_restRegionL[j];
+            o_H(j, j) = hjj;
+        }
+        if (j < m_edges.size() - 1)
+        {
+            o_H(j, j + 1) = -2 * m_beta / m_restRegionL[j + 1];
+
+            computeW(m_kb[j + 1], m1[j], m2[j], wij);
+            hjj = 2 * m_beta;
+            hjj += mg::dot( wij, mg::transpose(J) * m_B * J * (wij - m_restWprev[j + 1]) );
+            hjj -= mg::dot( wij, m_B * (wij - m_restWprev[j + 1]) );
+            hjj /= m_restRegionL[j + 1];
+            o_H(j, j) += hjj;
+        }
+    }
+}
+
+void ElasticRod::updateCurrentState()
+{
+//    parallel transport first frame in time
+    mg::Vec3D e0 = m_edges[0];
+    computeEdges(m_ppos, m_edges);
+    mg::Vec3D e1 = m_edges[0];
+    parallelTransportFrame(e0, e1, m_u0);
+
+//    std::cout << "ANGLE u0 edge[0] " << mg::deg( std::acos( mg::dot(m_u0, t1) ) ) << std::endl;
+
+    computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
+
+    double minE = 0;
+    if (m_minimization->m_strategy != NONE)
+    {
+        minE = m_minimization->minimize(m_theta);
+    }
+
+    computeMaterialFrame(m_theta, m_m1, m_m2);
+    std::cout<< "Theta:" << m_theta << std::endl;
+//    mg::Real E;
+//    computeEnergy(m_m1, m_m2, m_theta, E);
+//    std::cout<< "Total Energy:" << E << " MIN Energy: " << minE << std::endl;
 }
 
 void ElasticRod::parallelTransportFrame(const mg::Vec3D& e0, const mg::Vec3D& e1,
@@ -555,50 +710,163 @@ void ElasticRod::parallelTransportFrame(const mg::Vec3D& e0, const mg::Vec3D& e1
 
     io_u.set(p[1], p[2], p[3]);
     io_u.normalize();
-    assert(fabs(mg::length_squared(io_u) - 1) < mg::ERR);
 }
 
-void ElasticRod::updateCurrentState()
+
+
+//====================================== MinimizationPImpl implementation =======================================
+
+ElasticRod::MinimizationPImpl::MinimizationPImpl(const ElasticRod *rod, MINIMIZATION_STRATEGY strategy, double tolerance, unsigned maxIter):
+    m_strategy(strategy), m_tolerance(tolerance), m_maxIter(maxIter)
 {
-
-//    parallel transport first frame in time
-    mg::Vec3D e0 = m_edges[0];
-    computeEdges(m_ppos, m_edges);
-    mg::Vec3D e1 = m_edges[0];
-    parallelTransportFrame(e0, e1, m_u0);
-
-//    std::cout << "ANGLE u0 edge[0] " << mg::deg( std::acos( mg::dot(m_u0, t1) ) ) << std::endl;
-
-    computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
-    computeMaterialFrame(m_twistAngle, m_m1, m_m2);
+    assert(rod != NULL);
+    m_evaluate.m_rod = rod;
+    m_evaluateGradient.m_rod = rod;
+    m_evaluateHessian.m_rod = rod;
 }
 
+ElasticRod::MinimizationPImpl::~MinimizationPImpl()
+{ }
 
-void ElasticRod::computedEdQj(unsigned j, const mg::Matrix2D JB, mg::Real& o_dEQj) const
+double ElasticRod::MinimizationPImpl::minimize(ColumnVector &io_theta)
 {
-    assert( j < m_kb.size() );
+    ColumnVector guess = io_theta;
 
-    o_dEQj = 0.0;
-//    compute first term dWj/dQj + 2 * beta * mj / lj
-    mg::Vec2D wij;
-    if (j > 0)
-    {
-        computeW(m_kb[j], m_m1[j], m_m2[j], wij);
-        o_dEQj += mg::dot(wij, JB * (wij - m_restWnext[j]));
-        o_dEQj += 2 * m_twistStiffness * (m_twistAngle[j] - m_twistAngle[j - 1]);
-        o_dEQj /= m_restRegionL[j];
+    double minE = -1;
+    switch (m_strategy) {
+    case BFGS_NUMERIC:
+        minE = dlib::find_min(dlib::bfgs_search_strategy(),
+                             dlib::objective_delta_stop_strategy(m_tolerance, m_maxIter),
+                             m_evaluate,
+                             dlib::derivative(m_evaluate),
+                             guess,
+                             0.0);
+        break;
+    case BFGS:
+        minE = dlib::find_min(dlib::bfgs_search_strategy(),
+                             dlib::objective_delta_stop_strategy(m_tolerance, m_maxIter),
+                             m_evaluate,
+                             m_evaluateGradient,
+                             guess,
+                             0.0);
+        break;
+    case NEWTON:
+        minE = dlib::find_min(dlib::newton_search_strategy(m_evaluateHessian),
+                             dlib::objective_delta_stop_strategy(m_tolerance, m_maxIter),
+                             m_evaluate,
+                             m_evaluateGradient,
+                             guess,
+                             0.0);
+        break;
+    default:
+        break;
     }
-//    compute second term dWj+1/dQj + 2 * beta * mj+1 / lj+1
-    if (j < m_edges.size() - 1)
-    {
-        computeW(m_kb[j + 1], m_m1[j], m_m2[j], wij);
-        o_dEQj += mg::dot(wij, JB * (wij - m_restWprev[j + 1]));
-        o_dEQj += 2 * m_twistStiffness * (m_twistAngle[j + 1] - m_twistAngle[j]);
-        o_dEQj /= m_restRegionL[j + 1];
-    }
+
+    io_theta = guess;
+    return minE;
 }
+
+double ElasticRod::MinimizationPImpl::evaluate::operator ()(const ColumnVector& theta) const
+{
+    assert( m_rod != NULL );
+    assert( theta.size() == m_rod->m_theta.size() && static_cast<unsigned>(theta.size()) == m_rod->m_m1.size() );
+
+//    TODO FIX: can I avoid copying ?????
+//    keeping m1, m2 as members and copying the data gives ~ 1ms performance benefit
+    std::vector<mg::Vec3D> m1 = m_rod->m_m1;
+    std::vector<mg::Vec3D> m2 = m_rod->m_m2;
+    m_rod->computeMaterialFrame(theta, m1, m2);
+
+    mg::Real E;
+    m_rod->computeEnergy(m1, m2, theta, E);
+    return static_cast<double>(E);
+}
+
+ColumnVector ElasticRod::MinimizationPImpl::evaluateGradient::operator ()(const ColumnVector &theta) const
+{
+    assert( m_rod != NULL );
+    assert( theta.size() == m_rod->m_theta.size() && static_cast<unsigned>(theta.size()) == m_rod->m_m1.size() );
+
+    ColumnVector gradient(theta.size());
+//    TODO FIX: can I avoid copying ?????
+    std::vector<mg::Vec3D> m1 = m_rod->m_m1;
+    std::vector<mg::Vec3D> m2 = m_rod->m_m2;
+    m_rod->computeMaterialFrame(theta, m1, m2);
+
+    mg::Matrix2D JB;
+    mg::matrix_rotation_2D(JB, mg::Constants::pi_over_2());
+    JB *= m_rod->m_B;
+
+    mg::Real dEdQj;
+    for (unsigned j = 0; j < theta.size(); ++j)
+    {
+        m_rod->computedEdQj(j, m1, m2, theta, JB, dEdQj);
+        gradient(j) = static_cast<double>(dEdQj);
+    }
+    return gradient;
+}
+
+Hessian ElasticRod::MinimizationPImpl::evaluateHessian::operator ()(const ColumnVector& theta) const
+{
+    assert( m_rod != NULL );
+
+    Hessian hessian(theta.size(), theta.size());
+    hessian = dlib::zeros_matrix(hessian);
+//    TODO FIX: can I avoid copying ?????
+    std::vector<mg::Vec3D> m1 = m_rod->m_m1;
+    std::vector<mg::Vec3D> m2 = m_rod->m_m2;
+
+    m_rod->computeMaterialFrame(theta, m1, m2);
+    m_rod->computeHessian(m1, m2, hessian);
+
+    return hessian;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //============================  =======================
+
+
+//    mg::Real dEdQj;
+//        for (unsigned j = std::max((int)(i) - 1, 0); j < m_edges.size(); ++j)
+//        {
+//            computedEdQj(j, J * m_B, dEdQj);
+//            computeGradientHolonomySum(i, n, minusGH, plusGH, eqGH, GH);
+//            o_forces[i] += dEdQj * GH;
+//        }
 
 
 //void ElasticRod::updateCurrentState()

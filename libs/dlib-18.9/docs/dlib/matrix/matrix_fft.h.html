@@ -1,0 +1,281 @@
+<html><!-- Created using the cpp_pretty_printer from the dlib C++ library.  See http://dlib.net for updates. --><head><title>dlib C++ Library - matrix_fft.h</title></head><body bgcolor='white'><pre>
+<font color='#009900'>// Copyright (C) 2013  Davis E. King (davis@dlib.net)
+</font><font color='#009900'>// License: Boost Software License   See LICENSE.txt for the full license.
+</font><font color='#0000FF'>#ifndef</font> DLIB_FFt_H__
+<font color='#0000FF'>#define</font> DLIB_FFt_H__
+
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='matrix_fft_abstract.h.html'>matrix_fft_abstract.h</a>"
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='matrix_utilities.h.html'>matrix_utilities.h</a>"
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../hash.h.html'>../hash.h</a>"
+<font color='#0000FF'>#include</font> "<a style='text-decoration:none' href='../algs.h.html'>../algs.h</a>"
+
+<font color='#0000FF'>#ifdef</font> DLIB_USE_FFTW
+<font color='#0000FF'>#include</font> <font color='#5555FF'>&lt;</font>fftw3.h<font color='#5555FF'>&gt;</font>
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_USE_FFTW
+</font>
+<font color='#0000FF'>namespace</font> dlib
+<b>{</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>namespace</font> impl
+    <b>{</b>
+        <font color='#0000FF'>inline</font> <font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font> <b><a name='reverse_bits'></a>reverse_bits</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font> val,
+            <font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font> num
+        <font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font> temp <font color='#5555FF'>=</font> <font color='#979000'>0</font>;
+            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> num; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+            <b>{</b>
+                temp <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>=</font> <font color='#979000'>1</font>;
+                temp <font color='#5555FF'>|</font><font color='#5555FF'>=</font> val<font color='#5555FF'>&amp;</font><font color='#979000'>0x1</font>;
+                val <font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>1</font>;
+            <b>}</b>
+            <font color='#0000FF'>return</font> temp;
+        <b>}</b>
+
+        <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> EXP<font color='#5555FF'>&gt;</font>
+        <font color='#0000FF'><u>void</u></font> <b><a name='permute'></a>permute</b> <font face='Lucida Console'>(</font>
+            <font color='#0000FF'>const</font> matrix_exp<font color='#5555FF'>&lt;</font>EXP<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data, 
+            <font color='#0000FF'>typename</font> EXP::matrix_type<font color='#5555FF'>&amp;</font> outdata 
+        <font face='Lucida Console'>)</font>  
+        <b>{</b>
+            outdata.<font color='#BB00BB'>set_size</font><font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+                <font color='#0000FF'>return</font>;
+
+            <font color='#0000FF'>const</font> <font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font> num <font color='#5555FF'>=</font> <font color='#0000FF'>static_cast</font><font color='#5555FF'>&lt;</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font><font color='#5555FF'>&gt;</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>log</font><font face='Lucida Console'>(</font><font face='Lucida Console'>(</font><font color='#0000FF'><u>double</u></font><font face='Lucida Console'>)</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font color='#5555FF'>/</font>std::<font color='#BB00BB'>log</font><font face='Lucida Console'>(</font><font color='#979000'>2.0</font><font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> <font color='#979000'>0.5</font><font face='Lucida Console'>)</font>;
+            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font> i <font color='#5555FF'>=</font> <font color='#979000'>0</font>; i <font color='#5555FF'>&lt;</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font><font face='Lucida Console'>)</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>i<font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>impl::<font color='#BB00BB'>reverse_bits</font><font face='Lucida Console'>(</font>i,num<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> <font color='#BB00BB'>data</font><font face='Lucida Console'>(</font>i<font face='Lucida Console'>)</font>;
+            <b>}</b>
+        <b>}</b>
+
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>inline</font> <font color='#0000FF'><u>bool</u></font> <b><a name='is_power_of_two'></a>is_power_of_two</b> <font face='Lucida Console'>(</font>
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>unsigned</u></font> <font color='#0000FF'><u>long</u></font><font color='#5555FF'>&amp;</font> value
+    <font face='Lucida Console'>)</font>
+    <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>value <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> <font color='#979000'>true</font>;
+        <font color='#0000FF'>else</font>
+            <font color='#0000FF'>return</font> <font color='#BB00BB'>count_bits</font><font face='Lucida Console'>(</font>value<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>1</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> EXP<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>typename</font> EXP::matrix_type <b><a name='fft'></a>fft</b> <font face='Lucida Console'>(</font>
+        <font color='#0000FF'>const</font> matrix_exp<font color='#5555FF'>&lt;</font>EXP<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data
+    <font face='Lucida Console'>)</font>  
+    <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> data;
+
+        <font color='#009900'>// You have to give a complex matrix
+</font>        <font color='#BB00BB'>COMPILE_TIME_ASSERT</font><font face='Lucida Console'>(</font>is_complex<font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> EXP::type<font color='#5555FF'>&gt;</font>::value<font face='Lucida Console'>)</font>;
+        <font color='#009900'>// make sure requires clause is not broken
+</font>        <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font><font color='#BB00BB'>is_vector</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#BB00BB'>is_power_of_two</font><font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>,
+            "<font color='#CC0000'>\t void ifft(data)</font>"
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t data must be a vector with a size that is a power of two.</font>"
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t is_vector(data): </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> <font color='#BB00BB'>is_vector</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t data.size():     </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>
+            <font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'>typedef</font> <font color='#0000FF'>typename</font> EXP::type::value_type T;
+
+        <font color='#0000FF'>typename</font> EXP::matrix_type <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> half <font color='#5555FF'>=</font> outdata.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>/</font><font color='#979000'>2</font>;
+
+        <font color='#0000FF'>typedef</font> std::complex<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font> ct;
+        matrix<font color='#5555FF'>&lt;</font>ct,<font color='#979000'>0</font>,<font color='#979000'>1</font>,<font color='#0000FF'>typename</font> EXP::mem_manager_type<font color='#5555FF'>&gt;</font> <font color='#BB00BB'>twiddle_factors</font><font face='Lucida Console'>(</font>half<font face='Lucida Console'>)</font>;
+
+        <font color='#009900'>// compute the complex root of unity w
+</font>        <font color='#0000FF'>const</font> T temp <font color='#5555FF'>=</font> <font color='#5555FF'>-</font><font color='#979000'>2.0</font><font color='#5555FF'>*</font>pi<font color='#5555FF'>/</font>outdata.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        ct w <font color='#5555FF'>=</font> <font color='#BB00BB'>ct</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>cos</font><font face='Lucida Console'>(</font>temp<font face='Lucida Console'>)</font>,std::<font color='#BB00BB'>sin</font><font face='Lucida Console'>(</font>temp<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+        ct w_pow <font color='#5555FF'>=</font> <font color='#979000'>1</font>;
+
+        <font color='#009900'>// compute the twiddle factors
+</font>        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> j <font color='#5555FF'>=</font> <font color='#979000'>0</font>; j <font color='#5555FF'>&lt;</font> twiddle_factors.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>j<font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#BB00BB'>twiddle_factors</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> w_pow; 
+            w_pow <font color='#5555FF'>*</font><font color='#5555FF'>=</font> w;
+        <b>}</b>
+
+
+        <font color='#009900'>// now compute the decimation in frequency.  This first
+</font>        <font color='#009900'>// outer loop loops log2(outdata.size()) number of times
+</font>        <font color='#0000FF'><u>long</u></font> skip <font color='#5555FF'>=</font> <font color='#979000'>1</font>;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> step <font color='#5555FF'>=</font> half; step <font color='#5555FF'>!</font><font color='#5555FF'>=</font> <font color='#979000'>0</font>; step <font color='#5555FF'>&gt;</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>=</font> <font color='#979000'>1</font><font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#009900'>// do blocks of butterflies in this loop
+</font>            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> j <font color='#5555FF'>=</font> <font color='#979000'>0</font>; j <font color='#5555FF'>&lt;</font> outdata.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; j <font color='#5555FF'>+</font><font color='#5555FF'>=</font> step<font color='#5555FF'>*</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#009900'>// do step butterflies
+</font>                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> k <font color='#5555FF'>=</font> <font color='#979000'>0</font>; k <font color='#5555FF'>&lt;</font> step; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>k<font face='Lucida Console'>)</font>
+                <b>{</b>
+                    <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> a_idx <font color='#5555FF'>=</font> j<font color='#5555FF'>+</font>k;
+                    <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> b_idx <font color='#5555FF'>=</font> j<font color='#5555FF'>+</font>k<font color='#5555FF'>+</font>step;
+                    <font color='#0000FF'>const</font> ct a <font color='#5555FF'>=</font> <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>a_idx<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>b_idx<font face='Lucida Console'>)</font>;
+                    <font color='#0000FF'>const</font> ct b <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font><font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>a_idx<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font> <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>b_idx<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font><font color='#5555FF'>*</font><font color='#BB00BB'>twiddle_factors</font><font face='Lucida Console'>(</font>k<font color='#5555FF'>*</font>skip<font face='Lucida Console'>)</font>;
+                    <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>a_idx<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> a;
+                    <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>b_idx<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> b;
+                <b>}</b>
+            <b>}</b>
+            skip <font color='#5555FF'>*</font><font color='#5555FF'>=</font> <font color='#979000'>2</font>;
+        <b>}</b>
+
+        <font color='#0000FF'>typename</font> EXP::matrix_type outperm;
+        impl::<font color='#BB00BB'>permute</font><font face='Lucida Console'>(</font>outdata, outperm<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> outperm;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> EXP<font color='#5555FF'>&gt;</font>
+    <font color='#0000FF'>typename</font> EXP::matrix_type <b><a name='ifft'></a>ifft</b> <font face='Lucida Console'>(</font>
+        <font color='#0000FF'>const</font> matrix_exp<font color='#5555FF'>&lt;</font>EXP<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data
+    <font face='Lucida Console'>)</font>  
+    <b>{</b>
+        <font color='#0000FF'>if</font> <font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font> <font color='#5555FF'>=</font><font color='#5555FF'>=</font> <font color='#979000'>0</font><font face='Lucida Console'>)</font>
+            <font color='#0000FF'>return</font> data;
+
+        <font color='#009900'>// You have to give a complex matrix
+</font>        <font color='#BB00BB'>COMPILE_TIME_ASSERT</font><font face='Lucida Console'>(</font>is_complex<font color='#5555FF'>&lt;</font><font color='#0000FF'>typename</font> EXP::type<font color='#5555FF'>&gt;</font>::value<font face='Lucida Console'>)</font>;
+        <font color='#009900'>// make sure requires clause is not broken
+</font>        <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font><font color='#BB00BB'>is_vector</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#BB00BB'>is_power_of_two</font><font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>,
+            "<font color='#CC0000'>\t void ifft(data)</font>"
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t data must be a vector with a size that is a power of two.</font>"
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t is_vector(data): </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> <font color='#BB00BB'>is_vector</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t data.size():     </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>
+            <font face='Lucida Console'>)</font>;
+
+
+        <font color='#0000FF'>typedef</font> <font color='#0000FF'>typename</font> EXP::type::value_type T;
+
+        <font color='#0000FF'>typename</font> EXP::matrix_type outdata;
+        impl::<font color='#BB00BB'>permute</font><font face='Lucida Console'>(</font>data,outdata<font face='Lucida Console'>)</font>;
+
+        <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> half <font color='#5555FF'>=</font> outdata.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font color='#5555FF'>/</font><font color='#979000'>2</font>;
+
+        <font color='#0000FF'>typedef</font> std::complex<font color='#5555FF'>&lt;</font>T<font color='#5555FF'>&gt;</font> ct;
+        matrix<font color='#5555FF'>&lt;</font>ct,<font color='#979000'>0</font>,<font color='#979000'>1</font>,<font color='#0000FF'>typename</font> EXP::mem_manager_type<font color='#5555FF'>&gt;</font> <font color='#BB00BB'>twiddle_factors</font><font face='Lucida Console'>(</font>half<font face='Lucida Console'>)</font>;
+
+        <font color='#009900'>// compute the complex root of unity w
+</font>        <font color='#0000FF'>const</font> T temp <font color='#5555FF'>=</font> <font color='#979000'>2.0</font><font color='#5555FF'>*</font>pi<font color='#5555FF'>/</font>outdata.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        ct w <font color='#5555FF'>=</font> <font color='#BB00BB'>ct</font><font face='Lucida Console'>(</font>std::<font color='#BB00BB'>cos</font><font face='Lucida Console'>(</font>temp<font face='Lucida Console'>)</font>,std::<font color='#BB00BB'>sin</font><font face='Lucida Console'>(</font>temp<font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+
+        ct w_pow <font color='#5555FF'>=</font> <font color='#979000'>1</font>;
+
+        <font color='#009900'>// compute the twiddle factors
+</font>        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> j <font color='#5555FF'>=</font> <font color='#979000'>0</font>; j <font color='#5555FF'>&lt;</font> twiddle_factors.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>j<font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#BB00BB'>twiddle_factors</font><font face='Lucida Console'>(</font>j<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> w_pow; 
+            w_pow <font color='#5555FF'>*</font><font color='#5555FF'>=</font> w;
+        <b>}</b>
+
+        <font color='#009900'>// now compute the inverse decimation in frequency.  This first
+</font>        <font color='#009900'>// outer loop loops log2(outdata.size()) number of times
+</font>        <font color='#0000FF'><u>long</u></font> skip <font color='#5555FF'>=</font> half;
+        <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> step <font color='#5555FF'>=</font> <font color='#979000'>1</font>; step <font color='#5555FF'>&lt;</font><font color='#5555FF'>=</font> half; step <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font><font color='#5555FF'>=</font> <font color='#979000'>1</font><font face='Lucida Console'>)</font>
+        <b>{</b>
+            <font color='#009900'>// do blocks of butterflies in this loop
+</font>            <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> j <font color='#5555FF'>=</font> <font color='#979000'>0</font>; j <font color='#5555FF'>&lt;</font> outdata.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>; j <font color='#5555FF'>+</font><font color='#5555FF'>=</font> step<font color='#5555FF'>*</font><font color='#979000'>2</font><font face='Lucida Console'>)</font>
+            <b>{</b>
+                <font color='#009900'>// do step butterflies
+</font>                <font color='#0000FF'>for</font> <font face='Lucida Console'>(</font><font color='#0000FF'><u>long</u></font> k <font color='#5555FF'>=</font> <font color='#979000'>0</font>; k <font color='#5555FF'>&lt;</font> step; <font color='#5555FF'>+</font><font color='#5555FF'>+</font>k<font face='Lucida Console'>)</font>
+                <b>{</b>
+                    <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> a_idx <font color='#5555FF'>=</font> j<font color='#5555FF'>+</font>k;
+                    <font color='#0000FF'>const</font> <font color='#0000FF'><u>long</u></font> b_idx <font color='#5555FF'>=</font> j<font color='#5555FF'>+</font>k<font color='#5555FF'>+</font>step;
+                    <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>b_idx<font face='Lucida Console'>)</font> <font color='#5555FF'>*</font><font color='#5555FF'>=</font> <font color='#BB00BB'>twiddle_factors</font><font face='Lucida Console'>(</font>k<font color='#5555FF'>*</font>skip<font face='Lucida Console'>)</font>;
+                    <font color='#0000FF'>const</font> ct a <font color='#5555FF'>=</font> <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>a_idx<font face='Lucida Console'>)</font> <font color='#5555FF'>+</font> <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>b_idx<font face='Lucida Console'>)</font>;
+                    <font color='#0000FF'>const</font> ct b <font color='#5555FF'>=</font> <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>a_idx<font face='Lucida Console'>)</font> <font color='#5555FF'>-</font> <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>b_idx<font face='Lucida Console'>)</font>;
+                    <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>a_idx<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> a;
+                    <font color='#BB00BB'>outdata</font><font face='Lucida Console'>(</font>b_idx<font face='Lucida Console'>)</font> <font color='#5555FF'>=</font> b;
+                <b>}</b>
+            <b>}</b>
+            skip <font color='#5555FF'>/</font><font color='#5555FF'>=</font> <font color='#979000'>2</font>;
+        <b>}</b>
+
+        outdata <font color='#5555FF'>/</font><font color='#5555FF'>=</font> outdata.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> outdata;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<font color='#0000FF'>#ifdef</font> DLIB_USE_FFTW
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>long</u></font> NR, <font color='#0000FF'><u>long</u></font> NC, <font color='#0000FF'>typename</font> MM, <font color='#0000FF'>typename</font> L<font color='#5555FF'>&gt;</font>
+    matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,NR,NC,MM,L<font color='#5555FF'>&gt;</font> <b><a name='call_fftw_fft'></a>call_fftw_fft</b><font face='Lucida Console'>(</font>
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,NR,NC,MM,L<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data
+    <font face='Lucida Console'>)</font>
+    <b>{</b>
+        <font color='#009900'>// make sure requires clause is not broken
+</font>        <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font><font color='#BB00BB'>is_vector</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#BB00BB'>is_power_of_two</font><font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>,
+            "<font color='#CC0000'>\t void fft(data)</font>"
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t data must be a vector with a size that is a power of two.</font>"
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t is_vector(data): </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> <font color='#BB00BB'>is_vector</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t data.size():     </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>
+            <font face='Lucida Console'>)</font>;
+
+        matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,NR,NC,MM,L<font color='#5555FF'>&gt;</font> <font color='#BB00BB'>m2</font><font face='Lucida Console'>(</font>data.<font color='#BB00BB'>nr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>,data.<font color='#BB00BB'>nc</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        fftw_complex <font color='#5555FF'>*</font>in, <font color='#5555FF'>*</font>out;
+        fftw_plan p;
+        in <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>fftw_complex<font color='#5555FF'>*</font><font face='Lucida Console'>)</font><font color='#5555FF'>&amp;</font><font color='#BB00BB'>data</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+        out <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>fftw_complex<font color='#5555FF'>*</font><font face='Lucida Console'>)</font><font color='#5555FF'>&amp;</font><font color='#BB00BB'>m2</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+        p <font color='#5555FF'>=</font> <font color='#BB00BB'>fftw_plan_dft_1d</font><font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, in, out, FFTW_FORWARD, FFTW_ESTIMATE<font face='Lucida Console'>)</font>;
+        <font color='#BB00BB'>fftw_execute</font><font face='Lucida Console'>(</font>p<font face='Lucida Console'>)</font>; 
+        <font color='#BB00BB'>fftw_destroy_plan</font><font face='Lucida Console'>(</font>p<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> m2;
+    <b>}</b>
+
+    <font color='#0000FF'>template</font> <font color='#5555FF'>&lt;</font><font color='#0000FF'><u>long</u></font> NR, <font color='#0000FF'><u>long</u></font> NC, <font color='#0000FF'>typename</font> MM, <font color='#0000FF'>typename</font> L<font color='#5555FF'>&gt;</font>
+    matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,NR,NC,MM,L<font color='#5555FF'>&gt;</font> <b><a name='call_fftw_ifft'></a>call_fftw_ifft</b><font face='Lucida Console'>(</font>
+        <font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,NR,NC,MM,L<font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data
+    <font face='Lucida Console'>)</font>
+    <b>{</b>
+        <font color='#009900'>// make sure requires clause is not broken
+</font>        <font color='#BB00BB'>DLIB_CASSERT</font><font face='Lucida Console'>(</font><font color='#BB00BB'>is_vector</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font> <font color='#5555FF'>&amp;</font><font color='#5555FF'>&amp;</font> <font color='#BB00BB'>is_power_of_two</font><font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>,
+            "<font color='#CC0000'>\t void ifft(data)</font>"
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t data must be a vector with a size that is a power of two.</font>"
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t is_vector(data): </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> <font color='#BB00BB'>is_vector</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>
+            <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> "<font color='#CC0000'>\n\t data.size():     </font>" <font color='#5555FF'>&lt;</font><font color='#5555FF'>&lt;</font> data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>
+            <font face='Lucida Console'>)</font>;
+
+        matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,NR,NC,MM,L<font color='#5555FF'>&gt;</font> <font color='#BB00BB'>m2</font><font face='Lucida Console'>(</font>data.<font color='#BB00BB'>nr</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>,data.<font color='#BB00BB'>nc</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font><font face='Lucida Console'>)</font>;
+        fftw_complex <font color='#5555FF'>*</font>in, <font color='#5555FF'>*</font>out;
+        fftw_plan p;
+        in <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>fftw_complex<font color='#5555FF'>*</font><font face='Lucida Console'>)</font><font color='#5555FF'>&amp;</font><font color='#BB00BB'>data</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+        out <font color='#5555FF'>=</font> <font face='Lucida Console'>(</font>fftw_complex<font color='#5555FF'>*</font><font face='Lucida Console'>)</font><font color='#5555FF'>&amp;</font><font color='#BB00BB'>m2</font><font face='Lucida Console'>(</font><font color='#979000'>0</font><font face='Lucida Console'>)</font>;
+        p <font color='#5555FF'>=</font> <font color='#BB00BB'>fftw_plan_dft_1d</font><font face='Lucida Console'>(</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>, in, out, FFTW_BACKWARD, FFTW_ESTIMATE<font face='Lucida Console'>)</font>;
+        <font color='#BB00BB'>fftw_execute</font><font face='Lucida Console'>(</font>p<font face='Lucida Console'>)</font>; 
+        <font color='#BB00BB'>fftw_destroy_plan</font><font face='Lucida Console'>(</font>p<font face='Lucida Console'>)</font>;
+        <font color='#0000FF'>return</font> m2<font color='#5555FF'>/</font>data.<font color='#BB00BB'>size</font><font face='Lucida Console'>(</font><font face='Lucida Console'>)</font>;
+    <b>}</b>
+
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<font color='#009900'>// call FFTW for these cases:
+</font>    <font color='#0000FF'>inline</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> <b><a name='fft'></a>fft</b> <font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data<font face='Lucida Console'>)</font> <b>{</b><font color='#0000FF'>return</font> <font color='#BB00BB'>call_fftw_fft</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>;<b>}</b>
+    <font color='#0000FF'>inline</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font> <b><a name='ifft'></a>ifft</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,<font color='#979000'>0</font>,<font color='#979000'>1</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data<font face='Lucida Console'>)</font> <b>{</b><font color='#0000FF'>return</font> <font color='#BB00BB'>call_fftw_ifft</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>;<b>}</b>
+    <font color='#0000FF'>inline</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,<font color='#979000'>1</font>,<font color='#979000'>0</font><font color='#5555FF'>&gt;</font> <b><a name='fft'></a>fft</b> <font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,<font color='#979000'>1</font>,<font color='#979000'>0</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data<font face='Lucida Console'>)</font> <b>{</b><font color='#0000FF'>return</font> <font color='#BB00BB'>call_fftw_fft</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>;<b>}</b>
+    <font color='#0000FF'>inline</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,<font color='#979000'>1</font>,<font color='#979000'>0</font><font color='#5555FF'>&gt;</font> <b><a name='ifft'></a>ifft</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font>,<font color='#979000'>1</font>,<font color='#979000'>0</font><font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data<font face='Lucida Console'>)</font> <b>{</b><font color='#0000FF'>return</font> <font color='#BB00BB'>call_fftw_ifft</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>;<b>}</b>
+    <font color='#0000FF'>inline</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>&gt;</font> <b><a name='fft'></a>fft</b> <font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data<font face='Lucida Console'>)</font> <b>{</b><font color='#0000FF'>return</font> <font color='#BB00BB'>call_fftw_fft</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>;<b>}</b>
+    <font color='#0000FF'>inline</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>&gt;</font> <b><a name='ifft'></a>ifft</b><font face='Lucida Console'>(</font><font color='#0000FF'>const</font> matrix<font color='#5555FF'>&lt;</font>std::complex<font color='#5555FF'>&lt;</font><font color='#0000FF'><u>double</u></font><font color='#5555FF'>&gt;</font> <font color='#5555FF'>&gt;</font><font color='#5555FF'>&amp;</font> data<font face='Lucida Console'>)</font> <b>{</b><font color='#0000FF'>return</font> <font color='#BB00BB'>call_fftw_ifft</font><font face='Lucida Console'>(</font>data<font face='Lucida Console'>)</font>;<b>}</b>
+
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_USE_FFTW
+</font>
+<font color='#009900'>// ----------------------------------------------------------------------------------------
+</font>
+<b>}</b>
+
+<font color='#0000FF'>#endif</font> <font color='#009900'>// DLIB_FFt_H__
+</font>
+
+</pre></body></html>

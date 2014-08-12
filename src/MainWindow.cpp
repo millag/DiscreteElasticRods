@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainW
     connect(m_ui->m_sim, SIGNAL(clicked(bool)), this, SLOT(toggleSim(bool)));
     connect(m_ui->m_timerValue, SIGNAL(valueChanged(int)), m_gl, SLOT(setTimerDuration(int)));
 
-//    toggleSim(false);
+    m_ui->m_sim->click();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
