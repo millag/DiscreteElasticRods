@@ -2,7 +2,9 @@
 #define ROD_H
 
 #include <vector>
+#include <set>
 #include <dlib/matrix.h>
+
 #include "Types.h"
 
 typedef dlib::matrix<double,0,1> ColumnVector;
@@ -29,8 +31,7 @@ public:
               const std::vector<mg::Vec3D>& vel,
               const std::vector<mg::Real>& mass,
               const std::vector<double>& theta,
-              const std::vector<bool>& isFixed
-              );
+              const std::set<unsigned>& isClamped);
 
     void update(mg::Real dt);
 
@@ -70,8 +71,8 @@ public:
     std::vector<mg::Vec3D> m_pvel;
 /// #mass = n + 1
     std::vector<mg::Real> m_pmass;
-/// #isFixed = n + 1
-    std::vector<bool> m_pIsFixed;
+/// map containg indices of clamped positions - defines boundary conditions
+    std::set<unsigned> m_isClamped;
 /// unit length vector - defines the Bishop frame for the first edge for rest shape (restpos)
 /// Bishop frame for the first edge for the current configuration(pos) is deduced by parallel transport
     mg::Vec3D m_u0;
@@ -106,6 +107,7 @@ private:
 /// NOTE: it is used also as temporary place holder for v axis of Bishop frame
     std::vector<mg::Vec3D> m_m2;
 
+
 private:
 
     struct MinimizationPImpl;
@@ -122,7 +124,7 @@ private:
 /// NOTE: there is no l[0]
     void computeLengths(const std::vector<mg::Vec3D>& vertices,
                         std::vector<mg::Real>& o_edgeL,
-                        std::vector<mg::Real>& o_regionL) const;
+                        std::vector<mg::Real>& o_regionL)const;
 
     void computeW(const mg::Vec3D& kb,
                   const mg::Vec3D& m1,
@@ -217,6 +219,8 @@ private:
     void computeHessian(const std::vector<mg::Vec3D>& m1,
                         const std::vector<mg::Vec3D>& m2,
                         Hessian& o_H) const;
+
+
 };
 
 #endif // ROD_H

@@ -83,12 +83,6 @@ void Scene::initialize()
 
 void Scene::update(mg::Real dt)
 {
-//    typedef std::vector<Hair*>::const_iterator Iter;
-//    for (Iter it = m_hairs.begin(); it != m_hairs.end(); ++it)
-//    {
-//        (*it)->update(dt);
-//    }
-
 //    m_hair->update(dt);
 
     m_spiral->update(dt);

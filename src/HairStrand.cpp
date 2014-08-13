@@ -8,9 +8,9 @@ HairStrand::HairStrand():m_object(NULL)
     m_lengthVariance = 1.0;
     m_density = 0.001;
     m_thickness = 0.001;
-    m_bendStiffness = 100.0;
-    m_twistStiffness = 100.0;
-    m_maxForce = 1000;
+    m_bendStiffness = 5.0;
+    m_twistStiffness = 2.0;
+    m_maxForce = 500;
 
     m_nParticles = 15;
     m_nIterations = 4;
@@ -41,7 +41,7 @@ void HairStrand::initialize(const RenderObject* object)
     std::vector<mg::Vec3D> vel(m_nParticles);
     std::vector<mg::Real> mass(m_nParticles);
     std::vector<double> twistAngle(m_nParticles - 1, 0.0);
-    std::vector<bool> isFixed(m_nParticles, 0);
+    std::set<unsigned> isClamped;
 
     mg::Real t = 0.0;
     for (unsigned i = 0; i < pos.size(); ++i)
@@ -50,7 +50,7 @@ void HairStrand::initialize(const RenderObject* object)
         pos[i] = (1 - t) * start + t * end;
 
         vel[i].zero();
-        mass[i] = 10;
+        mass[i] = 1;
     }
 
     mg::Real step = mg::length( end - start ) / (m_nParticles - 1);
@@ -69,14 +69,14 @@ void HairStrand::initialize(const RenderObject* object)
         }
         restpos[i] = restpos[i - 1] + step * dir;
     }
-    isFixed[0] = 1;
-    isFixed[m_nParticles - 1] = 1;
+    isClamped.insert(0);
+//    isClamped.insert(m_nParticles - 1);
 
 
     for (unsigned i = 0; i < 1; ++i)
     {
         ElasticRod* strand = new ElasticRod(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce, ElasticRod::NEWTON);
-        strand->init(restpos, mg::Vec3D(0,1,0), pos, vel, mass, twistAngle, isFixed);
+        strand->init(restpos, mg::Vec3D(0,1,0), restpos, vel, mass, twistAngle, isClamped);
         m_strands.push_back(strand);
     }
 }
