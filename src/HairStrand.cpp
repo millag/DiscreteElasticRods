@@ -1,5 +1,4 @@
 #include "HairStrand.h"
-
 #include <QElapsedTimer>
 
 HairStrand::HairStrand():m_object(NULL)
@@ -33,7 +32,7 @@ void HairStrand::initialize(const RenderObject* object)
     assert(object != NULL);
     m_object = object;
 
-    mg::Vec3D start(m_object->getPosition().m_x, m_object->getPosition().m_y, m_object->getPosition().m_z);
+    mg::Vec3D start(m_object->getPosition());
     mg::Vec3D end = start + mg::Vec3D(1, 0, 0) * m_length;
 
     std::vector<mg::Vec3D> restpos(m_nParticles);
@@ -89,7 +88,7 @@ void HairStrand::update(mg::Real dt)
     typedef std::vector<ElasticRod*>::const_iterator SIter;
     for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
     {
-        (*it)->m_ppos[0].set(m_object->getPosition().m_x, m_object->getPosition().m_y, m_object->getPosition().m_z);
+        (*it)->m_ppos[0] = m_object->getPosition();
         (*it)->update(dt);
     }
 

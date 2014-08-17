@@ -1,6 +1,5 @@
 #ifndef ISURVANT_H
 #define ISURVANT_H
-#include <ngl/Vec4.h>
 #include "RenderObject.h"
 
 class IServant
@@ -8,7 +7,7 @@ class IServant
 
 public:
     virtual ~IServant() { }
-    virtual void findObjectsWithinDistance(const ngl::Vec4& pos, ngl::Real dist, std::vector<RenderObject*>& o_objects) = 0;
+    virtual void findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::vector<RenderObject*>& o_objects) = 0;
 
 };
 

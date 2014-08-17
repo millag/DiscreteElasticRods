@@ -37,26 +37,31 @@ vec4 catmull_rom(float t)
 
 void main ()
 {
-    const int nVertices = 2;
-    int i, prev, next;
-    vec4 viewPos, worldPos;
-    float step = 1.0 / (nVertices - 1);
-    for (i = 0; i < nVertices; i++)
+    const int nVertices = 6;
+    vec4 pos[nVertices];
+
+    float step = 1.0 / (pos.length() - 1);
+    for (int i = 0; i < pos.length(); i++)
     {
-        gl_Position = catmull_rom(i * step);
+        pos[i] = catmull_rom(i * step);
+    }
+
+    int prev, next;
+    vec4 viewPos, worldPos;
+    for (int i = 0; i < pos.length(); i++)
+    {
+        gl_Position = pos[i];
 
         worldPos = M * gl_Position;
         viewPos = MV * gl_Position;
-    //    eyeDir = normalize(vec4(eyePos, 1.0) - worldPos);
         eDir = normalize(vec4(eyePos, 1.0) - worldPos);
         lDir = normalize(light.position - worldPos);
-        prev = clamp(i - 1, 0, 9);
-        next = clamp(i + 1, 0, 9);
-        tDir = M * normalize(catmull_rom(next * step) - catmull_rom(prev * step));
+        prev = clamp(i - 1, 0, pos.length() - 1);
+        next = clamp(i + 1, 0, pos.length() - 1);
+        tDir =  M * normalize(pos[next] - pos[prev]);
 
         gl_Position = MVP * gl_Position;
         EmitVertex();
     }
-
     EndPrimitive();
 }

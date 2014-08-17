@@ -1,10 +1,6 @@
 #include "Scene.h"
-#include "ngl/Util.h"
 #include "Utils.h"
-#include "HairyObject.h"
 
-Mesh* createSphere(int id);
-HairyObject* createHairyBall(const Mesh* mesh);
 RenderObject* createBall(const Mesh* mesh);
 
 //===================================== Scene ===========================================
@@ -23,13 +19,6 @@ Scene::~Scene()
     if (m_spiral != NULL)
     {
         delete m_spiral;
-    }
-
-//    delete hair objects
-    typedef std::vector<Hair*>::const_iterator HIter;
-    for (HIter it = m_hairs.begin(); it != m_hairs.end(); ++it)
-    {
-        delete (*it);
     }
 
 //    delete render objects
@@ -51,15 +40,14 @@ void Scene::initialize()
 {
     m_meshes.reserve(10);
     m_renderObjects.reserve(10);
-    m_hairs.reserve(10);
 
 //    initialize scene bounding volume
-    ngl::Real size = 30;
-    m_boundingVolume.reshape(ngl::Vec4(-size, -size, -size), ngl::Vec4(size, size, size));
+    mg::Real size = 30;
+    m_boundingVolume.reshape(mg::Vec3D(-size, -size, -size), mg::Vec3D(size, size, size));
 
     unsigned meshId = m_meshes.size();
     m_meshMap["ball"] = meshId;
-    Mesh* mesh = createSphere(meshId);
+    Mesh* mesh = Mesh::createSphere(meshId);
     m_meshes.push_back(mesh);
 
     RenderObject* ball = createBall(mesh);
@@ -70,14 +58,6 @@ void Scene::initialize()
 
     m_spiral = new Spiral();
     m_spiral->init(ball);
-
-//    HairyObject* hairyBall = createHairyBall(mesh);
-//    m_renderObjects.push_back(hairyBall);
-
-
-//    Hair* hair = new Hair(this);
-//    m_hairs.push_back(hair);
-//    hairyBall->attachHair(hair, 1);
 }
 
 
@@ -88,7 +68,7 @@ void Scene::update(mg::Real dt)
     m_spiral->update(dt);
 }
 
-void Scene::findObjectsWithinDistance(const ngl::Vec4& pos, ngl::Real dist, std::vector<RenderObject*>& o_objects)
+void Scene::findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::vector<RenderObject*>& o_objects)
 {
     typedef std::vector<RenderObject*>::const_iterator Iter;
     for (Iter it = m_renderObjects.begin(); it != m_renderObjects.end(); ++it)
@@ -102,92 +82,11 @@ void Scene::findObjectsWithinDistance(const ngl::Vec4& pos, ngl::Real dist, std:
 
 //====================================== utility functions =============================================
 
-
-Mesh* createSphere(int id)
-{
-    Mesh* mesh = new Mesh(id);
-
-    const unsigned divu = 20;
-    const unsigned divv = 10;
-    const ngl::Real radius = 1.0;
-
-    mesh->m_vertices.push_back(ngl::Vec4(0,radius,0));
-    for (unsigned i = 1; i < divv; i++)
-    {
-        ngl::Real y = std::cos( ((float)i / divv) * ngl::PI ) * radius;
-        ngl::Real r = std::sin( ((float)i / divv) * ngl::PI ) * radius;
-
-        for (unsigned j = 0; j < divu; j++)
-        {
-            ngl::Real x = std::cos( ((float)j / divu) * ngl::PI * 2) * r;
-            ngl::Real z = std::sin( ((float)j / divu) * ngl::PI * 2) * r;
-            mesh->m_vertices.push_back(ngl::Vec4(x,y,z));
-        }
-    }
-    mesh->m_vertices.push_back(ngl::Vec4(0,-radius,0));
-
-    for (unsigned j = 0; j < divu; j++)
-    {
-        unsigned idxp1 = 0;
-        unsigned idxc1 = j % divu + 1;
-        unsigned idxc2 = (j + 1) % divu + 1;
-
-        mesh->m_vindices.push_back(idxp1);
-        mesh->m_vindices.push_back(idxc2);
-        mesh->m_vindices.push_back(idxc1);
-
-        idxc1 = (divv - 2) * divu + j % divu + 1;
-        idxc2 = (divv - 2) * divu + (j + 1) % divu + 1;
-        idxp1 = (divv - 1) * divu + 1;
-
-        mesh->m_vindices.push_back(idxc1);
-        mesh->m_vindices.push_back(idxp1);
-        mesh->m_vindices.push_back(idxc2);
-
-    }
-
-    for (unsigned i = 1; i < divv - 1; i++)
-    {
-        for (unsigned j = 0; j < divu; j++)
-        {
-            unsigned idxp1 = (i - 1) * divu + j % divu + 1;
-            unsigned idxp2 = (i - 1) * divu + (j + 1) % divu + 1;
-            unsigned idxc1 = i * divu + j % divu + 1;
-            unsigned idxc2 = i * divu + (j + 1) % divu + 1;
-
-            mesh->m_vindices.push_back(idxp1);
-            mesh->m_vindices.push_back(idxp2);
-            mesh->m_vindices.push_back(idxc1);
-
-
-            mesh->m_vindices.push_back(idxc2);
-            mesh->m_vindices.push_back(idxc1);
-            mesh->m_vindices.push_back(idxp2);
-        }
-    }
-
-    Mesh::calcNormals( *mesh,  Mesh::FLAT );
-    return mesh;
-}
-
-HairyObject *createHairyBall(const Mesh* mesh)
-{
-    ngl::Real s = 0.85;
-    ngl::Vec4 tr = ngl::Vec4(0, 1.5, 0);
-    ngl::Mat4 t;
-    t.scale(s, s, s);
-    t.translate(tr.m_x, tr.m_y, tr.m_z);
-
-    return new HairyObject(mesh, t, -1);
-}
-
 RenderObject *createBall(const Mesh* mesh)
 {
-    ngl::Real s = 0.1;
-    ngl::Vec4 tr = ngl::Vec4(-1.5, 2, 0);
-    ngl::Mat4 t;
-    t.scale(s, s, s);
-    t.translate(tr.m_x, tr.m_y, tr.m_z);
+    mg::Matrix4D transform;
+    mg::matrix_uniform_scale(transform, (mg::Real)0.1);
+    mg::matrix_set_translation(transform, (mg::Real)-2, (mg::Real)2, (mg::Real)0);
 
-    return new RenderObject(mesh, t, -1);
+    return new RenderObject(mesh, transform, -1);
 }

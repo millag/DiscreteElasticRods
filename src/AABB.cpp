@@ -1,19 +1,21 @@
 #include "AABB.h"
+#include <cassert>
 #include "Utils.h"
+
 
 AABB::AABB():m_vmin(),m_vmax(),m_boundingRadius(0)
 { }
 
-AABB::AABB(const ngl::Vec4 &_vmin, const ngl::Vec4 &_vmax):m_vmin(_vmin),m_vmax(_vmax),m_boundingRadius(0)
+AABB::AABB(const mg::Vec3D &_vmin, const mg::Vec3D &_vmax):m_vmin(_vmin),m_vmax(_vmax),m_boundingRadius(0)
 {
-    assert(m_vmin.m_x <= m_vmax.m_x && m_vmin.m_y <= m_vmax.m_y && m_vmin.m_z <= m_vmax.m_z);
+    assert(_vmin[0] <= _vmax[0] && _vmin[1] <= _vmax[1] && _vmin[2] <= _vmax[2]);
     m_boxSize = m_vmax - m_vmin;
     calcBoundaries();
 }
 
-void AABB::reshape(const ngl::Vec4 &_vmin, const ngl::Vec4 &_vmax)
+void AABB::reshape(const mg::Vec3D &_vmin, const mg::Vec3D &_vmax)
 {
-    assert(_vmin.m_x <= _vmax.m_x && _vmin.m_y <= _vmax.m_y && _vmin.m_z <= _vmax.m_z);
+    assert(_vmin[0] <= _vmax[0] && _vmin[1] <= _vmax[1] && _vmin[2] <= _vmax[2]);
     m_vmin = _vmin;
     m_vmax = _vmax;
     calcBoundaries();
@@ -23,6 +25,6 @@ void AABB::calcBoundaries()
 {
     m_boxSize = m_vmax - m_vmin;
    // m_boundingRadius = (m_vmax - getCenter()).length();
-    m_boundingRadius = std::max(m_boxSize.m_x, std::max(m_boxSize.m_y, m_boxSize.m_z)) / 2;
+    m_boundingRadius = std::max(m_boxSize[0], std::max(m_boxSize[1], m_boxSize[2])) * 0.5;
     assert(fabs((m_vmax - getCenter()).length() - (m_vmin - getCenter()).length()) < mg::ERR);
 }

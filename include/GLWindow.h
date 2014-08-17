@@ -4,7 +4,6 @@
 
 #include <ngl/Camera.h>
 #include <ngl/Colour.h>
-#include <ngl/TransformStack.h>
 #include <ngl/VertexArrayObject.h>
 #include "Scene.h"
 #include "TransformTool.h"
@@ -91,7 +90,7 @@ private :
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief our transformation stack used for drawing
 //----------------------------------------------------------------------------------------------------------------------
-    ngl::Transformation m_transform;
+    Transformation m_transform;
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief the timer
 //----------------------------------------------------------------------------------------------------------------------
@@ -164,7 +163,6 @@ private :
     void loadMatricesToHairShader();
 // ============= various draw related utility functions ===============
 
-    void drawStrand(const Strand &strand);
     void drawHairStrand(const ElasticRod& strand);
 };
 

@@ -2,32 +2,36 @@
 #define MESH_H
 
 #include <vector>
-#include "ngl/Vec4.h"
+#include "Types.h"
 
 class Mesh
 {
 public:
-    enum SHADING_MODE { FLAT, GOURAUD };
-    static void calcNormals(Mesh& o_mesh, Mesh::SHADING_MODE mode);
+    struct ShadingMode{ enum Enum { FLAT, GOURAUD }; };
+    struct PrimitiveMode{ enum Enum { TRIANGLES, LINES }; };
 
-
-    Mesh(unsigned id): m_id(id) {}
-    virtual ~Mesh() {}
+    Mesh(unsigned id, PrimitiveMode::Enum mode = PrimitiveMode::TRIANGLES);
+    ~Mesh();
 
     unsigned getId() const { return m_id; }
-    unsigned getNFaces() const { return (m_vindices.size() / 3); }
     unsigned getNVertices() const { return (m_vertices.size()); }
+    unsigned getNPrimitives() const;
 
-    std::vector<ngl::Vec4> m_vertices;
+public:
+    static Mesh* createSphere(int id, unsigned divu = 20, unsigned divv = 10);
+    static void calcNormals(Mesh& o_mesh, ShadingMode::Enum mode);
+
+public:
+    std::vector<mg::Vec3D> m_vertices;
+    std::vector<mg::Vec3D> m_normals;
     std::vector<unsigned> m_vindices;
-    std::vector<ngl::Vec4> m_normals;
-    std::vector<unsigned> m_nindices;
-
-protected:
-    const unsigned m_id;
 
 private:
     Mesh():m_id(-1) {}
+
+private:
+    unsigned m_id;
+    PrimitiveMode::Enum m_mode;
 };
 
 #endif // MESH_H

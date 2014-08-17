@@ -1,42 +1,42 @@
 #ifndef AABB_H
 #define AABB_H
 
-#include <ngl/Vec4.h>
+#include "Types.h"
 
 class AABB
 {
 public:
     AABB();
-    AABB(const ngl::Vec4& _vmin,  const ngl::Vec4& _vmax);
+    AABB(const mg::Vec3D& _vmin,  const mg::Vec3D& _vmax);
 
-    ngl::Vec4 getVMin() const { return m_vmin; }
-    ngl::Vec4 getVMax() const { return m_vmax; }
-    ngl::Vec4 getCenter() const { return (m_vmin + m_vmax) / 2; }
+    mg::Vec3D getVMin() const { return m_vmin; }
+    mg::Vec3D getVMax() const { return m_vmax; }
+    mg::Vec3D getCenter() const { return (m_vmin + m_vmax) * 0.5; }
 
-    ngl::Vec4 getBLF() const { return m_vmin; }
-    ngl::Vec4 getBLB() const { return ngl::Vec4(m_vmin.m_x, m_vmin.m_y, m_vmax.m_z); }
-    ngl::Vec4 getBRF() const { return ngl::Vec4(m_vmax.m_x, m_vmin.m_y, m_vmin.m_z); }
-    ngl::Vec4 getBRB() const { return ngl::Vec4(m_vmax.m_x, m_vmin.m_y, m_vmax.m_z); }
+    mg::Vec3D getBLF() const { return m_vmin; }
+    mg::Vec3D getBLB() const { return mg::Vec3D(m_vmin[0], m_vmin[1], m_vmax[2]); }
+    mg::Vec3D getBRF() const { return mg::Vec3D(m_vmax[0], m_vmin[1], m_vmin[2]); }
+    mg::Vec3D getBRB() const { return mg::Vec3D(m_vmax[0], m_vmin[1], m_vmax[2]); }
 
-    ngl::Vec4 getTRB() const { return m_vmax; }
-    ngl::Vec4 getTRF() const { return ngl::Vec4(m_vmax.m_x, m_vmax.m_y, m_vmin.m_z); }
-    ngl::Vec4 getTLB() const { return ngl::Vec4(m_vmin.m_x, m_vmax.m_y, m_vmax.m_z); }
-    ngl::Vec4 getTLF() const { return ngl::Vec4(m_vmin.m_x, m_vmax.m_y, m_vmin.m_z); }
+    mg::Vec3D getTRB() const { return m_vmax; }
+    mg::Vec3D getTRF() const { return mg::Vec3D(m_vmax[0], m_vmax[1], m_vmin[2]); }
+    mg::Vec3D getTLB() const { return mg::Vec3D(m_vmin[0], m_vmax[1], m_vmax[2]); }
+    mg::Vec3D getTLF() const { return mg::Vec3D(m_vmin[0], m_vmax[1], m_vmin[2]); }
 
-    ngl::Real getWidth() const { return m_boxSize.m_x; }
-    ngl::Real getHeight() const { return m_boxSize.m_y; }
-    ngl::Real getDepth() const { return m_boxSize.m_z; }
-    ngl::Real getBoundingRadius() const { return m_boundingRadius; }
+    mg::Real getWidth() const { return m_boxSize[0]; }
+    mg::Real getHeight() const { return m_boxSize[1]; }
+    mg::Real getDepth() const { return m_boxSize[2]; }
+    mg::Real getBoundingRadius() const { return m_boundingRadius; }
 
-    void reshape(const ngl::Vec4& _vmin,  const ngl::Vec4& _vmax);
+    void reshape(const mg::Vec3D& _vmin,  const mg::Vec3D& _vmax);
 
 protected:
     void calcBoundaries();
 
-    ngl::Vec4 m_vmin;
-    ngl::Vec4 m_vmax;
-    ngl::Vec4 m_boxSize;
-    ngl::Real m_boundingRadius;
+    mg::Vec3D m_vmin;
+    mg::Vec3D m_vmax;
+    mg::Vec3D m_boxSize;
+    mg::Real m_boundingRadius;
 
 };
 

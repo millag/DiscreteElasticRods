@@ -77,6 +77,17 @@ public:
 /// Bishop frame for the first edge for the current configuration(pos) is deduced by parallel transport
     mg::Vec3D m_u0;
 
+/// defined at vertices 1 ... n - 1 i.e. #kb = (#edges - 1)
+/// #kb = #edges - defines rotation from e[i-1] to e[i],
+/// NOTE: there is no kb[0] => kb[0] = (0, 0, 0, 0);
+    std::vector<mg::Vec3D> m_kb;
+/// #m1 = #edges - m1[i] defines material axis m1(normal) at e[i]
+/// NOTE: it is used also as temporary place holder for u axis of Bishop frame
+    std::vector<mg::Vec3D> m_m1;
+/// #m2 = #edges - m2[i] defines material axis m2(binormal) at e[i]
+/// NOTE: it is used also as temporary place holder for v axis of Bishop frame
+    std::vector<mg::Vec3D> m_m2;
+
 private:
 /// #twistAngle = #edges = n
     ColumnVector m_theta;
@@ -96,16 +107,8 @@ private:
 /// #edges = #vertices - 1 defines tangent axis for the segment between v[i + 1] and v[i]
 /// together with m_m1 and m_m2 they define material frame for each segment of the rod
     std::vector<mg::Vec3D> m_edges;
-/// defined at vertices 1 ... n - 1 i.e. #kb = (#edges - 1)
-/// #kb = #edges - defines rotation from e[i-1] to e[i],
-/// NOTE: there is no kb[0] => kb[0] = (0, 0, 0, 0);
-    std::vector<mg::Vec3D> m_kb;
-/// #m1 = #edges - m1[i] defines material axis m1(normal) at e[i]
-/// NOTE: it is used also as temporary place holder for u axis of Bishop frame
-    std::vector<mg::Vec3D> m_m1;
-/// #m2 = #edges - m2[i] defines material axis m2(binormal) at e[i]
-/// NOTE: it is used also as temporary place holder for v axis of Bishop frame
-    std::vector<mg::Vec3D> m_m2;
+
+
 
 
 private:

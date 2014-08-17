@@ -2,7 +2,6 @@
 #define UTILS_H
 
 #include "Types.h"
-#include "ngl/Vec4.h"
 
 namespace mg
 {
@@ -22,23 +21,21 @@ namespace mg
 
     const static Real ERR = 1e-6f;
     const static Real THRESHODL = 0.00001;
-    const static ngl::Vec4 EX(1, 0, 0, 0);
-    const static ngl::Vec4 EY(0, 1, 0, 0);
-    const static ngl::Vec4 EZ(0, 0, 1, 0);
-    const static ngl::Vec4 EW(0, 0, 0, 1);
+    const static mg::Vec3D EX(1, 0, 0);
+    const static mg::Vec3D EY(0, 1, 0);
+    const static mg::Vec3D EZ(0, 0, 1);
 
-    const static ngl::Vec4 G(0, -9.81, 0, 0);
     const static mg::Vec3D GRAVITY(0, -9.81, 0);
 
     mg::Real getSign(mg::Real value);
     mg::Real randf(mg::Real min = 0.0, mg::Real max = 1.0);
-    ngl::Vec4 genRandPointInBox(mg::Real bBoxMin = -1.0, mg::Real bBoxMax = 1.0);
-    ngl::Vec4 genRandPointOnSphere(mg::Real radius = 1.0, const ngl::Vec4& center = ngl::Vec4());
-    ngl::Vec4 genRandPointOnDisk(mg::Real radius = 1.0, const ngl::Vec4& center = ngl::Vec4());
+    mg::Vec3D genRandPointInBox(mg::Real bBoxMin = -1.0, mg::Real bBoxMax = 1.0);
+    mg::Vec3D genRandPointOnSphere(mg::Real radius = 1.0, const mg::Vec3D& center = mg::Vec3D());
+    mg::Vec3D genRandPointOnDisk(mg::Real radius = 1.0, const mg::Vec3D& center = mg::Vec3D());
 
-    void truncate(ngl::Vec4& io_v, mg::Real maxLength);
-    ngl::Vec4 faceforward(const ngl::Vec4& n, const ngl::Vec4& v);
-    ngl::Vec4 reflect(const ngl::Vec4& v, const ngl::Vec4& n);
+    void truncate(mg::Vec3D& io_v, mg::Real maxLength);
+    mg::Vec3D faceforward(const mg::Vec3D& n, const mg::Vec3D& v);
+    mg::Vec3D reflect(const mg::Vec3D& v, const mg::Vec3D& n);
 }
 
 #endif // UTILS_H

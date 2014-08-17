@@ -4,15 +4,15 @@
 
 Spiral::Spiral(): m_object(NULL)
 {
-    m_radius = 0.3;
+    m_radius = 0.2;
     m_lenght = 4.0;
 
-    m_bendStiffness = 0.0001;
-    m_twistStiffness = 0.0001;
-    m_maxForce = 1000;
+    m_bendStiffness = 0.1;
+    m_twistStiffness = 0.01;
+    m_maxForce = 10;
 
     m_nParticles = 25;
-    m_nIterations = 5;
+    m_nIterations = 4;
 
     m_strands.reserve(100);
 }
@@ -38,14 +38,14 @@ void Spiral::init(const RenderObject* object)
     std::vector<double> twistAngle(m_nParticles - 1, 0.0);
     std::set<unsigned> isClamped;
 
-    mg::Vec3D center(m_object->getPosition().m_x, m_object->getPosition().m_y, m_object->getPosition().m_z);
+    mg::Vec3D center(m_object->getPosition());
     mg::Vec3D dirx = mg::Vec3D(1, 0, 0);
     mg::Vec3D diry = mg::Vec3D(0, -1, 0);
     mg::Vec3D dirz = mg::Vec3D(0, 0, 1);
 
 
     mg::Real angle = m_lenght / ((m_nParticles - 1) * m_radius);
-    mg::Real step = 0.0;
+    mg::Real step = 0.1;
     mg::Real len = 0;
     for (unsigned i = 0; i < restpos.size(); ++i)
     {
@@ -57,7 +57,7 @@ void Spiral::init(const RenderObject* object)
         }
     }
     isClamped.insert(0);
-    isClamped.insert(m_nParticles - 1);
+//    isClamped.insert(m_nParticles - 1);
 
     mg::Vec3D u0 = mg::cross((restpos[1] - restpos[0]), dirx);
     u0 = mg::normalize( mg::cross(u0, (restpos[1] - restpos[0])) );
@@ -77,7 +77,7 @@ void Spiral::init(const RenderObject* object)
     for (unsigned i = 0; i < 1; ++i)
     {
         ElasticRod* strand = new ElasticRod(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce, ElasticRod::BFGS);
-        strand->init(pos, diry, pos, vel, mass, twistAngle, isClamped);
+        strand->init(restpos, u0, restpos, vel, mass, twistAngle, isClamped);
         m_strands.push_back(strand);
     }
 }
@@ -90,7 +90,7 @@ void Spiral::update(mg::Real dt)
     typedef std::vector<ElasticRod*>::const_iterator SIter;
     for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
     {
-        (*it)->m_ppos[0].set(m_object->getPosition().m_x, m_object->getPosition().m_y, m_object->getPosition().m_z);
+        (*it)->m_ppos[0] = m_object->getPosition();
         (*it)->update(dt);
     }
 

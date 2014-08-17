@@ -12,8 +12,6 @@
 #include <ngl/Random.h>
 #include <ngl/VAOPrimitives.h>
 #include <ngl/ShaderLib.h>
-#include <boost/foreach.hpp>
-
 #include "Utils.h"
 
 void buildVAOs(const std::vector<Mesh*>& meshList, std::vector<ngl::VertexArrayObject*>& o_VAOList);
@@ -43,13 +41,12 @@ GLWindow::GLWindow(const QGLFormat _format, int _timer, QWidget *_parent ) : QGL
 GLWindow::~GLWindow()
 {
     std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
-    ngl::NGLInit *init = ngl::NGLInit::instance();
-
     if (m_scene != NULL)
     {
         delete m_cam;
     }
 
+    ngl::NGLInit *init = ngl::NGLInit::instance();
     init->NGLQuit();
 }
 
@@ -60,8 +57,8 @@ GLWindow::~GLWindow()
 //----------------------------------------------------------------------------------------------------------------------
 void GLWindow::initializeGL()
 {
-    m_cameraTransform.m_phi = 0;
-    m_cameraTransform.m_theta = 30;
+    m_cameraTransform.m_angle0 = 0;
+    m_cameraTransform.m_angle1 = 0;
     m_cameraTransform.m_translation.set(0,0,-6);
 
     ngl::NGLInit::instance();
@@ -130,32 +127,58 @@ void GLWindow::initializeGL()
     light.loadToShader("light");
 
 
-    shader->createShaderProgram("Colour");
+    shader->createShaderProgram("Tube");
 
-    shader->attachShader("ColourGeometry", ngl::GEOMETRY);
-    shader->attachShader("ColourVertex", ngl::VERTEX);
-    shader->attachShader("ColourFragment", ngl::FRAGMENT);
-    shader->loadShaderSource("ColourGeometry", "shaders/ColourGeom.glsl");
-    shader->loadShaderSource("ColourVertex", "shaders/ColourVert.glsl");
-    shader->loadShaderSource("ColourFragment", "shaders/ColourFrag.glsl");
+    shader->attachShader("TubeGeometry", ngl::GEOMETRY);
+    shader->attachShader("TubeVertex", ngl::VERTEX);
+    shader->attachShader("TubeFragment", ngl::FRAGMENT);
+    shader->loadShaderSource("TubeGeometry", "shaders/TubeGeom.glsl");
+    shader->loadShaderSource("TubeVertex", "shaders/TubeVert.glsl");
+    shader->loadShaderSource("TubeFragment", "shaders/TubeFrag.glsl");
 
-    shader->compileShader("ColourGeometry");
-    shader->compileShader("ColourVertex");
-    shader->compileShader("ColourFragment");
-    shader->attachShaderToProgram("Colour","ColourGeometry");
-    shader->attachShaderToProgram("Colour","ColourVertex");
-    shader->attachShaderToProgram("Colour","ColourFragment");
+    shader->compileShader("TubeGeometry");
+    shader->compileShader("TubeVertex");
+    shader->compileShader("TubeFragment");
+    shader->attachShaderToProgram("Tube","TubeGeometry");
+    shader->attachShaderToProgram("Tube","TubeVertex");
+    shader->attachShaderToProgram("Tube","TubeFragment");
 
-    shader->bindAttribute("Colour",0,"inVert");
+    shader->bindAttribute("Tube",0,"inVert");
+    shader->bindAttribute("Tube",1,"inUV");
+    shader->bindAttribute("Tube",2,"inNormal");
 
-    shader->linkProgramObject("Colour");
-    (*shader)["Colour"]->use();
-    shader->setShaderParam1i("Normalize",1);
+    shader->linkProgramObject("Tube");
+    (*shader)["Tube"]->use();
+    light.loadToShader("light");
+
+
+    shader->createShaderProgram("DebugRod");
+
+    shader->attachShader("DebugGeometry", ngl::GEOMETRY);
+    shader->attachShader("DebugVertex", ngl::VERTEX);
+    shader->attachShader("DebugFragment", ngl::FRAGMENT);
+    shader->loadShaderSource("DebugGeometry", "shaders/DebugGeom.glsl");
+    shader->loadShaderSource("DebugVertex", "shaders/DebugVert.glsl");
+    shader->loadShaderSource("DebugFragment", "shaders/DebugFrag.glsl");
+
+    shader->compileShader("DebugGeometry");
+    shader->compileShader("DebugVertex");
+    shader->compileShader("DebugFragment");
+    shader->attachShaderToProgram("DebugRod","DebugGeometry");
+    shader->attachShaderToProgram("DebugRod","DebugVertex");
+    shader->attachShaderToProgram("DebugRod","DebugFragment");
+
+    shader->bindAttribute("DebugRod",0,"inVert");
+    shader->bindAttribute("DebugRod",1,"inKB");
+    shader->bindAttribute("DebugRod",2,"inM1");
+    shader->bindAttribute("DebugRod",3,"inM2");
+
+    shader->linkProgramObject("DebugRod");
+    (*shader)["DebugRod"]->use();
     light.loadToShader("light");
 
 
     ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
-    prim->createSphere("sphere",1.0,20);
 
     prim->createLineGrid("grid", 10, 10, 10);
 
@@ -184,7 +207,7 @@ void GLWindow::loadMatricesToShader()
     ngl::Mat3 normalMatrix;
     ngl::Mat4 M;
     M = m_transform.getMatrix();
-    MV = M * m_cameraTransform.getTransform() * m_cam->getViewMatrix();
+    MV = M * m_cameraTransform.getMatrix() * m_cam->getViewMatrix();
     MVP = MV * m_cam->getProjectionMatrix();
     normalMatrix = MV;
     normalMatrix.inverse();
@@ -202,7 +225,7 @@ void GLWindow::loadMatricesToHairShader()
     ngl::Mat4 MV;
     ngl::Mat4 MVP;
     M = m_transform.getMatrix();
-    MV = M * m_cameraTransform.getTransform() * m_cam->getViewMatrix();
+    MV = M  * m_cameraTransform.getMatrix() * m_cam->getViewMatrix();
     MVP = MV * m_cam->getProjectionMatrix();
     shader->setShaderParamFromMat4("MVP",MVP);
     shader->setShaderParamFromMat4("M",M);
@@ -214,92 +237,8 @@ void GLWindow::setSelectedObject(RenderObject *object)
     m_selectedTransform.reset();
     if (m_selectedObject != NULL)
     {
-        m_selectedTransform.m_transform = m_selectedObject->getTransform();
-        m_selectedTransform.m_translation.set(m_selectedTransform.m_transform.m_30, m_selectedTransform.m_transform.m_31, m_selectedTransform.m_transform.m_32);
+        m_selectedTransform.setTransform(m_selectedObject->getTransform());
     }
-}
-
-void GLWindow::drawStrand(const Strand &strand)
-{
-    if (m_strandVAO != NULL)
-    {
-        m_strandVAO->bind();
-
-        m_strandVAO->updateIndexedData(strand.m_ppos.size() * sizeof(ngl::Vec4),
-                                       strand.m_ppos[0].m_x);
-
-        m_strandVAO->setVertexAttributePointer(0, 4, GL_FLOAT, 0, 0);
-
-        m_strandVAO->draw();
-        m_strandVAO->unbind();
-        return;
-    }
-
-    std::vector<unsigned> indices(strand.m_ppos.size() + 2);
-    unsigned i = 0;
-    indices[i] = 0;
-    for (i = 0; i < strand.m_ppos.size(); ++i)
-    {
-        indices[i + 1] = i;
-    }
-    indices[i + 1] = i - 1;
-
-    m_strandVAO = ngl::VertexArrayObject::createVOA(GL_LINE_STRIP_ADJACENCY);
-    m_strandVAO->bind();
-
-
-    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(ngl::Vec4),
-                               strand.m_ppos[0].m_x,
-                               indices.size(),
-                               &indices[0],
-                               GL_UNSIGNED_INT);
-
-    m_strandVAO->setVertexAttributePointer(0, 4, GL_FLOAT, 0, 0);
-    m_strandVAO->setNumIndices(indices.size());
-
-    m_strandVAO->draw();
-    m_strandVAO->unbind();
-}
-
-void GLWindow::drawHairStrand(const ElasticRod& strand)
-{
-    if (m_strandVAO != NULL)
-    {
-        m_strandVAO->bind();
-
-        m_strandVAO->updateIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
-                                       strand.m_ppos[0][0]);
-
-        m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
-
-        m_strandVAO->draw();
-        m_strandVAO->unbind();
-        return;
-    }
-
-    std::vector<unsigned> indices(strand.m_ppos.size() + 2);
-    unsigned i = 0;
-    indices[i] = 0;
-    for (i = 0; i < strand.m_ppos.size(); ++i)
-    {
-        indices[i + 1] = i;
-    }
-    indices[i + 1] = i - 1;
-
-    m_strandVAO = ngl::VertexArrayObject::createVOA(GL_LINE_STRIP_ADJACENCY);
-    m_strandVAO->bind();
-
-    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
-                                strand.m_ppos[0][0],
-                               indices.size(),
-                               &indices[0],
-                               GL_UNSIGNED_INT);
-
-    m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
-    m_strandVAO->setNumIndices(indices.size());
-
-    m_strandVAO->draw();
-    m_strandVAO->unbind();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -320,56 +259,33 @@ void GLWindow::paintGL()
     // get an instance of the VBO primitives for drawing
     ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
 
-    m_transform.reset();
-
-    ngl::VertexArrayObject* vao;
-    const std::vector<RenderObject*>& roList = m_scene->getRenderObjects();
-    typedef std::vector<RenderObject*>::const_iterator ROIter;
-    for (ROIter it = roList.begin(); it != roList.end(); ++it)
-    {
-        RenderObject* ro = (*it);
-        m_transform.reset();
-        {
-//            place object in world
-            shader->use("Phong");
-            m_transform.setMatrix(ro->getTransform());
-            loadMatricesToShader();
-
-//            actual draw
-            vao =  m_VAOList.at(ro->getMeshId());
-            if (vao == NULL)
-                continue;
-
-            vao->bind();
-            vao->draw();
-            vao->unbind();
-        }
-    }
-
-    // draw spring lines
-//    glLineWidth(0.05);
-//    shader->use("Colour");
-//    shader->setShaderParam4f("Colour",0.4,0.3,0.0,1.0);
-//    // load transform stack
-//    m_transform.reset();
-//    loadMatricesToHairShader();
-
-//    const std::vector<Hair*>& hList = m_scene->getHairs();
-//    typedef std::vector<Hair*>::const_iterator HIter;
-//    typedef std::vector<Strand>::const_iterator SIter;
-//    for (HIter hit = hList.begin(); hit != hList.end(); hit++)
+//    ngl::VertexArrayObject* vao;
+//    const std::vector<RenderObject*>& roList = m_scene->getRenderObjects();
+//    typedef std::vector<RenderObject*>::const_iterator ROIter;
+//    for (ROIter it = roList.begin(); it != roList.end(); ++it)
 //    {
-//        Hair* hair = *hit;
-//        for (SIter it = hair->m_strands.begin(); it != hair->m_strands.end(); it++)
+//        RenderObject* ro = (*it);
+//        m_transform.reset();
 //        {
+////            place object in world
+//            shader->use("Phong");
+//            m_transform.setMatrix(ro->getTransform());
+//            loadMatricesToShader();
 
-//            drawStrand((*it));
+////            actual draw
+//            vao =  m_VAOList.at(ro->getMeshId());
+//            if (vao == NULL)
+//                continue;
+
+//            vao->bind();
+//            vao->draw();
+//            vao->unbind();
 //        }
 //    }
 
     // draw spring lines
     glLineWidth(0.05);
-    shader->use("Colour");
+    shader->use("DebugRod");
     shader->setShaderParam4f("Colour", 0.8, 0.8, 0.0, 1.0);
     // load transform stack
     m_transform.reset();
@@ -383,7 +299,6 @@ void GLWindow::paintGL()
     }
 
     shader->use("Phong");
-//    shader->setShaderParam4f("Colour",0.4,0.4,0.4,1.0);
     m_transform.reset();
     loadMatricesToShader();
     prim->draw("grid");
@@ -404,10 +319,10 @@ void GLWindow::mouseMoveEvent ( QMouseEvent * _event )
     // pressed when the mousePress/Release event is generated
     if(m_rotate && _event->buttons() == Qt::LeftButton)
     {
-        ngl::Real dx = _event->x() - m_mouseX;
-        ngl::Real dy = _event->y() - m_mouseY;
-        ttool.m_phi = fmod(ttool.m_phi + dx, 360.0);
-        ttool.m_theta = fmod(ttool.m_theta + dy, 360.0);
+        mg::Real dx = _event->x() - m_mouseX;
+        mg::Real dy = _event->y() - m_mouseY;
+        ttool.m_angle0 = fmod(ttool.m_angle0 + dx, 360.0);
+        ttool.m_angle1 = fmod(ttool.m_angle1 + dy, 360.0);
 
         m_mouseX = _event->x();
         m_mouseY = _event->y();
@@ -417,17 +332,18 @@ void GLWindow::mouseMoveEvent ( QMouseEvent * _event )
 
     if(m_zoom && _event->buttons() == Qt::RightButton)
     {
-        ngl::Real dx = 2 * ngl::Real(_event->x() - m_mouseX) / width();
-        ngl::Real dy = 2 * ngl::Real(_event->y() - m_mouseY) / height();
-        ngl::Vec4 dirz = (m_cam->getLook() - m_cam->getEye());
+        mg::Real dx = 2 * mg::Real(_event->x() - m_mouseX) / width();
+        mg::Real dy = 2 * mg::Real(_event->y() - m_mouseY) / height();
+        ngl::Vec4 lookDir = (m_cam->getLook() - m_cam->getEye());
+        mg::Vec3D dirz(lookDir.m_x, lookDir.m_y, lookDir.m_z);
 
         if (m_selectedObject != NULL)
         {
-            dirz = dirz * m_cameraTransform.getTransform().inverse();
+            dirz = mg::transform_vector(m_cameraTransform.getTransform().inverse(), dirz);
             dirz.normalize();
-            ngl::Vec4 dirx = mg::EY.cross(dirz);
+            mg::Vec3D dirx = mg::cross(mg::EY, dirz);
             dirx.normalize();
-            ngl::Vec4 diry = dirz.cross(dirx);
+            mg::Vec3D diry = mg::cross(dirz, dirx);
             diry.normalize();
             ttool.m_translation += dirx * dx;
             ttool.m_translation += diry * dy;
@@ -493,8 +409,8 @@ void GLWindow::mouseReleaseEvent ( QMouseEvent * _event )
 
 void GLWindow::timerEvent( QTimerEvent *_event)
 {
-    m_scene->update(1.0 / mg::UPS);
-//    m_scene->update(0.01);
+//    m_scene->update(1.0 / mg::UPS);
+    m_scene->update(0.01);
     updateGL();
 }
 
@@ -510,6 +426,84 @@ void GLWindow::stopSimTimer()
 }
 
 
+
+void GLWindow::drawHairStrand(const ElasticRod& strand)
+{
+    std::vector<mg::Vec3D> v;
+    if (m_strandVAO != NULL)
+    {
+        m_strandVAO->bind();
+
+        m_strandVAO->updateIndexedData(0, strand.m_ppos.size() * sizeof(mg::Vec3D),
+                                       strand.m_ppos[0][0]);
+        m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
+
+        m_strandVAO->updateIndexedData(1, strand.m_kb.size() * sizeof(mg::Vec3D),
+                                       strand.m_kb[0][0]);
+        m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
+
+        m_strandVAO->updateIndexedData(2, strand.m_m1.size() * sizeof(mg::Vec3D),
+                                       strand.m_m1[0][0]);
+        m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
+
+        m_strandVAO->updateIndexedData(3, strand.m_m2.size() * sizeof(mg::Vec3D),
+                                       strand.m_m2[0][0]);
+        m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
+
+
+        m_strandVAO->draw();
+        m_strandVAO->unbind();
+        return;
+    }
+
+    std::vector<unsigned> indices(strand.m_ppos.size() + 2);
+    unsigned i = 0;
+    indices[i] = 0;
+    for (i = 0; i < strand.m_ppos.size(); ++i)
+    {
+        indices[i + 1] = i;
+    }
+    indices[i + 1] = i - 1;
+
+    m_strandVAO = ngl::VertexArrayObject::createVOA(GL_LINE_STRIP_ADJACENCY);
+    m_strandVAO->bind();
+
+    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
+                                strand.m_ppos[0][0],
+                                indices.size(),
+                                &indices[0],
+                                GL_UNSIGNED_INT);
+    m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
+
+    m_strandVAO->setIndexedData(strand.m_kb.size() * sizeof(mg::Vec3D),
+                                strand.m_kb[0][0],
+                                indices.size(),
+                                &indices[0],
+                                GL_UNSIGNED_INT);
+    m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
+
+    m_strandVAO->setIndexedData(strand.m_m1.size() * sizeof(mg::Vec3D),
+                                strand.m_m1[0][0],
+                                indices.size(),
+                                &indices[0],
+                                GL_UNSIGNED_INT);
+    m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
+
+    m_strandVAO->setIndexedData(strand.m_m2.size() * sizeof(mg::Vec3D),
+                                strand.m_m2[0][0],
+                                indices.size(),
+                                &indices[0],
+                                GL_UNSIGNED_INT);
+    m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
+
+
+    m_strandVAO->setNumIndices(indices.size());
+
+    m_strandVAO->draw();
+    m_strandVAO->unbind();
+}
+
+
 // ============================ utility functions ==========================
 
 void buildVAOs(const std::vector<Mesh*>& meshList, std::vector<ngl::VertexArrayObject*>& o_VAOList)
@@ -520,7 +514,7 @@ void buildVAOs(const std::vector<Mesh*>& meshList, std::vector<ngl::VertexArrayO
     unsigned i = 0;
     for (std::vector<Mesh*>::const_iterator it = meshList.begin(); it != meshList.end(); ++it)
     {
-        if ((*it)->getNFaces() == 0)
+        if ((*it)->getNPrimitives() == 0)
         {
             ++i;
             continue;
@@ -539,21 +533,21 @@ void feedVAO(const Mesh& mesh, ngl::VertexArrayObject& o_vao)
     o_vao.bind();
     // in this case we are going to set our data as the vertices above
     // now we set the attribute pointer to be 0 (as this matches vertIn in our shader)
-    o_vao.setIndexedData(mesh.m_vertices.size() * sizeof(ngl::Vec4),
-                        mesh.m_vertices[0].m_x,
-                        mesh.m_vindices.size(),
-                        &mesh.m_vindices[0],
-                        GL_UNSIGNED_INT);
-
-    o_vao.setVertexAttributePointer(0, 4, GL_FLOAT, 0, 0);
+    o_vao.setIndexedData(mesh.m_vertices.size() * sizeof(mg::Vec3D),
+                         mesh.m_vertices[0][0],
+                         mesh.m_vindices.size(),
+                         &mesh.m_vindices[0],
+                         GL_UNSIGNED_INT);
+    o_vao.setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
 
     // now we set the attribute pointer to be 2 (as this matches normalIn in our shader)
-    o_vao.setIndexedData(mesh.m_normals.size() * sizeof(ngl::Vec4),
-                        mesh.m_normals[0].m_x,
-                        mesh.m_nindices.size(),
-                        &mesh.m_nindices[0],
-                        GL_UNSIGNED_INT);
-    o_vao.setVertexAttributePointer(2, 4, GL_FLOAT, 0, 0);
+    o_vao.setIndexedData(mesh.m_normals.size() * sizeof(mg::Vec3D),
+                         mesh.m_normals[0][0],
+                         mesh.m_vindices.size(),
+                         &mesh.m_vindices[0],
+                         GL_UNSIGNED_INT);
+    o_vao.setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
+
     o_vao.setNumIndices(mesh.m_vindices.size());
 
     // now unbind

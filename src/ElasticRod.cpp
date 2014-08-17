@@ -10,7 +10,7 @@
 struct ElasticRod::MinimizationPImpl
 {
 public:
-    MinimizationPImpl(const ElasticRod* rod, MINIMIZATION_STRATEGY strategy, double tolerance = 1, unsigned maxIter = 10000);
+    MinimizationPImpl(const ElasticRod* rod, MINIMIZATION_STRATEGY strategy, double tolerance = 1, unsigned maxIter = 1000);
     ~MinimizationPImpl();
 
     double minimize(ColumnVector& io_theta);
@@ -196,7 +196,7 @@ void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
                         std::vector<mg::Vec3D>& o_v) const
 {
 //    check if Bishop frame is correctly defined
-    assert( fabs(mg::length_squared( u0 ) - 1) < mg::ERR );
+//    assert( fabs(mg::length_squared( u0 ) - 1) < mg::ERR );
 //    std::cout << "ANGLE u0 edge[0] " << mg::deg( std::acos( mg::dot( u0, mg::normalize(edges[0]) ) ) ) << std::endl;
 
     computeKB(edges, o_kb);
@@ -232,10 +232,10 @@ void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
         o_v[i] = mg::cross(edges[i], o_u[i]);
         o_v[i].normalize();
 
-        assert( mg::length_squared(o_kb[i]) >= mg::ERR );
-        assert( fabs(p[0]) <  mg::ERR );
-        assert( fabs(mg::length_squared(o_u[i]) - 1) < mg::ERR );
-        assert( fabs(mg::length_squared(o_v[i]) - 1) < mg::ERR );
+//        assert( mg::length_squared(o_kb[i]) >= mg::ERR );
+//        assert( fabs(p[0]) <  mg::ERR );
+//        assert( fabs(mg::length_squared(o_u[i]) - 1) < mg::ERR );
+//        assert( fabs(mg::length_squared(o_v[i]) - 1) < mg::ERR );
 //        std::cout << "LENGTH u[" << i << "] " << mg::length_squared(o_u[i]) << std::endl;
 //        std::cout << "ANGLE u edge[" << i << "] " << mg::deg( std::acos( mg::dot( o_u[i], mg::normalize(edges[i]) ) ) ) << std::endl;
 //        std::cout << "ANGLE v edge[" << i << "] " << mg::deg( std::acos( mg::dot( o_v[i], mg::normalize(edges[i]) ) ) ) << std::endl;
@@ -283,9 +283,9 @@ void ElasticRod::computeMaterialFrame(const ColumnVector &theta,
         io_m1[i] = m1;
         io_m2[i] = m2;
 
-        assert( fabs( mg::length_squared( m1 ) - 1 ) < mg::ERR );
-        assert( fabs( mg::length_squared( m2 ) - 1 ) < mg::ERR);
-        assert( fabs( mg::dot( m1, m2 )) < mg::ERR );
+//        assert( fabs( mg::length_squared( m1 ) - 1 ) < mg::ERR );
+//        assert( fabs( mg::length_squared( m2 ) - 1 ) < mg::ERR);
+//        assert( fabs( mg::dot( m1, m2 )) < mg::ERR );
 //        std::cout << "ANGLE m1 edge[" << i << "] " << mg::deg( std::acos( mg::dot( m1, mg::normalize(edges[i]) ) ) ) << std::endl;
 //        std::cout << "ANGLE m2 edge[" << i << "] " << mg::deg( std::acos( mg::dot( m2, mg::normalize(edges[i]) ) ) ) << std::endl;
     }
@@ -388,7 +388,7 @@ void ElasticRod::computeExternalForces(const std::vector<mg::Vec3D>& vertices,
         {
             continue;
         }
-        o_forces[i] += mg::GRAVITY * m_pmass[i];
+        o_forces[i] += mg::GRAVITY * m_pmass[i] - 0.01 * m_pvel[i];
     }
 }
 
@@ -457,11 +457,11 @@ void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
         }
 
 //        need to limit the force otherwise when e[i] ~ -e[i - 1] ||kb|| goes to infinity => force goes to infinity
-//        if (mg::length_squared(o_forces[i]) > m_maxElasticForce * m_maxElasticForce)
-//        {
-//            o_forces[i].normalize();
-//            o_forces[i] *= m_maxElasticForce;
-//        }
+        if (mg::length_squared(o_forces[i]) > m_maxElasticForce * m_maxElasticForce)
+        {
+            o_forces[i].normalize();
+            o_forces[i] *= m_maxElasticForce;
+        }
     }
 }
 
@@ -700,9 +700,7 @@ void ElasticRod::updateCurrentState()
 
     computeMaterialFrame(m_theta, m_m1, m_m2);
     std::cout<< "Theta:" << m_theta << std::endl;
-    mg::Real E;
-    computeEnergy(m_m1, m_m2, m_theta, E);
-    std::cout<< "Total Energy:" << E << " MIN Energy: " << minE << std::endl;
+    std::cout<< "Total Energy:" << minE << std::endl;
 }
 
 

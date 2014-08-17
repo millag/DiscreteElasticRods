@@ -21,8 +21,6 @@ SOURCES += src/main.cpp \
     src/Mesh.cpp \
     src/RenderObject.cpp \
     src/AABB.cpp \
-    src/Hair.cpp \
-    src/VoxelGrid.cpp \
     src/ElasticRod.cpp \
     src/HairStrand.cpp \
     libs/dlib-18.9/dlib/all/source.cpp \
@@ -39,11 +37,8 @@ HEADERS += include/MainWindow.h \
     include/Mesh.h \
     include/RenderObject.h \
     include/AABB.h \
-    include/Hair.h \
     include/TransformTool.h \
-    include/HairyObject.h \
     include/IServant.h \
-    include/VoxelGrid.h \
     include/ElasticRod.h \
     include/Types.h \
     include/cml_config.h \
@@ -60,7 +55,14 @@ OTHER_FILES+= shaders/Phong.fs \
     shaders/PhongFragment.glsl \
     shaders/ColourFrag.glsl \
     shaders/ColourVert.glsl \
-    shaders/ColourGeom.glsl
+    shaders/ColourGeom.glsl \
+    shaders/TubeVert.glsl \
+    shaders/TubeGeom.glsl \
+    shaders/TubeFrag.glsl \
+    shaders/TubeTCS.glsl \
+    shaders/DebugVert.glsl \
+    shaders/DebugGeom.glsl \
+    shaders/DebugFrag.glsl
 
 DESTDIR=./
 CONFIG += console
