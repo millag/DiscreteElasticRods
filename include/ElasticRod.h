@@ -88,6 +88,8 @@ public:
 /// NOTE: it is used also as temporary place holder for v axis of Bishop frame
     std::vector<mg::Vec3D> m_m2;
 
+    std::vector<mg::Vec3D> m_force;
+
 private:
 /// #twistAngle = #edges = n
     ColumnVector m_theta;
@@ -213,15 +215,19 @@ private:
 
 
     void computedEdQj(unsigned j,
-                      const std::vector<mg::Vec3D>& m1,
-                      const std::vector<mg::Vec3D>& m2,
+                      const mg::Vec3D &m1j,
+                      const mg::Vec3D &m2j,
                       const ColumnVector& theta,
                       const mg::Matrix2D& JB,
                       mg::Real& o_dEQj) const;
 
-    void computeHessian(const std::vector<mg::Vec3D>& m1,
-                        const std::vector<mg::Vec3D>& m2,
-                        Hessian& o_H) const;
+    void computeHessian(unsigned j,
+                        const mg::Vec3D &m1j,
+                        const mg::Vec3D &m2j,
+                        const mg::Matrix2D &J,
+                        mg::Real& o_Hjjm1,
+                        mg::Real& o_Hjj,
+                        mg::Real& o_Hjjp1) const;
 
 
 };

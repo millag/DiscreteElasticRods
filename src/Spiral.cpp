@@ -7,9 +7,9 @@ Spiral::Spiral(): m_object(NULL)
     m_radius = 0.2;
     m_lenght = 4.0;
 
-    m_bendStiffness = 0.1;
-    m_twistStiffness = 0.01;
-    m_maxForce = 10;
+    m_bendStiffness = 0.01;
+    m_twistStiffness = 0.02;
+    m_maxForce = 0.5;
 
     m_nParticles = 25;
     m_nIterations = 4;
@@ -71,13 +71,14 @@ void Spiral::init(const RenderObject* object)
         pos[i] = (1 - t) * start + t * end;
 
         vel[i].zero();
-        mass[i] = 0.01;
+        mass[i] = 0.001;
     }
 
-    for (unsigned i = 0; i < 1; ++i)
+    for (unsigned i = 0; i < 100; ++i)
     {
-        ElasticRod* strand = new ElasticRod(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce, ElasticRod::BFGS);
-        strand->init(restpos, u0, restpos, vel, mass, twistAngle, isClamped);
+        ElasticRod* strand = new ElasticRod(m_bendStiffness, m_twistStiffness,
+                                            m_nIterations, m_maxForce, ElasticRod::NONE);
+        strand->init(restpos, u0, pos, vel, mass, twistAngle, isClamped);
         m_strands.push_back(strand);
     }
 }

@@ -4,6 +4,7 @@
 #include "ElasticRod.h"
 #include "RenderObject.h"
 
+
 class HairStrand
 {
 public:
@@ -12,8 +13,10 @@ public:
 
     const std::vector<ElasticRod*>& getStrands() const { return m_strands; }
 
+    void generateStrands(const RenderObject* object);
     void initialize(const RenderObject* object);
     void update(mg::Real dt);
+
 
     mg::Real m_length;
     mg::Real m_lengthVariance;

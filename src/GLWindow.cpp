@@ -438,8 +438,8 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
                                        strand.m_ppos[0][0]);
         m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->updateIndexedData(1, strand.m_kb.size() * sizeof(mg::Vec3D),
-                                       strand.m_kb[0][0]);
+        m_strandVAO->updateIndexedData(1, strand.m_force.size() * sizeof(mg::Vec3D),
+                                       strand.m_force[0][0]);
         m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
 
         m_strandVAO->updateIndexedData(2, strand.m_m1.size() * sizeof(mg::Vec3D),
@@ -475,8 +475,8 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
                                 GL_UNSIGNED_INT);
     m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setIndexedData(strand.m_kb.size() * sizeof(mg::Vec3D),
-                                strand.m_kb[0][0],
+    m_strandVAO->setIndexedData(strand.m_force.size() * sizeof(mg::Vec3D),
+                                strand.m_force[0][0],
                                 indices.size(),
                                 &indices[0],
                                 GL_UNSIGNED_INT);
