@@ -14,7 +14,9 @@ HairStrand::HairStrand():m_object(NULL)
     m_nParticles = 15;
     m_nIterations = 4;
 
+    m_rodParams = new RodParams(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce);
     m_strands.reserve(100);
+
 }
 
 HairStrand::~HairStrand()
@@ -25,6 +27,8 @@ HairStrand::~HairStrand()
     {
         delete (*it);
     }
+
+    delete m_rodParams;
 }
 
 void HairStrand::initialize(const RenderObject* object)
@@ -74,7 +78,7 @@ void HairStrand::initialize(const RenderObject* object)
 
     for (unsigned i = 0; i < 1; ++i)
     {
-        ElasticRod* strand = new ElasticRod(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce, ElasticRod::NEWTON);
+        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::NEWTON);
         strand->init(restpos, mg::Vec3D(0,1,0), restpos, vel, mass, twistAngle, isClamped);
         m_strands.push_back(strand);
     }
@@ -131,7 +135,7 @@ void HairStrand::generateStrands(const RenderObject* object)
 
     for (unsigned i = 0; i < 1; ++i)
     {
-        ElasticRod* strand = new ElasticRod(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce, ElasticRod::BFGS);
+        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::BFGS);
         strand->init(restpos, mg::Vec3D(0,1,0), restpos, vel, mass, twistAngle, isClamped);
         m_strands.push_back(strand);
     }

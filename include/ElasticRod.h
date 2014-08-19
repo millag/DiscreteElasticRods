@@ -10,17 +10,50 @@
 typedef dlib::matrix<double,0,1> ColumnVector;
 typedef dlib::matrix<double> Hessian;
 
+struct RodParams
+{
+    RodParams(mg::Real bendStiffness = 1.0,
+              mg::Real twistStiffness = 1.0,
+              unsigned pbdIter = 4,
+              mg::Real maxElasticForce = 1.0);
+
+    inline void setBendStiffness(const mg::Real& bendStiffness);
+    inline void setTwistStiffness(const mg::Real& twistStiffness);
+
+///    bending stiffness B = [EI1 0  ]   =  [bendStiffnes  0           ]
+///                          [0   EI2]      [0             bendStiffnes]
+///    depends on the Young modulus E(this is material property measured and constant throughout simulation)
+///    and the area moment of inertia I1 or I2 which in turn depend only on cross-section area
+///    note that I1 = I2 when the cross-section is circular, thus we always assume isotropic response
+///    otherwise there should be 2 values describing the stiffness in each material axis direction
+///    FIX: need to calculate bendStiffnes by using the thickness and density
+    mg::Matrix2D m_B;
+///    twisting stiffness m_beta = GJ
+///    depends on the shear modulus G = E/(2(1 + v)) where E is Young modulus and v is the Poison ratio
+///    (this are material properties measured and constant throughout simulation)
+///    and the area moment of twist J which in turn depends only on cross-section area
+///    FIX: need to calculate twistStiffness by using the thickness and density
+    mg::Real m_beta;
+///     constraints are enforced using PBD(Position Based Dynamics) framework
+///     the parameter controls # of PBD iterations to be performed
+///     NOTE that PBD DOES NOT GUARANTEE exact enforcement but converges towards the solution
+///     higher value of iterations means higher precision but is more computationally expensive
+    unsigned m_pbdIter;
+///    parameter that limits elastic force magnitude
+///    need to limit the force otherwise when e[i] ~ -e[i - 1], ||kb|| goes to inf
+///    => elastic force goes to inf and simulation blows up
+    mg::Real m_maxElasticForce;
+};
+
 class ElasticRod {
 
 public:
 
     enum MINIMIZATION_STRATEGY {NONE, NEWTON, BFGS, BFGS_NUMERIC};
 
-    ElasticRod(mg::Real bendStiffness = 1.0,
-               mg::Real twistStiffness = 1.0,
-               unsigned nIteratons = 4,
-               mg::Real maxElasticForce = 100,
-               MINIMIZATION_STRATEGY strategy = BFGS_NUMERIC);
+//    NOTE: valid RodParams object is mandatory
+    ElasticRod(const RodParams* params);
+    ElasticRod(const RodParams* params, MINIMIZATION_STRATEGY strategy = BFGS, double minTolerance = 1e-6f, unsigned minMaxIter = 100);
 
     ~ElasticRod();
 
@@ -36,34 +69,19 @@ public:
     void update(mg::Real dt);
 
 public:
-///    bending stiffness B = [EI1 0  ]   =  [bendStiffnes  0           ]
-///                          [0   EI2]      [0             bendStiffnes]
-///    depends on the Young modulus E(this is material property measured and constant throughout simulation)
-///    and the area moment of inertia I1 or I2 which in turn depend only on cross-section area
-///    note that I1 = I2 when the cross-section is circular, thus we always assume isotropic response
-///    otherwise there should be 2 values describing the stiffness in each material axis direction
-///    FIX: need to calculate bendStiffnes by using the thickness and density
-    mg::Matrix2D m_B;
 
-///    twisting stiffness m_beta = GJ
-///    depends on the shear modulus G = E/(2(1 + v)) where E is Young modulus and v is the Poison ratio
-///    (this are material properties measured and constant throughout simulation)
-///    and the area moment of twist J which in turn depends only on cross-section area
-///    FIX: need to calculate twistStiffness by using the thickness and density
-    mg::Real m_beta;
+//    mg::Matrix2D m_B;
 
-///     constraints are enforced using PBD(Position Based Dynamics) framework
-///     the parameter controls # of PBD iterations to be performed
-///     NOTE that PBD DOES NOT GUARANTEE exact enforcement but converges towards the solution
-///     higher value of iterations means higher precision but is more computationally expensive
-    unsigned m_nIter;
 
-///    parameter that limits elastic force magnitude
-///    need to limit the force otherwise when e[i] ~ -e[i - 1], ||kb|| goes to inf
-///    => elastic force goes to inf and simulation blows up
-    mg::Real m_maxElasticForce;
+//    mg::Real m_beta;
 
-//    ========= should be private ========
+
+//    unsigned m_nIter;
+
+
+//    mg::Real m_maxElasticForce;
+
+//    ========= should be private - made public only for debug purposes ========
 
 /// #vertices = n + 1
     std::vector<mg::Vec3D> m_ppos;
@@ -87,8 +105,9 @@ public:
 /// #m2 = #edges - m2[i] defines material axis m2(binormal) at e[i]
 /// NOTE: it is used also as temporary place holder for v axis of Bishop frame
     std::vector<mg::Vec3D> m_m2;
-
-    std::vector<mg::Vec3D> m_force;
+/// #m_elasticForce = #positions - m_elasticForce[i] contains applied elastic force from last iteration
+/// NOTE: this is used for debug purpose only - in general theres no need to store it
+    std::vector<mg::Vec3D> m_elasticForce;
 
 private:
 /// #twistAngle = #edges = n
@@ -105,15 +124,17 @@ private:
 /// #restWnext = #edges - restWnext[i] defines rest material curvature for kb[i] at e[i]
 /// NOTE: there is no m_restWnext[0], because kb[0] = (0,0,0) => m_restWnext[0] = (0,0)
     std::vector<mg::Vec2D> m_restWnext;
-
 /// #edges = #vertices - 1 defines tangent axis for the segment between v[i + 1] and v[i]
 /// together with m_m1 and m_m2 they define material frame for each segment of the rod
     std::vector<mg::Vec3D> m_edges;
 
-
-
+//    contains all params that drive the rod and can be changed dynamically (animated, whatever)
+    const RodParams* m_params;
 
 private:
+
+    ElasticRod(): m_params(NULL), m_minimization(NULL)
+    { }
 
     struct MinimizationPImpl;
     MinimizationPImpl* m_minimization;
@@ -178,7 +199,7 @@ private:
                                 std::vector<mg::Vec3D>& o_forces) const;
 
     void computeElasticForces(const std::vector<mg::Vec3D>& vertices,
-                              std::vector<mg::Vec3D>& o_forces);
+                              std::vector<mg::Vec3D>& o_forces) const;
 
     void computeGradientKB(const std::vector<mg::Vec3D>& kb,
                            const std::vector<mg::Vec3D>& edges,

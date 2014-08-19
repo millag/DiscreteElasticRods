@@ -26,6 +26,7 @@ in vec3 vert_gs[];
 in vec3 kb_gs[];
 in vec3 m1_gs[];
 in vec3 m2_gs[];
+in vec3 force_gs[];
 
 out vec3 eDir;
 out vec3 lDir;
@@ -69,6 +70,25 @@ void main ()
     eDir = normalize(eyePos - gl_Position.xyz);
     lDir = normalize(light.position - gl_Position).xyz;
     color = vec4(0.0, 1.0, 0.0, 1.0);
+    gl_Position = MVP * gl_Position;
+    EmitVertex();
+
+    EndPrimitive();
+
+//  draw force
+    tDir = normalize(force_gs[1]);
+    gl_Position = vec4(vert_gs[1], 1.0);
+    eDir = normalize(eyePos - gl_Position.xyz);
+    lDir = normalize(light.position - gl_Position).xyz;
+    color = vec4(0.0, 1.0, 1.0, 1.0);
+    gl_Position = MVP * gl_Position;
+    EmitVertex();
+
+    tDir = normalize(force_gs[1]);
+    gl_Position = vec4(vert_gs[1] + force_gs[1], 1.0);
+    eDir = normalize(eyePos - gl_Position.xyz);
+    lDir = normalize(light.position - gl_Position).xyz;
+    color = vec4(0.0, 1.0, 1.0, 1.0);
     gl_Position = MVP * gl_Position;
     EmitVertex();
 

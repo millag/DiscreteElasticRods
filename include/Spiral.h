@@ -27,6 +27,7 @@ public:
 
 private:
     std::vector<ElasticRod*> m_strands;
+    RodParams* m_rodParams;
     const RenderObject* m_object;
 };
 

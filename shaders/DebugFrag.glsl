@@ -1,12 +1,13 @@
 // glsl fragment shader
 #version 410
 
+layout (location = 0) out vec4 fragColour;
+
 in vec3 eDir;
 in vec3 lDir;
 in vec3 tDir;
 in vec4 color;
 
-out vec4 fragColour;
 
 void main()
 {

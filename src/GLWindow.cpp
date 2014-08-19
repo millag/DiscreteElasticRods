@@ -129,23 +129,26 @@ void GLWindow::initializeGL()
 
     shader->createShaderProgram("Tube");
 
-    shader->attachShader("TubeGeometry", ngl::GEOMETRY);
     shader->attachShader("TubeVertex", ngl::VERTEX);
+    shader->attachShader("TubeTCS", ngl::TESSCONTROL);
+    shader->attachShader("TubeTES", ngl::TESSEVAL);
     shader->attachShader("TubeFragment", ngl::FRAGMENT);
-    shader->loadShaderSource("TubeGeometry", "shaders/TubeGeom.glsl");
     shader->loadShaderSource("TubeVertex", "shaders/TubeVert.glsl");
+    shader->loadShaderSource("TubeTCS", "shaders/TubeTCS.glsl");
+    shader->loadShaderSource("TubeTES", "shaders/TubeTES.glsl");
     shader->loadShaderSource("TubeFragment", "shaders/TubeFrag.glsl");
 
-    shader->compileShader("TubeGeometry");
     shader->compileShader("TubeVertex");
+    shader->compileShader("TubeTCS");
+    shader->compileShader("TubeTES");
     shader->compileShader("TubeFragment");
-    shader->attachShaderToProgram("Tube","TubeGeometry");
     shader->attachShaderToProgram("Tube","TubeVertex");
+    shader->attachShaderToProgram("Tube","TubeTCS");
+    shader->attachShaderToProgram("Tube","TubeTES");
     shader->attachShaderToProgram("Tube","TubeFragment");
 
     shader->bindAttribute("Tube",0,"inVert");
-    shader->bindAttribute("Tube",1,"inUV");
-    shader->bindAttribute("Tube",2,"inNormal");
+    shader->bindAttribute("Tube",1,"inNormal");
 
     shader->linkProgramObject("Tube");
     (*shader)["Tube"]->use();
@@ -172,6 +175,7 @@ void GLWindow::initializeGL()
     shader->bindAttribute("DebugRod",1,"inKB");
     shader->bindAttribute("DebugRod",2,"inM1");
     shader->bindAttribute("DebugRod",3,"inM2");
+    shader->bindAttribute("DebugRod",4,"inForce");
 
     shader->linkProgramObject("DebugRod");
     (*shader)["DebugRod"]->use();
@@ -285,8 +289,13 @@ void GLWindow::paintGL()
 
     // draw spring lines
     glLineWidth(0.05);
-    shader->use("DebugRod");
+
+    shader->use("Tube");
     shader->setShaderParam4f("Colour", 0.8, 0.8, 0.0, 1.0);
+    shader->setShaderParam1f("Radius", 0.05);
+
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
+
     // load transform stack
     m_transform.reset();
     loadMatricesToHairShader();
@@ -427,81 +436,90 @@ void GLWindow::stopSimTimer()
 
 
 
-void GLWindow::drawHairStrand(const ElasticRod& strand)
-{
-    std::vector<mg::Vec3D> v;
-    if (m_strandVAO != NULL)
-    {
-        m_strandVAO->bind();
+//void GLWindow::drawHairStrand(const ElasticRod& strand)
+//{
+//    std::vector<mg::Vec3D> v;
+//    if (m_strandVAO != NULL)
+//    {
+//        m_strandVAO->bind();
 
-        m_strandVAO->updateIndexedData(0, strand.m_ppos.size() * sizeof(mg::Vec3D),
-                                       strand.m_ppos[0][0]);
-        m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
+//        m_strandVAO->updateIndexedData(0, strand.m_ppos.size() * sizeof(mg::Vec3D),
+//                                       strand.m_ppos[0][0]);
+//        m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->updateIndexedData(1, strand.m_force.size() * sizeof(mg::Vec3D),
-                                       strand.m_force[0][0]);
-        m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
+//        m_strandVAO->updateIndexedData(1, strand.m_kb.size() * sizeof(mg::Vec3D),
+//                                       strand.m_kb[0][0]);
+//        m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->updateIndexedData(2, strand.m_m1.size() * sizeof(mg::Vec3D),
-                                       strand.m_m1[0][0]);
-        m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
+//        m_strandVAO->updateIndexedData(2, strand.m_m1.size() * sizeof(mg::Vec3D),
+//                                       strand.m_m1[0][0]);
+//        m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->updateIndexedData(3, strand.m_m2.size() * sizeof(mg::Vec3D),
-                                       strand.m_m2[0][0]);
-        m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
+//        m_strandVAO->updateIndexedData(3, strand.m_m2.size() * sizeof(mg::Vec3D),
+//                                       strand.m_m2[0][0]);
+//        m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
 
+//        m_strandVAO->updateIndexedData(4, strand.m_elasticForce.size() * sizeof(mg::Vec3D),
+//                                       strand.m_elasticForce[0][0]);
+//        m_strandVAO->setVertexAttributePointer(4, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->draw();
-        m_strandVAO->unbind();
-        return;
-    }
+//        m_strandVAO->draw();
+//        m_strandVAO->unbind();
+//        return;
+//    }
 
-    std::vector<unsigned> indices(strand.m_ppos.size() + 2);
-    unsigned i = 0;
-    indices[i] = 0;
-    for (i = 0; i < strand.m_ppos.size(); ++i)
-    {
-        indices[i + 1] = i;
-    }
-    indices[i + 1] = i - 1;
+//    std::vector<unsigned> indices(strand.m_ppos.size() + 2);
+//    unsigned i = 0;
+//    indices[i] = 0;
+//    for (i = 0; i < strand.m_ppos.size(); ++i)
+//    {
+//        indices[i + 1] = i;
+//    }
+//    indices[i + 1] = i - 1;
 
-    m_strandVAO = ngl::VertexArrayObject::createVOA(GL_LINE_STRIP_ADJACENCY);
-    m_strandVAO->bind();
+//    m_strandVAO = ngl::VertexArrayObject::createVOA(GL_LINE_STRIP_ADJACENCY);
+//    m_strandVAO->bind();
 
-    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
-                                strand.m_ppos[0][0],
-                                indices.size(),
-                                &indices[0],
-                                GL_UNSIGNED_INT);
-    m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
+//    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
+//                                strand.m_ppos[0][0],
+//                                indices.size(),
+//                                &indices[0],
+//                                GL_UNSIGNED_INT);
+//    m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setIndexedData(strand.m_force.size() * sizeof(mg::Vec3D),
-                                strand.m_force[0][0],
-                                indices.size(),
-                                &indices[0],
-                                GL_UNSIGNED_INT);
-    m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
+//    m_strandVAO->setIndexedData(strand.m_kb.size() * sizeof(mg::Vec3D),
+//                                strand.m_kb[0][0],
+//                                indices.size(),
+//                                &indices[0],
+//                                GL_UNSIGNED_INT);
+//    m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setIndexedData(strand.m_m1.size() * sizeof(mg::Vec3D),
-                                strand.m_m1[0][0],
-                                indices.size(),
-                                &indices[0],
-                                GL_UNSIGNED_INT);
-    m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
+//    m_strandVAO->setIndexedData(strand.m_m1.size() * sizeof(mg::Vec3D),
+//                                strand.m_m1[0][0],
+//                                indices.size(),
+//                                &indices[0],
+//                                GL_UNSIGNED_INT);
+//    m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setIndexedData(strand.m_m2.size() * sizeof(mg::Vec3D),
-                                strand.m_m2[0][0],
-                                indices.size(),
-                                &indices[0],
-                                GL_UNSIGNED_INT);
-    m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
+//    m_strandVAO->setIndexedData(strand.m_m2.size() * sizeof(mg::Vec3D),
+//                                strand.m_m2[0][0],
+//                                indices.size(),
+//                                &indices[0],
+//                                GL_UNSIGNED_INT);
+//    m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
 
+//    m_strandVAO->setIndexedData(strand.m_elasticForce.size() * sizeof(mg::Vec3D),
+//                                strand.m_elasticForce[0][0],
+//                                indices.size(),
+//                                &indices[0],
+//                                GL_UNSIGNED_INT);
+//    m_strandVAO->setVertexAttributePointer(4, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setNumIndices(indices.size());
+//    m_strandVAO->setNumIndices(indices.size());
 
-    m_strandVAO->draw();
-    m_strandVAO->unbind();
-}
+//    m_strandVAO->draw();
+//    m_strandVAO->unbind();
+//}
 
 
 // ============================ utility functions ==========================
@@ -552,4 +570,61 @@ void feedVAO(const Mesh& mesh, ngl::VertexArrayObject& o_vao)
 
     // now unbind
     o_vao.unbind();
+}
+
+
+
+
+void GLWindow::drawHairStrand(const ElasticRod& strand)
+{
+    std::vector<mg::Vec3D> v;
+    if (m_strandVAO != NULL)
+    {
+        m_strandVAO->bind();
+
+        m_strandVAO->updateIndexedData(0, strand.m_ppos.size() * sizeof(mg::Vec3D),
+                                       strand.m_ppos[0][0]);
+        m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
+
+        m_strandVAO->updateIndexedData(1, strand.m_m1.size() * sizeof(mg::Vec3D),
+                                       strand.m_m1[0][0]);
+        m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
+
+        m_strandVAO->draw();
+        m_strandVAO->unbind();
+        return;
+    }
+
+    std::vector<unsigned> indices( (strand.m_ppos.size() - 1) * 4 );
+    int nPoints = static_cast<int>(strand.m_ppos.size());
+    for (int i = -1; i < nPoints - 3; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            assert( (i + 1) >= 0 && (4*(i + 1) + j) < indices.size());
+            indices[4*(i + 1) + j] = std::min(std::max(0, i + j), nPoints - 1);
+        }
+    }
+
+    m_strandVAO = ngl::VertexArrayObject::createVOA(GL_PATCHES);
+    m_strandVAO->bind();
+
+    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
+                                strand.m_ppos[0][0],
+                                indices.size(),
+                                &indices[0],
+                                GL_UNSIGNED_INT);
+    m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
+
+    m_strandVAO->setIndexedData(strand.m_m1.size() * sizeof(mg::Vec3D),
+                                strand.m_m1[0][0],
+                                indices.size(),
+                                &indices[0],
+                                GL_UNSIGNED_INT);
+    m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
+
+    m_strandVAO->setNumIndices(indices.size());
+
+    m_strandVAO->draw();
+    m_strandVAO->unbind();
 }

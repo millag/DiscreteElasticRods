@@ -62,7 +62,8 @@ OTHER_FILES+= shaders/Phong.fs \
     shaders/TubeTCS.glsl \
     shaders/DebugVert.glsl \
     shaders/DebugGeom.glsl \
-    shaders/DebugFrag.glsl
+    shaders/DebugFrag.glsl \
+    shaders/TubeTES.glsl
 
 DESTDIR=./
 CONFIG += console

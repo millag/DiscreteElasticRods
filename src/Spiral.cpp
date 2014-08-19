@@ -14,6 +14,7 @@ Spiral::Spiral(): m_object(NULL)
     m_nParticles = 25;
     m_nIterations = 4;
 
+    m_rodParams = new RodParams(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce);
     m_strands.reserve(100);
 }
 
@@ -24,6 +25,8 @@ Spiral::~Spiral()
     {
         delete (*it);
     }
+
+    delete m_rodParams;
 }
 
 void Spiral::init(const RenderObject* object)
@@ -74,10 +77,9 @@ void Spiral::init(const RenderObject* object)
         mass[i] = 0.001;
     }
 
-    for (unsigned i = 0; i < 100; ++i)
+    for (unsigned i = 0; i < 1; ++i)
     {
-        ElasticRod* strand = new ElasticRod(m_bendStiffness, m_twistStiffness,
-                                            m_nIterations, m_maxForce, ElasticRod::NONE);
+        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::NONE);
         strand->init(restpos, u0, pos, vel, mass, twistAngle, isClamped);
         m_strands.push_back(strand);
     }
