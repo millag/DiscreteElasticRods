@@ -42,7 +42,7 @@ vec3 catmull_rom_cubic_normal(float t)
 vec3 geometric_slerp(vec3 n0, vec3 n1, float t)
 {
     float w = dot(n0, n1);
-    if (abs(1 - w) < ERR || t == 1)
+    if (abs(1 - w) < ERR)
         return n0;
 
     w = acos(w);
@@ -59,7 +59,7 @@ vec3 slerp_normal(float t)
     ei_1 = ei;
     ei = length(vert_es[3] - vert_es[2]);
     ti = (ei_1 / (ei_1 + ei));
-    vec3 nvi1 = geometric_slerp(normal_es[1], normal_es[2], ti);
+    vec3 nvi1 = ((1 - ti) < ERR)? nvi0 : geometric_slerp(normal_es[1], normal_es[2], ti);
 
     return geometric_slerp(nvi0, nvi1, t);
 }
@@ -75,10 +75,10 @@ void main ()
     vec3 center = catmull_rom_cubic(v);
     tangent_fr = (catmull_rom_cubic( max(0.0, v - 0.5 * DT) ) - catmull_rom_cubic( min(v + 0.5 * DT, 1.0) )) / DT;
 
-//    vec3 normal = normal_es[1];
-    vec3 normal = slerp_normal(v);
+    vec3 normal = normal_es[1];
+//    vec3 normal = catmull_rom_cubic_normal(v);
+//    vec3 normal = slerp_normal(v);
     vec3 binormal = normalize( cross(tangent_fr, normal) );
-
 
     float theta = u * TWO_PI;
     normal_fr = cos(theta) * normal + sin(theta) * binormal;

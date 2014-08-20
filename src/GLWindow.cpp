@@ -292,8 +292,9 @@ void GLWindow::paintGL()
 
 
     shader->use("Tube");
-    shader->setShaderParam4f("Colour", 0.8, 0.8, 0.0, 1.0);
-    shader->setShaderParam1f("Radius", 0.05);
+    shader->setShaderParam4f("Col1", 0.8, 0.8, 0.0, 1.0);
+    shader->setShaderParam4f("Col2", 0.0, 0.0, 0.0, 1.0);
+    shader->setShaderParam1f("Radius", 0.07);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
     // load transform stack
     m_transform.reset();
@@ -426,9 +427,6 @@ void GLWindow::mouseReleaseEvent ( QMouseEvent * _event )
 void GLWindow::timerEvent( QTimerEvent *_event)
 {
     m_scene->update(0.01);
-    m_scene->update(0.01);
-    m_scene->update(0.01);
-
     updateGL();
 }
 

@@ -24,7 +24,8 @@ struct Lights
 };
 
 
-uniform vec4 Colour;
+uniform vec4 Col1;
+uniform vec4 Col2;
 
 uniform mat4 M;
 uniform mat4 MV;
@@ -43,15 +44,19 @@ in vec2 uv_fr;
 void main()
 {
     vec3 L = light.position.xyz;
-    vec3 N = normalize( normalMatrix * normal_fr );
-    N = faceforward(N, vec3(0), N);
+    vec3 N = -normalize( normalMatrix * normal_fr );
     vec3 V = (MV * vec4(vert_fr, 1.0)).xyz;
     vec3 H = normalize( L + V );
 
+
+    float repeatCount = 6;
+    float whichStripe = floor(uv_fr.x * repeatCount);
+    vec4 col = mix(Col1, Col2, mod( whichStripe, 2));
+
     vec4 ambient = material.ambient * light.ambient;
-    vec4 diffuse = material.diffuse * light.diffuse * dot(N, L);
+    vec4 diffuse = material.diffuse * light.diffuse * dot(N, L) * col;
     vec4 specular = material.specular * light.specular * pow( max(dot(N, H), 0.0),  material.shininess);
 
-    frag_colour = ambient + diffuse;// + specular;
+    frag_colour = ambient + diffuse + specular;
 }
 
