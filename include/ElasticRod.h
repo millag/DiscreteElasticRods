@@ -15,7 +15,7 @@ struct RodParams
     RodParams(mg::Real bendStiffness = 1.0,
               mg::Real twistStiffness = 1.0,
               unsigned pbdIter = 4,
-              mg::Real maxElasticForce = 1.0);
+              mg::Real maxElasticForce = 1000);
 
     inline void setBendStiffness(const mg::Real& bendStiffness);
     inline void setTwistStiffness(const mg::Real& twistStiffness);

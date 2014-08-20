@@ -86,7 +86,7 @@ RenderObject *createBall(const Mesh* mesh)
 {
     mg::Matrix4D transform;
     mg::matrix_uniform_scale(transform, (mg::Real)0.1);
-    mg::matrix_set_translation(transform, (mg::Real)0, (mg::Real)2.5, (mg::Real)0);
+    mg::matrix_set_translation(transform, (mg::Real)0, (mg::Real)0, (mg::Real)0);
 
     return new RenderObject(mesh, transform, -1);
 }

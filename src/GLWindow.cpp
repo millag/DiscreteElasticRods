@@ -114,7 +114,7 @@ void GLWindow::initializeGL()
     // the shader will use the currently active material and light0 so set them
     ngl::Material m(ngl::SILVER);
     m.loadToShader("material");
-    ngl::Light light(ngl::Vec3(3,3,0),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::POINTLIGHT);
+    ngl::Light light(ngl::Vec3(0,0,0),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::POINTLIGHT);
     // now create our light this is done after the camera so we can pass the
     // transpose of the projection matrix to the light to do correct eye space
     // transformations
@@ -153,6 +153,7 @@ void GLWindow::initializeGL()
     shader->linkProgramObject("Tube");
     (*shader)["Tube"]->use();
     light.loadToShader("light");
+    m.loadToShader("material");
 
 
     shader->createShaderProgram("DebugRod");
@@ -180,6 +181,7 @@ void GLWindow::initializeGL()
     shader->linkProgramObject("DebugRod");
     (*shader)["DebugRod"]->use();
     light.loadToShader("light");
+    m.loadToShader("material");
 
 
     ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
@@ -287,18 +289,23 @@ void GLWindow::paintGL()
 //        }
 //    }
 
-    // draw spring lines
-    glLineWidth(0.05);
+
 
     shader->use("Tube");
     shader->setShaderParam4f("Colour", 0.8, 0.8, 0.0, 1.0);
     shader->setShaderParam1f("Radius", 0.05);
-
     glPatchParameteri(GL_PATCH_VERTICES, 4);
-
     // load transform stack
     m_transform.reset();
-    loadMatricesToHairShader();
+    loadMatricesToShader();
+
+    // draw spring lines
+//    glLineWidth(0.05);
+//    shader->use("DebugRod");
+//    shader->setShaderParam4f("Colour", 0.8, 0.8, 0.0, 1.0);
+//    // load transform stack
+//    m_transform.reset();
+//    loadMatricesToHairShader();
 
     const std::vector<ElasticRod*>& strands = m_scene->getStrands();
     typedef std::vector<ElasticRod*>::const_iterator SIter;
@@ -418,8 +425,10 @@ void GLWindow::mouseReleaseEvent ( QMouseEvent * _event )
 
 void GLWindow::timerEvent( QTimerEvent *_event)
 {
-//    m_scene->update(1.0 / mg::UPS);
     m_scene->update(0.01);
+    m_scene->update(0.01);
+    m_scene->update(0.01);
+
     updateGL();
 }
 
@@ -577,7 +586,6 @@ void feedVAO(const Mesh& mesh, ngl::VertexArrayObject& o_vao)
 
 void GLWindow::drawHairStrand(const ElasticRod& strand)
 {
-    std::vector<mg::Vec3D> v;
     if (m_strandVAO != NULL)
     {
         m_strandVAO->bind();
@@ -597,11 +605,11 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
 
     std::vector<unsigned> indices( (strand.m_ppos.size() - 1) * 4 );
     int nPoints = static_cast<int>(strand.m_ppos.size());
-    for (int i = -1; i < nPoints - 3; ++i)
+    for (int i = -1; i < nPoints - 2; ++i)
     {
         for (int j = 0; j < 4; ++j)
         {
-            assert( (i + 1) >= 0 && (4*(i + 1) + j) < indices.size());
+            assert( (i + 1) >= 0 && (4*(i + 1) + j) < static_cast<int>(indices.size()));
             indices[4*(i + 1) + j] = std::min(std::max(0, i + j), nPoints - 1);
         }
     }

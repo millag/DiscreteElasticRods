@@ -128,7 +128,7 @@ void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
     m_m1.resize(m_edges.size());
     m_m2.resize(m_edges.size());
 //    store elasic force for debug purpose
-    m_elasticForce.resize(m_ppos.size());
+    m_elasticForce.resize(m_ppos.size(), mg::Vec3D(0, 0, 0));
 
     m_restEdgeL.resize(m_edges.size());
     m_restRegionL.resize(m_edges.size());
@@ -145,6 +145,8 @@ void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
 
 //    initialize current state
     updateCurrentState();
+
+    computeElasticForces(m_ppos, m_elasticForce);
 }
 
 
@@ -276,6 +278,8 @@ void ElasticRod::parallelTransportFrame(const mg::Vec3D& e0, const mg::Vec3D& e1
 
     if ( (1 - cosPhi) < mg::ERR )
     {
+        io_u = mg::cross(e1, io_u);
+        io_u = mg::normalize( mg::cross(io_u, e1) );
         return;
     }
     mg::Quaternion q(cosPhi, sinPhi * mg::normalize(axis));
@@ -469,7 +473,7 @@ void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
         if (m_isClamped.size())
         {
             computeGradientHolonomy(i, n, minusGH, plusGH, eqGH, GH);
-            o_forces[i] -= dEdQn * GH;
+            o_forces[i] += dEdQn * GH;
             assert( std::isfinite(mg::length_squared(o_forces[i])) );
         }
 
@@ -505,9 +509,13 @@ void ElasticRod::computeGradientKB(const std::vector<mg::Vec3D> &kb,
         scalarFactor = (m_restEdgeL[i - 1] * m_restEdgeL[i] + mg::dot( edges[i - 1], edges[i] ));
         assert( std::isfinite(scalarFactor) && fabs(scalarFactor) > 0 );
 
-        o_minusGKB[i] = (2.0 * edgeMatrix[i] + mg::outer( kb[i], edges[i] )) / scalarFactor;
-        o_plusGKB[i] = (2.0 * edgeMatrix[i - 1] - mg::outer( kb[i], edges[i - 1] )) / scalarFactor;
-        o_eqGKB[i] = -(o_minusGKB[i] + o_plusGKB[i]);
+        o_minusGKB[i] = (2.0 * edgeMatrix[i - 1] + mg::outer( kb[i], edges[i - 1] )) / scalarFactor;
+        o_plusGKB[i] = (2.0 * edgeMatrix[i] - mg::outer( kb[i], edges[i] )) / scalarFactor;
+        o_eqGKB[i] = -(o_plusGKB[i] + o_minusGKB[i]);
+
+//        o_minusGKB[i] = (2.0 * edgeMatrix[i] + mg::outer( kb[i], edges[i] )) / scalarFactor;
+//        o_plusGKB[i] = (2.0 * edgeMatrix[i - 1] - mg::outer( kb[i], edges[i - 1] )) / scalarFactor;
+//        o_eqGKB[i] = -(o_minusGKB[i] + o_plusGKB[i]);
     }
 }
 
@@ -627,8 +635,6 @@ void ElasticRod::computedEdQj(unsigned j,
                               const mg::Matrix2D &JB,
                               mg::Real &o_dEQj) const
 {
-    assert( j < m_kb.size() );
-
     o_dEQj = 0.0;
     mg::Vec2D wij;
     mg::Real term;
@@ -705,9 +711,6 @@ void ElasticRod::updateCurrentState()
     parallelTransportFrame(e0, e1, m_u0);
     computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
 
-//    std::cout << "ANGLE u0 edge[0] " << mg::deg( std::acos( mg::dot(m_u0, mg::normalize(e1)) ) ) << std::endl;
-
-
     double minE = 0;
     if (m_minimization->m_strategy != NONE)
     {
@@ -717,7 +720,7 @@ void ElasticRod::updateCurrentState()
 
 //    mg::Real E;
 //    computeEnergy(m_m1, m_m2, m_theta, E);
-////    std::cout<< "Theta:" << m_theta << std::endl;
+//    std::cout<< "Theta:" << m_theta << std::endl;
 //    std::cout<< "Total Energy:" << E << std::endl;
 }
 
@@ -765,15 +768,12 @@ void ElasticRod::MinimizationPImpl::constructTheta(const ElasticRod *rod, const 
 
 double ElasticRod::MinimizationPImpl::minimize(const ElasticRod* rod, ColumnVector &io_theta)
 {
-    assert(rod != NULL);
     m_evaluate.m_rod = rod;
     m_evaluateGradient.m_rod = rod;
     m_evaluateHessian.m_rod = rod;
 
     ColumnVector thetaVars;
     extractThetaVars(rod, io_theta, thetaVars);
-
-//    std::cout << "DERIVATIVE " << dlib::derivative(m_evaluate)(thetaVars) - m_evaluateGradient(thetaVars) << std::endl;
 
     double minE = -1;
     switch (m_strategy) {
@@ -916,45 +916,6 @@ Hessian ElasticRod::MinimizationPImpl::evaluateHessian::operator ()(const Column
 //            computeGradientHolonomySum(i, n, minusGH, plusGH, eqGH, GH);
 //            o_forces[i] += dEdQj * GH;
 //        }
-
-
-//void ElasticRod::updateCurrentState()
-//{
-//    std::vector<mg::Vec3D> edges_prev = m_edges;
-//    computeEdges(m_ppos, m_edges);
-
-
-////    parallel transport Bishop frame in time
-//    for (unsigned i = 0; i < m_edges.size(); ++i)
-//    {
-//        parallelTransportFrame(edges_prev[i], m_edges[i], m_u[i]);
-//    }
-//    m_u0 = m_u[0];
-
-////    std::cout << "ANGLE u0 edge[0] " << mg::deg( std::acos( mg::dot(m_u0, t1) ) ) << std::endl;
-//    computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
-
-//    mg::Real cosQ, sinQ;
-//    m_twistAngle[0] = 0;
-//    for (unsigned i = 1; i < m_edges.size(); ++i)
-//    {
-//        cosQ = mg::dot(m_u[i], m_m1[i]);
-//        sinQ = mg::dot(m_u[i], m_m2[i]);
-//        m_twistAngle[i] = mg::sign(sinQ) * mg::acos_safe(cosQ);
-////        std::cout<< "Twist angle [" << i << "] = " << cosQ * cosQ + sinQ * sinQ << std::endl;
-////        std::cout<< "Twist angle [" << i << "] = " << mg::deg(m_twistAngle[i]) << std::endl;
-//    }
-
-//    computeMaterialFrame(m_twistAngle, m_m1, m_m2);
-
-//    for (unsigned i = 1; i < m_edges.size(); ++i)
-//    {
-//        std::cout<< "Twist angle [" << i << "] = " << mg::dot( m_u[i], m_m1[i] ) << std::endl;
-//    }
-//    m_u = m_m1;
-//}
-
-
 
 
 //void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices, std::vector<mg::Vec3D>& o_forces)

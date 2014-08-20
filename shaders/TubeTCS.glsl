@@ -22,9 +22,9 @@ void main ()
         gl_TessLevelOuter[1] = 6.0;
         gl_TessLevelOuter[3] = 6.0;
 
-        gl_TessLevelInner[1] = 5.0;
-        gl_TessLevelOuter[0] = 5.0;
-        gl_TessLevelOuter[2] = 5.0;
+        gl_TessLevelInner[1] = 6.0;
+        gl_TessLevelOuter[0] = 6.0;
+        gl_TessLevelOuter[2] = 6.0;
     }
 
 //     Just pass the control points of the output patch
