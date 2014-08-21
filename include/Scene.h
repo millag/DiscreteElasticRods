@@ -7,7 +7,7 @@
 #include <map>
 
 #include "IServant.h"
-#include "HairStrand.h"
+#include "Hair.h"
 #include "Spiral.h"
 
 class Scene : virtual public IServant {
@@ -18,18 +18,17 @@ public:
     void initialize();
     void update(mg::Real dt);
 
-    const AABB& getBoundingVolume() const { return m_boundingVolume; }
-    const std::vector<ElasticRod*>& getStrands() const { return m_spiral->getStrands(); }
-    const std::vector<RenderObject*>& getRenderObjects() const { return m_renderObjects; }
-    const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
-    void findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::vector<RenderObject*>& o_objects);
+    inline const AABB& getBoundingVolume() const { return m_boundingVolume; }
+    inline const std::vector<ElasticRod*>& getStrands() const { return m_spiral->getStrands(); }
+    inline const std::vector<RenderObject*>& getRenderObjects() const { return m_renderObjects; }
+    inline const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
 
-//    const Grid& getGrid() const;
+    void findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::vector<RenderObject*>& o_objects);
 
 private:
     AABB m_boundingVolume;
 
-    HairStrand* m_hair;
+    Hair* m_hair;
     Spiral* m_spiral;
     std::vector<RenderObject*> m_renderObjects;
     std::vector<Mesh*> m_meshes;

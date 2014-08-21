@@ -24,7 +24,8 @@ SOURCES += src/main.cpp \
     src/ElasticRod.cpp \
     src/HairStrand.cpp \
     libs/dlib-18.9/dlib/all/source.cpp \
-    src/Spiral.cpp
+    src/Spiral.cpp \
+    src/Hair.cpp
 
 INCLUDEPATH += ./include
 INCLUDEPATH += ./libs/cml-1_0_2/
@@ -43,7 +44,8 @@ HEADERS += include/MainWindow.h \
     include/Types.h \
     include/cml_config.h \
     include/HairStrand.h \
-    include/Spiral.h
+    include/Spiral.h \
+    include/Hair.h
 
 
 FORMS += \

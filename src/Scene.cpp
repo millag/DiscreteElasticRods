@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "Utils.h"
+#include "HairStrand.h"
 
 RenderObject* createBall(const Mesh* mesh);
 
@@ -53,8 +54,9 @@ void Scene::initialize()
     RenderObject* ball = createBall(mesh);
     m_renderObjects.push_back(ball);
 
-//    m_hair = new HairStrand();
-//    m_hair->initialize(ball);
+    m_hair = new Hair();
+    HairGenerator hairGenerator;
+    hairGenerator.generateStraightHair(ball, *m_hair);
 
     m_spiral = new Spiral();
     m_spiral->init(ball);

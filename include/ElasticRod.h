@@ -51,7 +51,7 @@ public:
 
     enum MINIMIZATION_STRATEGY {NONE, NEWTON, BFGS, BFGS_NUMERIC};
 
-//    NOTE: valid RodParams object is mandatory
+///    NOTE: valid RodParams object is mandatory
     ElasticRod(const RodParams* params);
     ElasticRod(const RodParams* params, MINIMIZATION_STRATEGY strategy = BFGS, double minTolerance = 1e-6f, unsigned minMaxIter = 100);
 
@@ -63,23 +63,12 @@ public:
               const std::vector<mg::Vec3D>& pos,
               const std::vector<mg::Vec3D>& vel,
               const std::vector<mg::Real>& mass,
-              const std::vector<double>& theta,
+              const ColumnVector& theta,
               const std::set<unsigned>& isClamped);
 
     void update(mg::Real dt);
 
 public:
-
-//    mg::Matrix2D m_B;
-
-
-//    mg::Real m_beta;
-
-
-//    unsigned m_nIter;
-
-
-//    mg::Real m_maxElasticForce;
 
 //    ========= should be private - made public only for debug purposes ========
 
@@ -94,6 +83,8 @@ public:
 /// unit length vector - defines the Bishop frame for the first edge for rest shape (restpos)
 /// Bishop frame for the first edge for the current configuration(pos) is deduced by parallel transport
     mg::Vec3D m_u0;
+/// #twistAngle = #edges = n
+    ColumnVector m_theta;
 
 /// defined at vertices 1 ... n - 1 i.e. #kb = (#edges - 1)
 /// #kb = #edges - defines rotation from e[i-1] to e[i],
@@ -110,9 +101,6 @@ public:
     std::vector<mg::Vec3D> m_elasticForce;
 
 private:
-/// #twistAngle = #edges = n
-    ColumnVector m_theta;
-
 /// #restEdgeL = #edges = n edge length
     std::vector<mg::Real> m_restEdgeL;
 /// #restRegionL = #edges = n defines integrated length for voronoi region of integration
@@ -166,7 +154,7 @@ private:
     void computeKB(const std::vector<mg::Vec3D>& edges,
                    std::vector<mg::Vec3D>& o_kb) const;
 
-/// Computes Bishop frame for every edge by parallel transporting around the curvature binormal kb
+/// Computes Bishop frame for every edge by parallel transporting u0 around the curvature binormal kb
 /// the method internally computes kb 3-vectors
     void computeBishopFrame(const mg::Vec3D& u0,
                             const std::vector<mg::Vec3D>& edges,
@@ -175,7 +163,8 @@ private:
                             std::vector<mg::Vec3D>& o_v) const;
 
 /// Computes Material frame for every edge - defining the orientation of the edge
-/// the method internally computes kb 3-vectors, Bishop frame and rotates Bishop frame with twist angle
+/// rotates Bishop frame with twist angle theta
+/// NOTE: the method expects io_m1 and io_m2 to contain u and v axis of the Bishop frame correspondingly
     void computeMaterialFrame(const ColumnVector& theta,
                               std::vector<mg::Vec3D>& io_m1,
                               std::vector<mg::Vec3D>& io_m2) const;

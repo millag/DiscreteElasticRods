@@ -62,7 +62,7 @@ void RenderObject::calcBoundaries()
     m_boundingRadius = m_AABB.getBoundingRadius();
 }
 
-//    TODO FIX need to add transformation somehow
+
 void RenderObject::calcAABB()
 {
 

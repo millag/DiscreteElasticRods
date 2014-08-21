@@ -38,7 +38,7 @@ void Spiral::init(const RenderObject* object)
     std::vector<mg::Vec3D> pos(m_nParticles);
     std::vector<mg::Vec3D> vel(m_nParticles);
     std::vector<mg::Real> mass(m_nParticles);
-    std::vector<double> twistAngle(m_nParticles - 1, 0.0);
+    ColumnVector theta(m_nParticles - 1);
     std::set<unsigned> isClamped;
 
     mg::Vec3D center(m_object->getPosition());
@@ -75,13 +75,17 @@ void Spiral::init(const RenderObject* object)
 
         vel[i].zero();
         mass[i] = 0.001;
+        if (i < static_cast<unsigned>(theta.size()))
+        {
+            theta(i) = 0;
+        }
     }
 
     for (unsigned i = 0; i < 1; ++i)
     {
         ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::NONE);
-//        strand->init(pos, diry, pos, vel, mass, twistAngle, isClamped);
-        strand->init(restpos, u0, pos, vel, mass, twistAngle, isClamped);
+//        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
+        strand->init(restpos, u0, pos, vel, mass, theta, isClamped);
         m_strands.push_back(strand);
     }
 }
@@ -112,7 +116,7 @@ void Spiral::update(mg::Real dt)
 //    std::vector<mg::Vec3D> pos(m_nParticles);
 //    std::vector<mg::Vec3D> vel(m_nParticles);
 //    std::vector<mg::Real> mass(m_nParticles);
-//    std::vector<double> twistAngle(m_nParticles - 1, 0.0);
+//    ColumnVector theta(m_nParticles - 1);
 //    std::set<unsigned> isClamped;
 
 //    mg::Vec3D center(m_object->getPosition());
@@ -140,13 +144,17 @@ void Spiral::update(mg::Real dt)
 
 //        vel[i].zero();
 //        mass[i] = 0.001;
+//        if (i < static_cast<unsigned>(theta.size()))
+//        {
+//            theta(i) = 0;
+//        }
 //    }
 
 //    for (unsigned i = 0; i < 1; ++i)
 //    {
 //        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::BFGS);
-////        strand->init(pos, diry, pos, vel, mass, twistAngle, isClamped);
-//        strand->init(restpos, -dirz, pos, vel, mass, twistAngle, isClamped);
+////        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
+//        strand->init(restpos, -dirz, pos, vel, mass, theta, isClamped);
 //        m_strands.push_back(strand);
 //    }
 //}

@@ -1,158 +1,143 @@
 #include "HairStrand.h"
 #include <QElapsedTimer>
+#include "Utils.h"
 
-HairStrand::HairStrand():m_object(NULL)
-{
-    m_length = 4.0;
-    m_lengthVariance = 1.0;
-    m_density = 0.001;
-    m_thickness = 0.001;
-    m_bendStiffness = 5.0;
-    m_twistStiffness = 2.0;
-    m_maxForce = 1000;
 
-    m_nParticles = 15;
-    m_nIterations = 4;
+HairGenerator::HairGenerator()
+{ }
 
-    m_rodParams = new RodParams(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce);
-    m_strands.reserve(100);
+HairGenerator::~HairGenerator()
+{ }
 
-}
-
-HairStrand::~HairStrand()
-{
-//    delete hair strands
-    typedef std::vector<ElasticRod*>::const_iterator SIter;
-    for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
-    {
-        delete (*it);
-    }
-
-    delete m_rodParams;
-}
-
-void HairStrand::initialize(const RenderObject* object)
+void HairGenerator::generateCurlyHair(const RenderObject* object, Hair& o_hair) const
 {
     assert(object != NULL);
-    m_object = object;
+    assert(object->getMesh() != NULL);
 
-    mg::Vec3D start(m_object->getPosition());
-    mg::Vec3D end = start + mg::Vec3D(1, 0, 0) * m_length;
+    unsigned nStrands = 30;
 
-    std::vector<mg::Vec3D> restpos(m_nParticles);
-    std::vector<mg::Vec3D> pos(m_nParticles);
-    std::vector<mg::Vec3D> vel(m_nParticles);
-    std::vector<mg::Real> mass(m_nParticles);
-    std::vector<double> twistAngle(m_nParticles - 1, 0.0);
-    std::set<unsigned> isClamped;
+    o_hair.reset();
+    o_hair.m_object = object;
+    o_hair.m_strands.resize(nStrands);
 
-    mg::Real t = 0.0;
-    for (unsigned i = 0; i < pos.size(); ++i)
+    mg::Vec3D p, n, u;
+    const Mesh* mesh = object->getMesh();
+    for (unsigned i = 0; i < nStrands && i < mesh->m_vertices.size(); ++i)
     {
-        t = (mg::Real)(i) / (m_nParticles - 1);
-        pos[i] = (1 - t) * start + t * end;
-
-        vel[i].zero();
-        mass[i] = 1;
-    }
-
-    mg::Real step = mg::length( end - start ) / (m_nParticles - 1);
-    restpos[0] = start;
-    restpos[1] = restpos[0] + step * mg::Vec3D(1, 0, 0);
-    mg::Vec3D dir = mg::normalize(mg::Vec3D(1, 1, 1));
-    for (unsigned i = 2; i < restpos.size(); ++i)
-    {
-        if ((i - 1) % 2)
-        {
-            dir[1] = -dir[1];
-        }
-        if (i % 2)
-        {
-            dir[2] = -dir[2];
-        }
-        restpos[i] = restpos[i - 1] + step * dir;
-    }
-    isClamped.insert(0);
-//    isClamped.insert(m_nParticles - 1);
-
-
-    for (unsigned i = 0; i < 1; ++i)
-    {
-        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::NEWTON);
-        strand->init(restpos, mg::Vec3D(0,1,0), restpos, vel, mass, twistAngle, isClamped);
-        m_strands.push_back(strand);
+        p = mg::transform_point(object->getTransform(), mesh->m_vertices[i]);
+        n = mg::transform_vector(object->getTransform(), mesh->m_normals[i]);
+        u = mg::EY;
+        ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams, ElasticRod::BFGS);
+        generateHelicalRod(*o_hair.m_params, p, n, u, *rod);
+        o_hair.m_strands[i] = rod;
     }
 }
 
-
-void HairStrand::generateStrands(const RenderObject* object)
+void HairGenerator::generateStraightHair(const RenderObject* object, Hair& o_hair) const
 {
     assert(object != NULL);
-    m_object = object;
+    assert(object->getMesh() != NULL);
 
-    mg::Real volume = m_length * m_thickness * m_thickness * mg::Constants::pi();
-    mg::Real pmass = m_density * volume / (m_nParticles - 1);
+    unsigned nStrands = 30;
 
-    std::vector<mg::Vec3D> restpos(m_nParticles);
-    std::vector<mg::Vec3D> pos(m_nParticles);
-    std::vector<mg::Vec3D> vel(m_nParticles);
-    std::vector<mg::Real> mass(m_nParticles, pmass);
-    std::vector<double> twistAngle(m_nParticles - 1, 0.0);
-    std::set<unsigned> isClamped;
+    o_hair.reset();
+    o_hair.m_object = object;
+    o_hair.m_strands.resize(nStrands);
 
-    mg::Vec3D start(m_object->getPosition());
-    mg::Vec3D end = start + mg::Vec3D(1, 0, 0) * m_length;
+    mg::Vec3D p, n, u;
+    const Mesh* mesh = object->getMesh();
+    for (unsigned i = 0; i < nStrands && i < mesh->m_vertices.size(); ++i)
+    {
+        p = mg::transform_point(object->getTransform(), mesh->m_vertices[i]);
+        n = mg::transform_vector(object->getTransform(), mesh->m_normals[i]);
+        u = mg::EY;
+        ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams, ElasticRod::BFGS);
+        generateStraightRod(*o_hair.m_params, p, n, u, *rod);
+        o_hair.m_strands[i] = rod;
+    }
+}
+
+void HairGenerator::generateHelicalRod(const HairParams& params,
+                                    const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
+                                    ElasticRod& o_rod) const
+{
+    o_rod.m_ppos.resize(params.m_nParticles);
+    o_rod.m_pvel.resize(params.m_nParticles);
+    o_rod.m_pmass.resize(params.m_nParticles);
+    o_rod.m_theta.set_size(params.m_nParticles - 1);
+    o_rod.m_isClamped.clear();
+
+    mg::Vec3D dirv = mg::normalize(mg::cross(n, u));
+    mg::Vec3D dirn = mg::normalize(n);
+    mg::Vec3D diru = mg::normalize(mg::cross(dirv, dirn));
+
+    mg::Real length = params.m_length + mg::random_real(-params.m_lengthVariance, params.m_lengthVariance);
+    mg::Real volume = length * params.m_thickness * params.m_thickness * mg::Constants::pi();
+    mg::Real pmass = params.m_density * volume / (params.m_nParticles - 1);
+
+    mg::Real angle = params.m_length / ((params.m_nParticles - 1) * params.m_helicalRadius);
+    for (unsigned i = 0; i < o_rod.m_ppos.size(); ++i)
+    {
+//        calc point on unit circle
+        o_rod.m_ppos[i] = (std::cos(i * angle) * diru  + std::sin(i * angle) * dirv - diru);
+//        place point on helix
+        o_rod.m_ppos[i] = o_rod.m_ppos[i]* params.m_helicalRadius + params.m_helicalPitch * (i * angle) * dirn;
+//        move helix to position
+        o_rod.m_ppos[i] += p;
+//        init velocity and mass
+        o_rod.m_pvel[i].zero();
+        o_rod.m_pmass[i] = pmass;
+        if (i < static_cast<unsigned>(o_rod.m_theta.size()))
+        {
+            o_rod.m_theta(i) = 0;
+        }
+    }
+    o_rod.m_isClamped.insert(0);
+//    o_rod.m_isClamped.insert(params->m_nParticles - 1);
+
+    mg::Vec3D e0 = o_rod.m_ppos[1] - o_rod.m_ppos[0];
+    o_rod.m_u0 = mg::cross(e0, u);
+    o_rod.m_u0 = mg::normalize( mg::cross(o_rod.m_u0, e0) );
+
+    o_rod.init(o_rod.m_ppos, o_rod.m_u0, o_rod.m_ppos, o_rod.m_pvel, o_rod.m_pmass, o_rod.m_theta, o_rod.m_isClamped);
+}
+
+
+void HairGenerator::generateStraightRod(const HairParams& params,
+                                     const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
+                                     ElasticRod& o_rod) const
+{
+    o_rod.m_ppos.resize(params.m_nParticles);
+    o_rod.m_pvel.resize(params.m_nParticles);
+    o_rod.m_pmass.resize(params.m_nParticles);
+    o_rod.m_theta.set_size(params.m_nParticles - 1);
+    o_rod.m_isClamped.clear();
+
+    mg::Real length = params.m_length + mg::random_real(-params.m_lengthVariance, params.m_lengthVariance);
+    mg::Real volume = length * params.m_thickness * params.m_thickness * mg::Constants::pi();
+    mg::Real pmass = params.m_density * volume / (params.m_nParticles - 1);
 
 //    generate straight line
+    mg::Vec3D end = p + length * mg::normalize(n);
     mg::Real t = 0.0;
-    for (unsigned i = 0; i < pos.size(); ++i)
+    for (unsigned i = 0; i < o_rod.m_ppos.size(); ++i)
     {
-        t = (mg::Real)(i) / (m_nParticles - 1);
-
-        pos[i] = (1 - t) * start + t * end;
-        vel[i].zero();
-    }
-
-    mg::Real step = mg::length( end - start ) / (m_nParticles - 1);
-    restpos[0] = start;
-    restpos[1] = restpos[0] + step * mg::Vec3D(1, 0, 0);
-    mg::Vec3D dir = mg::normalize(mg::Vec3D(1, 1, 1));
-    for (unsigned i = 2; i < restpos.size(); ++i)
-    {
-        if ((i - 1) % 2)
+        t = (mg::Real)(i) / (params.m_nParticles - 1);
+        o_rod.m_ppos[i] = (1 - t) * p + t * end;
+//        init velocity and mass
+        o_rod.m_pvel[i].zero();
+        o_rod.m_pmass[i] = pmass;
+        if (i < static_cast<unsigned>(o_rod.m_theta.size()))
         {
-            dir[1] = -dir[1];
+            o_rod.m_theta(i) = 0;
         }
-        if (i % 2)
-        {
-            dir[2] = -dir[2];
-        }
-        restpos[i] = restpos[i - 1] + step * dir;
     }
-    isClamped.insert(0);
-//    isClamped.insert(m_nParticles - 1);
+    o_rod.m_isClamped.insert(0);
+//    o_rod.m_isClamped.insert(params->m_nParticles - 1);
 
+    mg::Vec3D e0 = o_rod.m_ppos[1] - o_rod.m_ppos[0];
+    o_rod.m_u0 = mg::cross(e0, u);
+    o_rod.m_u0 = mg::normalize( mg::cross(o_rod.m_u0, e0) );
 
-    for (unsigned i = 0; i < 1; ++i)
-    {
-        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::BFGS);
-        strand->init(restpos, mg::Vec3D(0,1,0), restpos, vel, mass, twistAngle, isClamped);
-        m_strands.push_back(strand);
-    }
-}
-
-void HairStrand::update(mg::Real dt)
-{
-    QElapsedTimer chronometer;
-    chronometer.start();
-
-    typedef std::vector<ElasticRod*>::const_iterator SIter;
-    for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
-    {
-        (*it)->m_ppos[0] = m_object->getPosition();
-        (*it)->update(dt);
-    }
-
-    std::cout << "TIME update ms: " << chronometer.elapsed() << std::endl;
-    chronometer.restart();
+    o_rod.init(o_rod.m_ppos, o_rod.m_u0, o_rod.m_ppos, o_rod.m_pvel, o_rod.m_pmass, o_rod.m_theta, o_rod.m_isClamped);
 }

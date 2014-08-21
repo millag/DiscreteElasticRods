@@ -59,7 +59,7 @@ vec3 slerp_normal(float t)
     ei_1 = ei;
     ei = length(vert_es[3] - vert_es[2]);
     ti = (ei_1 / (ei_1 + ei));
-    vec3 nvi1 = ((1 - ti) < ERR)? nvi0 : geometric_slerp(normal_es[1], normal_es[2], ti);
+    vec3 nvi1 = ((1 - ti) < ERR)? normal_es[1] : geometric_slerp(normal_es[1], normal_es[2], ti);
 
     return geometric_slerp(nvi0, nvi1, t);
 }

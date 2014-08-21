@@ -107,20 +107,20 @@ void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
                       const std::vector<mg::Vec3D>& pos,
                       const std::vector<mg::Vec3D>& vel,
                       const std::vector<mg::Real>& mass,
-                      const std::vector<double> &theta,
+                      const ColumnVector& theta,
                       const std::set<unsigned> &isClamped)
 {
     assert( pos.size() > 2 );
     assert( pos.size() == restpos.size() );
     assert( pos.size() == vel.size() );
     assert( pos.size() == mass.size() );
-    assert( theta.size() == (pos.size() - 1) );
+    assert( static_cast<unsigned>(theta.size()) == (pos.size() - 1) );
 
     m_u0 = u0;
     m_ppos = pos;
     m_pvel = vel;
     m_pmass = mass;
-    m_theta = dlib::mat(theta);
+    m_theta = theta;
     m_isClamped = isClamped;
 
     m_edges.resize(m_ppos.size() - 1);
