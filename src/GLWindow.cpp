@@ -59,7 +59,7 @@ void GLWindow::initializeGL()
 {
     m_cameraTransform.m_angle0 = 0;
     m_cameraTransform.m_angle1 = 0;
-    m_cameraTransform.m_translation.set(0,0,-6);
+    m_cameraTransform.m_translation.set(0,0,-16);
 
     ngl::NGLInit::instance();
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);			   // Grey Background

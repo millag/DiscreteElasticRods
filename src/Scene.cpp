@@ -1,6 +1,6 @@
 #include "Scene.h"
 #include "Utils.h"
-#include "HairStrand.h"
+#include "HairGenerator.h"
 
 RenderObject* createBall(const Mesh* mesh);
 
@@ -56,7 +56,7 @@ void Scene::initialize()
 
     m_hair = new Hair();
     HairGenerator hairGenerator;
-    hairGenerator.generateStraightHair(ball, *m_hair);
+    hairGenerator.generateCurlyHair(ball, *m_hair);
 
     m_spiral = new Spiral();
     m_spiral->init(ball);
@@ -65,9 +65,8 @@ void Scene::initialize()
 
 void Scene::update(mg::Real dt)
 {
-//    m_hair->update(dt);
-
-    m_spiral->update(dt);
+    m_hair->update(dt);
+//    m_spiral->update(dt);
 }
 
 void Scene::findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::vector<RenderObject*>& o_objects)
@@ -87,7 +86,7 @@ void Scene::findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::
 RenderObject *createBall(const Mesh* mesh)
 {
     mg::Matrix4D transform;
-    mg::matrix_uniform_scale(transform, (mg::Real)0.1);
+    mg::matrix_uniform_scale(transform, (mg::Real)1);
     mg::matrix_set_translation(transform, (mg::Real)0, (mg::Real)0, (mg::Real)0);
 
     return new RenderObject(mesh, transform, -1);

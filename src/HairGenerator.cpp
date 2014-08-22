@@ -1,4 +1,4 @@
-#include "HairStrand.h"
+#include "HairGenerator.h"
 #include <QElapsedTimer>
 #include "Utils.h"
 
@@ -27,7 +27,7 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, Hair& o_hair) 
         p = mg::transform_point(object->getTransform(), mesh->m_vertices[i]);
         n = mg::transform_vector(object->getTransform(), mesh->m_normals[i]);
         u = mg::EY;
-        ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams, ElasticRod::BFGS);
+        ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams, ElasticRod::NONE);
         generateHelicalRod(*o_hair.m_params, p, n, u, *rod);
         o_hair.m_strands[i] = rod;
     }
@@ -51,7 +51,7 @@ void HairGenerator::generateStraightHair(const RenderObject* object, Hair& o_hai
         p = mg::transform_point(object->getTransform(), mesh->m_vertices[i]);
         n = mg::transform_vector(object->getTransform(), mesh->m_normals[i]);
         u = mg::EY;
-        ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams, ElasticRod::BFGS);
+        ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams, ElasticRod::NONE);
         generateStraightRod(*o_hair.m_params, p, n, u, *rod);
         o_hair.m_strands[i] = rod;
     }
@@ -71,11 +71,12 @@ void HairGenerator::generateHelicalRod(const HairParams& params,
     mg::Vec3D dirn = mg::normalize(n);
     mg::Vec3D diru = mg::normalize(mg::cross(dirv, dirn));
 
-    mg::Real length = params.m_length + mg::random_real(-params.m_lengthVariance, params.m_lengthVariance);
+    mg::Real length = params.m_length + mg::randf(-params.m_lengthVariance, params.m_lengthVariance);
     mg::Real volume = length * params.m_thickness * params.m_thickness * mg::Constants::pi();
     mg::Real pmass = params.m_density * volume / (params.m_nParticles - 1);
 
-    mg::Real angle = params.m_length / ((params.m_nParticles - 1) * params.m_helicalRadius);
+    mg::Real angle = params.m_length / std::sqrt(params.m_helicalRadius * params.m_helicalRadius + params.m_helicalPitch * params.m_helicalPitch);
+    angle /= (params.m_nParticles - 1);
     for (unsigned i = 0; i < o_rod.m_ppos.size(); ++i)
     {
 //        calc point on unit circle
@@ -86,7 +87,7 @@ void HairGenerator::generateHelicalRod(const HairParams& params,
         o_rod.m_ppos[i] += p;
 //        init velocity and mass
         o_rod.m_pvel[i].zero();
-        o_rod.m_pmass[i] = pmass;
+        o_rod.m_pmass[i] =  pmass;
         if (i < static_cast<unsigned>(o_rod.m_theta.size()))
         {
             o_rod.m_theta(i) = 0;

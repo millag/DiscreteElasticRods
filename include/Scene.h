@@ -19,7 +19,7 @@ public:
     void update(mg::Real dt);
 
     inline const AABB& getBoundingVolume() const { return m_boundingVolume; }
-    inline const std::vector<ElasticRod*>& getStrands() const { return m_spiral->getStrands(); }
+    inline const std::vector<ElasticRod*>& getStrands() const { return m_hair->m_strands; }
     inline const std::vector<RenderObject*>& getRenderObjects() const { return m_renderObjects; }
     inline const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
 
