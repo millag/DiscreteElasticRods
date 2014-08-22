@@ -2,7 +2,6 @@
 #include <limits>
 
 
-
 Mesh::Mesh(unsigned id, PrimitiveMode::Enum mode):
     m_id(id), m_mode(mode)
 { }
@@ -22,10 +21,14 @@ unsigned Mesh::getNPrimitives() const
 
     default:
         break;
-
     }
-
     return 0;
+}
+
+unsigned Mesh::getPrimitiveOffset(unsigned primitiveIdx) const
+{
+    assert( ((primitiveIdx + 1) * getNVerticesPerPrimitive()) <= m_vindices.size() );
+    return primitiveIdx * getNVerticesPerPrimitive();
 }
 
 //TODO: mode is always ignored - GOURAUD assumed

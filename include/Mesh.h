@@ -2,19 +2,22 @@
 #define MESH_H
 
 #include <vector>
+#include <cassert>
 #include "Types.h"
 
 class Mesh
 {
 public:
     struct ShadingMode{ enum Enum { FLAT, GOURAUD }; };
-    struct PrimitiveMode{ enum Enum { TRIANGLES, LINES }; };
+    struct PrimitiveMode{ enum Enum { TRIANGLES = 3, LINES = 2 }; };
 
     Mesh(unsigned id, PrimitiveMode::Enum mode = PrimitiveMode::TRIANGLES);
     ~Mesh();
 
-    unsigned getId() const { return m_id; }
-    unsigned getNVertices() const { return (m_vertices.size()); }
+    inline unsigned getId() const { return m_id; }
+    inline unsigned getNVertices() const { return (m_vertices.size()); }
+    inline unsigned getNVerticesPerPrimitive() const { return m_mode; }
+    unsigned getPrimitiveOffset(unsigned primitiveIdx) const;
     unsigned getNPrimitives() const;
 
 public:

@@ -159,11 +159,15 @@ private :
 /// @brief timer event trigered by startTimer
 //----------------------------------------------------------------------------------------------------------------------
 	void timerEvent(QTimerEvent *_event	);
+
+// ============= various draw related utility functions ===============
     void loadMatricesToShader();
     void loadMatricesToHairShader();
-// ============= various draw related utility functions ===============
 
+    void buildVAOs(const std::vector<Mesh*>& meshList, std::vector<ngl::VertexArrayObject*>& o_VAOList) const;
+    void feedVAO(const Mesh& mesh, ngl::VertexArrayObject& o_vao) const;
     void drawHairStrand(const ElasticRod& strand);
+    void drawHairStrandDebug(const ElasticRod& strand);
 };
 
 #endif

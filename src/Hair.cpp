@@ -14,9 +14,10 @@ HairParams::~HairParams()
 
 Hair::Hair():m_object(NULL)
 {
+//    init default hair params
     m_params = new HairParams();
     m_params->m_length = 4;
-    m_params->m_lengthVariance = 1.0;
+    m_params->m_lengthVariance = 0;
     m_params->m_helicalRadius = 0.2;
     m_params->m_helicalPitch = 0.1;
     m_params->m_density = 0.5;
@@ -25,7 +26,7 @@ Hair::Hair():m_object(NULL)
 
     mg::Real bendStiffness = 0.01;
     mg::Real twistStiffness = 0.01;
-    unsigned pbdIterations = 4;
+    unsigned pbdIterations = 5;
     mg::Real maxElasticForce = 1000;
     m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, pbdIterations, maxElasticForce);
 }
@@ -46,6 +47,8 @@ void Hair::reset()
         delete (*it);
     }
     m_strands.clear();
+    m_findices.clear();
+    m_vindices.clear();
     m_object = NULL;
 }
 
@@ -57,13 +60,13 @@ void Hair::update(mg::Real dt)
     chronometer.start();
 
     const Mesh* mesh = m_object->getMesh();
-    unsigned i = 0;
-    typedef std::vector<ElasticRod*>::const_iterator SIter;
-    for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
+
+    #pragma omp parallel for
+    for (unsigned i = 0; i < m_vindices.size(); ++i)
     {
-        (*it)->m_ppos[0] = mg::transform_point(m_object->getTransform(), mesh->m_vertices[i]);
-        (*it)->update(dt);
-        ++i;
+        unsigned idx = m_vindices[i];
+        m_strands[i]->m_ppos[0] = mg::transform_point(m_object->getTransform(), mesh->m_vertices[idx]);
+        m_strands[i]->update(dt);
     }
 
     std::cout << "TIME update ms: " << chronometer.elapsed() << std::endl;

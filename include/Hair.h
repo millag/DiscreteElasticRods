@@ -31,9 +31,11 @@ public:
     void update(mg::Real dt);
 
 public:
-    const RenderObject* m_object;
     HairParams* m_params;
     std::vector<ElasticRod*> m_strands;
+    const RenderObject* m_object;
+    std::vector<unsigned> m_findices;
+    std::vector<unsigned> m_vindices;
 };
 
 #endif // HAIR_H

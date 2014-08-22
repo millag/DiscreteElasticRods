@@ -3,6 +3,7 @@
 #include "HairGenerator.h"
 
 RenderObject* createBall(const Mesh* mesh);
+Hair* createHair(const RenderObject* object);
 
 //===================================== Scene ===========================================
 
@@ -54,9 +55,7 @@ void Scene::initialize()
     RenderObject* ball = createBall(mesh);
     m_renderObjects.push_back(ball);
 
-    m_hair = new Hair();
-    HairGenerator hairGenerator;
-    hairGenerator.generateCurlyHair(ball, *m_hair);
+    m_hair = createHair(ball);
 
     m_spiral = new Spiral();
     m_spiral->init(ball);
@@ -90,4 +89,18 @@ RenderObject *createBall(const Mesh* mesh)
     mg::matrix_set_translation(transform, (mg::Real)0, (mg::Real)0, (mg::Real)0);
 
     return new RenderObject(mesh, transform, -1);
+}
+
+Hair* createHair(const RenderObject* object)
+{
+    std::vector<unsigned> fidx(20);
+    for (unsigned i = 0; i < fidx.size(); ++i)
+    {
+        fidx[i] = 2 * i;
+    }
+
+    Hair* hair = new Hair();
+    HairGenerator::generateCurlyHair(object, fidx, *hair);
+
+    return hair;
 }

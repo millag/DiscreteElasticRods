@@ -9,48 +9,97 @@ HairGenerator::HairGenerator()
 HairGenerator::~HairGenerator()
 { }
 
-void HairGenerator::generateCurlyHair(const RenderObject* object, Hair& o_hair) const
+void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vector<unsigned>& findices, Hair& o_hair)
 {
     assert(object != NULL);
     assert(object->getMesh() != NULL);
 
-    unsigned nStrands = 30;
+    const Mesh* mesh = object->getMesh();
 
     o_hair.reset();
     o_hair.m_object = object;
-    o_hair.m_strands.resize(nStrands);
+    o_hair.m_findices = findices;
+    o_hair.m_vindices.reserve( findices.size() );
 
-    mg::Vec3D p, n, u;
-    const Mesh* mesh = object->getMesh();
-    for (unsigned i = 0; i < nStrands && i < mesh->m_vertices.size(); ++i)
+    std::pair<std::set<unsigned>::const_iterator, bool> hasIdx;
+    std::set<unsigned> vIdxSet;
+    for (unsigned i = 0; i < findices.size(); ++i)
     {
-        p = mg::transform_point(object->getTransform(), mesh->m_vertices[i]);
-        n = mg::transform_vector(object->getTransform(), mesh->m_normals[i]);
-        u = mg::EY;
+        unsigned idx = mesh->getPrimitiveOffset(findices[i]);
+        for (unsigned j = 0; j < mesh->getNVerticesPerPrimitive(); ++j)
+        {
+            hasIdx = vIdxSet.insert(mesh->m_vindices[idx + j]);
+            if (hasIdx.second)
+            {
+                o_hair.m_vindices.push_back( *hasIdx.first );
+            }
+        }
+    }
+
+    o_hair.m_strands.resize( o_hair.m_vindices.size() );
+
+    #pragma omp parallel for
+    for (unsigned i = 0; i < o_hair.m_vindices.size(); ++i)
+    {
+        unsigned idx = o_hair.m_vindices[i];
+        mg::Vec3D p = mg::transform_point(object->getTransform(), mesh->m_vertices[ idx ]);
+        mg::Vec3D n = mg::transform_vector(object->getTransform(), mesh->m_normals[ idx ]);
+        mg::Vec3D u = mg::EY;
+        if (fabs(1 - fabs(mg::dot(n, u))) < mg::ERR)
+        {
+            u = mg::EX;
+        }
+
         ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams, ElasticRod::NONE);
         generateHelicalRod(*o_hair.m_params, p, n, u, *rod);
         o_hair.m_strands[i] = rod;
     }
+
+
+    std::cout << "# strands " << o_hair.m_strands.size() << std::endl;
 }
 
-void HairGenerator::generateStraightHair(const RenderObject* object, Hair& o_hair) const
+void HairGenerator::generateStraightHair(const RenderObject* object, const std::vector<unsigned>& findices, Hair& o_hair)
 {
     assert(object != NULL);
     assert(object->getMesh() != NULL);
 
-    unsigned nStrands = 30;
+    const Mesh* mesh = object->getMesh();
 
     o_hair.reset();
     o_hair.m_object = object;
-    o_hair.m_strands.resize(nStrands);
+    o_hair.m_findices = findices;
+    o_hair.m_vindices.reserve( findices.size() );
 
-    mg::Vec3D p, n, u;
-    const Mesh* mesh = object->getMesh();
-    for (unsigned i = 0; i < nStrands && i < mesh->m_vertices.size(); ++i)
+    std::pair<std::set<unsigned>::const_iterator, bool> hasIdx;
+    std::set<unsigned> vIdxSet;
+    for (unsigned i = 0; i < findices.size(); ++i)
     {
-        p = mg::transform_point(object->getTransform(), mesh->m_vertices[i]);
-        n = mg::transform_vector(object->getTransform(), mesh->m_normals[i]);
-        u = mg::EY;
+        unsigned idx = mesh->getPrimitiveOffset(findices[i]);
+        for (unsigned j = 0; j < mesh->getNVerticesPerPrimitive(); ++j)
+        {
+            hasIdx = vIdxSet.insert(mesh->m_vindices[idx + j]);
+            if (hasIdx.second)
+            {
+                o_hair.m_vindices.push_back( *hasIdx.first );
+            }
+        }
+    }
+
+    o_hair.m_strands.resize( o_hair.m_vindices.size() );
+
+    #pragma omp parallel for
+    for (unsigned i = 0; i < o_hair.m_vindices.size(); ++i)
+    {
+        unsigned idx = o_hair.m_vindices[i];
+        mg::Vec3D p = mg::transform_point(object->getTransform(), mesh->m_vertices[ idx ]);
+        mg::Vec3D n = mg::transform_vector(object->getTransform(), mesh->m_normals[ idx ]);
+        mg::Vec3D u = mg::EY;
+        if (fabs(1 - fabs(mg::dot(n, u))) < mg::ERR)
+        {
+            u = mg::EX;
+        }
+
         ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams, ElasticRod::NONE);
         generateStraightRod(*o_hair.m_params, p, n, u, *rod);
         o_hair.m_strands[i] = rod;
@@ -59,7 +108,7 @@ void HairGenerator::generateStraightHair(const RenderObject* object, Hair& o_hai
 
 void HairGenerator::generateHelicalRod(const HairParams& params,
                                     const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
-                                    ElasticRod& o_rod) const
+                                    ElasticRod& o_rod)
 {
     o_rod.m_ppos.resize(params.m_nParticles);
     o_rod.m_pvel.resize(params.m_nParticles);
@@ -77,10 +126,11 @@ void HairGenerator::generateHelicalRod(const HairParams& params,
 
     mg::Real angle = params.m_length / std::sqrt(params.m_helicalRadius * params.m_helicalRadius + params.m_helicalPitch * params.m_helicalPitch);
     angle /= (params.m_nParticles - 1);
+    mg::Real phase = mg::randf(0, mg::Constants::two_pi());
     for (unsigned i = 0; i < o_rod.m_ppos.size(); ++i)
     {
 //        calc point on unit circle
-        o_rod.m_ppos[i] = (std::cos(i * angle) * diru  + std::sin(i * angle) * dirv - diru);
+        o_rod.m_ppos[i] = (std::cos(phase + i * angle) * diru  + std::sin(phase + i * angle) * dirv - (std::cos(phase) * diru  + std::sin(phase) * dirv));
 //        place point on helix
         o_rod.m_ppos[i] = o_rod.m_ppos[i]* params.m_helicalRadius + params.m_helicalPitch * (i * angle) * dirn;
 //        move helix to position
@@ -106,7 +156,7 @@ void HairGenerator::generateHelicalRod(const HairParams& params,
 
 void HairGenerator::generateStraightRod(const HairParams& params,
                                      const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
-                                     ElasticRod& o_rod) const
+                                     ElasticRod& o_rod)
 {
     o_rod.m_ppos.resize(params.m_nParticles);
     o_rod.m_pvel.resize(params.m_nParticles);
@@ -142,3 +192,31 @@ void HairGenerator::generateStraightRod(const HairParams& params,
 
     o_rod.init(o_rod.m_ppos, o_rod.m_u0, o_rod.m_ppos, o_rod.m_pvel, o_rod.m_pmass, o_rod.m_theta, o_rod.m_isClamped);
 }
+
+
+//    Iter it2;
+//    int result = 0;
+//    OpenMesh::VertexHandle vh;
+//#pragma omp parallel for
+//    for (unsigned i = 0 ; i < v_idxSet.size() ; i++){
+//        vh = m_mesh.vertex_handle(i);
+//        it2 = this->find_by_index(i);
+
+//        if (it2.find_result == true){
+
+//            reuslt = it2.result();
+//            return;
+//        }
+//    }
+
+
+//std::set<unsigned>::iterator* HairGenerator::find_by_index(unsigned _index){
+//    unsigned currenti = 0;
+//    typedef std::set<unsigned>::const_iterator Iter;
+//    for (Iter it = vIdxSet.begin(); it != vIdxSet.end(); ++it){
+//        if (currenti = _index){
+//            return Iter;
+//        }
+//        currenti++;
+//    }
+//}

@@ -70,6 +70,10 @@ OTHER_FILES+= shaders/Phong.fs \
 DESTDIR=./
 CONFIG += console
 CONFIG -= app_bundle
+
+QMAKE_CXXFLAGS+= -fopenmp
+QMAKE_LFLAGS += -fopenmp
+
 # use this to suppress some warning from boost
 unix:QMAKE_CXXFLAGS_WARN_ON += "-Wno-unused-parameter"
 

@@ -252,6 +252,7 @@ void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
             o_v[i] = o_v[i - 1];
             continue;
         }
+
 //        rotate frame u axis around kb
         mg::Quaternion q(cosPhi, sinPhi * mg::normalize(o_kb[i]));
         mg::Quaternion p(0, o_u[i - 1]);

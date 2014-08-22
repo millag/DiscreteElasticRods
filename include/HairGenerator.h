@@ -9,16 +9,15 @@ public:
     HairGenerator();
     ~HairGenerator();
 
-    void generateCurlyHair(const RenderObject* object, Hair& o_hair) const;
-    void generateStraightHair(const RenderObject* object, Hair& o_hair) const;
+    static void generateCurlyHair(const RenderObject* object, const std::vector<unsigned>& findices, Hair& o_hair);
+    static void generateStraightHair(const RenderObject* object, const std::vector<unsigned>& findices, Hair& o_hair);
 
-    void generateHelicalRod(const HairParams& params,
+    static void generateHelicalRod(const HairParams& params,
                             const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
-                            ElasticRod& o_rod) const;
-    void generateStraightRod(const HairParams& params,
+                            ElasticRod& o_rod);
+    static void generateStraightRod(const HairParams& params,
                              const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
-                             ElasticRod& o_rod) const;
-
+                             ElasticRod& o_rod);
 };
 
 #endif // HAIRSTRAND_H
