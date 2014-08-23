@@ -1,5 +1,6 @@
 #include "Hair.h"
 #include <QElapsedTimer>
+#include "config.h"
 
 HairParams::HairParams(): m_rodParams(NULL)
 { }
@@ -56,12 +57,14 @@ void Hair::update(mg::Real dt)
 {
     assert(m_object != NULL);
 
+    const Mesh* mesh = m_object->getMesh();
+
     QElapsedTimer chronometer;
     chronometer.start();
 
-    const Mesh* mesh = m_object->getMesh();
-
-    #pragma omp parallel for
+#ifdef MULTI_THREAD
+#pragma omp parallel for
+#endif
     for (unsigned i = 0; i < m_vindices.size(); ++i)
     {
         unsigned idx = m_vindices[i];

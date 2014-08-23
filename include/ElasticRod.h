@@ -5,7 +5,7 @@
 #include <set>
 #include <dlib/matrix.h>
 
-#include "Types.h"
+#include "config.h"
 
 typedef dlib::matrix<double,0,1> ColumnVector;
 typedef dlib::matrix<double> Hessian;

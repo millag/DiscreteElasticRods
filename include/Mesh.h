@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <cassert>
-#include "Types.h"
+#include "config.h"
 
 class Mesh
 {

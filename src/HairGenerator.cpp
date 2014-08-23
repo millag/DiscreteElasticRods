@@ -1,6 +1,7 @@
 #include "HairGenerator.h"
 #include <QElapsedTimer>
 #include "Utils.h"
+#include "config.h"
 
 
 HairGenerator::HairGenerator()
@@ -38,7 +39,9 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
 
     o_hair.m_strands.resize( o_hair.m_vindices.size() );
 
-    #pragma omp parallel for
+#ifdef MULTI_THREAD
+#pragma omp parallel for
+#endif
     for (unsigned i = 0; i < o_hair.m_vindices.size(); ++i)
     {
         unsigned idx = o_hair.m_vindices[i];
@@ -54,9 +57,6 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
         generateHelicalRod(*o_hair.m_params, p, n, u, *rod);
         o_hair.m_strands[i] = rod;
     }
-
-
-    std::cout << "# strands " << o_hair.m_strands.size() << std::endl;
 }
 
 void HairGenerator::generateStraightHair(const RenderObject* object, const std::vector<unsigned>& findices, Hair& o_hair)
@@ -88,7 +88,9 @@ void HairGenerator::generateStraightHair(const RenderObject* object, const std::
 
     o_hair.m_strands.resize( o_hair.m_vindices.size() );
 
-    #pragma omp parallel for
+#ifdef MULTI_THREAD
+#pragma omp parallel for
+#endif
     for (unsigned i = 0; i < o_hair.m_vindices.size(); ++i)
     {
         unsigned idx = o_hair.m_vindices[i];
@@ -192,31 +194,3 @@ void HairGenerator::generateStraightRod(const HairParams& params,
 
     o_rod.init(o_rod.m_ppos, o_rod.m_u0, o_rod.m_ppos, o_rod.m_pvel, o_rod.m_pmass, o_rod.m_theta, o_rod.m_isClamped);
 }
-
-
-//    Iter it2;
-//    int result = 0;
-//    OpenMesh::VertexHandle vh;
-//#pragma omp parallel for
-//    for (unsigned i = 0 ; i < v_idxSet.size() ; i++){
-//        vh = m_mesh.vertex_handle(i);
-//        it2 = this->find_by_index(i);
-
-//        if (it2.find_result == true){
-
-//            reuslt = it2.result();
-//            return;
-//        }
-//    }
-
-
-//std::set<unsigned>::iterator* HairGenerator::find_by_index(unsigned _index){
-//    unsigned currenti = 0;
-//    typedef std::set<unsigned>::const_iterator Iter;
-//    for (Iter it = vIdxSet.begin(); it != vIdxSet.end(); ++it){
-//        if (currenti = _index){
-//            return Iter;
-//        }
-//        currenti++;
-//    }
-//}

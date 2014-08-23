@@ -2,7 +2,7 @@
 #define TRANSFORMTOOL_H
 
 #include <ngl/Mat4.h>
-#include "Types.h"
+#include "config.h"
 
 class TransformTool
 {

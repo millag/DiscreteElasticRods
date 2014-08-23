@@ -4,6 +4,8 @@
 #include "cml_config.h"
 #include <cml/cml.h>
 
+//#define MULTI_THREAD
+
 namespace mg
 {
     using  namespace cml;

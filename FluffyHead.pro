@@ -41,11 +41,11 @@ HEADERS += include/MainWindow.h \
     include/TransformTool.h \
     include/IServant.h \
     include/ElasticRod.h \
-    include/Types.h \
     include/cml_config.h \
     include/Spiral.h \
     include/Hair.h \
-    include/HairGenerator.h
+    include/HairGenerator.h \
+    include/config.h
 
 
 FORMS += \

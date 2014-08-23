@@ -1,7 +1,7 @@
 #ifndef AABB_H
 #define AABB_H
 
-#include "Types.h"
+#include "config.h"
 
 class AABB
 {

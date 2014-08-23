@@ -1,18 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "Types.h"
+#include "config.h"
 
 namespace mg
 {
-    template<class T>
-    T clamp(T v, T a, T b)
-    {
-        assert(a < b);
-        return std::max(a, std::min(v, b));
-    }
-
-
     const static unsigned short SEC = 1000;
     const static unsigned short UPS = 30;
     const static unsigned short FPS = 30;
