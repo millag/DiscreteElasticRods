@@ -13,10 +13,12 @@ struct HairParams
     mg::Real m_lengthVariance;
     mg::Real m_helicalRadius;
     mg::Real m_helicalPitch;
-
     mg::Real m_density;
     mg::Real m_thickness;
     unsigned m_nParticles;
+
+    mg::Vec3D m_gravity;
+    mg::Real m_drag;
 
     RodParams* m_rodParams;
 };
@@ -36,6 +38,10 @@ public:
     const RenderObject* m_object;
     std::vector<unsigned> m_findices;
     std::vector<unsigned> m_vindices;
+
+private:
+    void updateRod(ElasticRod& rod, mg::Real dt) const;
+    void accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const;
 };
 
 #endif // HAIR_H

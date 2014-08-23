@@ -167,7 +167,6 @@ private :
     void buildVAOs(const std::vector<Mesh*>& meshList, std::vector<ngl::VertexArrayObject*>& o_VAOList) const;
     void feedVAO(const Mesh& mesh, ngl::VertexArrayObject& o_vao) const;
     void drawHairStrand(const ElasticRod& strand);
-    void drawHairStrandDebug(const ElasticRod& strand);
 };
 
 #endif

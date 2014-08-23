@@ -1,17 +1,17 @@
 #include "Spiral.h"
-
 #include <QElapsedTimer>
+#include "Utils.h"
 
 Spiral::Spiral(): m_object(NULL)
 {
     m_radius = 0.2;
     m_lenght = 4.0;
 
-    m_bendStiffness = 0.01;
-    m_twistStiffness = 0.01;
+    m_bendStiffness = 0.5;
+    m_twistStiffness = 0.7;
     m_maxForce = 1000;
 
-    m_nParticles = 25;
+    m_nParticles = 20;
     m_nIterations = 4;
 
     m_rodParams = new RodParams(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce);
@@ -74,7 +74,7 @@ void Spiral::init(const RenderObject* object)
         pos[i] = (1 - t) * start + t * end;
 
         vel[i].zero();
-        mass[i] = 0.001;
+        mass[i] = 0.05;
         if (i < static_cast<unsigned>(theta.size()))
         {
             theta(i) = 0;
@@ -83,7 +83,7 @@ void Spiral::init(const RenderObject* object)
 
     for (unsigned i = 0; i < 1; ++i)
     {
-        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::NONE);
+        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::BFGS);
 //        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
         strand->init(restpos, u0, pos, vel, mass, theta, isClamped);
         m_strands.push_back(strand);
@@ -99,11 +99,49 @@ void Spiral::update(mg::Real dt)
     for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
     {
         (*it)->m_ppos[0] = m_object->getPosition();
-        (*it)->update(dt);
+        updateRod(**it, dt);
     }
 
     std::cout << "TIME update ms: " << chronometer.elapsed() << std::endl;
     chronometer.restart();
+}
+
+/* semi-implicit Euler with Verlet scheme for velocity update */
+void Spiral::updateRod(ElasticRod& rod, mg::Real dt) const
+{
+    std::vector<mg::Vec3D> forces(rod.m_ppos.size(), mg::Vec3D(0,0,0));
+    rod.accumulateInternalElasticForces(forces);
+    accumulateExternalForces(rod, forces);
+
+//    integrate centerline - semi- implicit Euler
+    std::vector<mg::Vec3D> prevPos(rod.m_ppos.size());
+    for (unsigned i = 0; i < rod.m_ppos.size(); ++i)
+    {
+        prevPos[i] = rod.m_ppos[i];
+        rod.m_pvel[i] += dt * forces[i] / rod.m_pmass[i];
+        rod.m_ppos[i] += rod.m_pvel[i] * dt;
+    }
+
+    rod.enforceInternalConstraints();
+
+//    update velocities:
+    for (unsigned i = 0; i < rod.m_ppos.size(); ++i)
+    {
+        rod.m_pvel[i] = (rod.m_ppos[i] - prevPos[i]) / dt;
+    }
+
+    rod.updateCurrentState();
+}
+
+void Spiral::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const
+{
+    for (unsigned i = 0; i < o_forces.size(); ++i)
+    {
+        if (!rod.m_isClamped.count(i))
+        {
+            o_forces[i] += mg::GRAVITY * rod.m_pmass[i] - 0.001 * rod.m_pvel[i];
+        }
+    }
 }
 
 

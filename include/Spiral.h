@@ -10,11 +10,10 @@ public:
     Spiral();
     ~Spiral();
 
-    const std::vector<ElasticRod*>& getStrands() const { return m_strands; }
-
     void init(const RenderObject* object);
     void update(mg::Real dt);
 
+public:
     mg::Real m_radius;
     mg::Real m_lenght;
 
@@ -25,10 +24,15 @@ public:
     unsigned m_nParticles;
     unsigned m_nIterations;
 
-private:
     std::vector<ElasticRod*> m_strands;
+
+private:
     RodParams* m_rodParams;
     const RenderObject* m_object;
+
+private:
+    void updateRod(ElasticRod& rod, mg::Real dt) const;
+    void accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const;
 };
 
 #endif // SPIRAL_H

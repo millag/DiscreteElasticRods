@@ -127,8 +127,6 @@ void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
     m_kb.resize(m_edges.size());
     m_m1.resize(m_edges.size());
     m_m2.resize(m_edges.size());
-//    store elasic force for debug purpose
-    m_elasticForce.resize(m_ppos.size(), mg::Vec3D(0, 0, 0));
 
     m_restEdgeL.resize(m_edges.size());
     m_restRegionL.resize(m_edges.size());
@@ -146,7 +144,12 @@ void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
 //    initialize current state
     updateCurrentState();
 
-    computeElasticForces(m_ppos, m_elasticForce);
+#ifdef DBUGG
+//    store elasic force for debug purpose
+    m_elasticForce.resize(m_ppos.size(), mg::Vec3D(0, 0, 0));
+    accumulateInternalElasticForces(m_elasticForce);
+#endif
+
 }
 
 
@@ -310,22 +313,9 @@ void ElasticRod::computeMaterialFrame(const ColumnVector &theta,
     }
 }
 
-/* Use Verlet integration. */
-void ElasticRod::update(mg::Real dt)
+
+void ElasticRod::enforceInternalConstraints()
 {
-    std::vector<mg::Vec3D> forces(m_ppos.size(), mg::Vec3D(0,0,0));
-    computeForces(m_ppos, forces);
-
-//    integrate centerline - semi- implicit Euler
-    std::vector<mg::Vec3D> prevPos(m_ppos.size());
-    for (unsigned i = 0; i < m_ppos.size(); ++i)
-    {
-        prevPos[i] = m_ppos[i];
-        m_pvel[i] += dt * forces[i] / m_pmass[i];
-        m_ppos[i] += m_pvel[i] * dt;
-    }
-
-//    solve constraints
     mg::Vec3D e;
     mg::Real l, l1, l2;
     bool clamped_i, clamped_i1;
@@ -368,54 +358,9 @@ void ElasticRod::update(mg::Real dt)
             m_ppos[i + 1] += l2 * e;
         }
     }
-
-//    update velocities:
-    for (unsigned i = 0; i < m_ppos.size(); ++i)
-    {
-        m_pvel[i] = (m_ppos[i] - prevPos[i]) / dt;
-    }
-
-    updateCurrentState();
 }
 
-void ElasticRod::computeForces(const std::vector<mg::Vec3D>& vertices,
-                               std::vector<mg::Vec3D>& o_forces)
-{
-    std::vector<mg::Vec3D> externalForces(vertices.size(), mg::Vec3D(0,0,0));
-    std::vector<mg::Vec3D> elasticForces(vertices.size(), mg::Vec3D(0,0,0));
-
-    computeExternalForces(vertices, externalForces);
-    computeElasticForces(vertices, elasticForces);
-
-    m_elasticForce = elasticForces;
-
-    for (unsigned i = 0; i < o_forces.size(); ++i)
-    {
-        o_forces[i].set(0,0,0);
-        if (m_isClamped.count(i))
-        {
-            continue;
-        }
-        o_forces[i] += externalForces[i] + elasticForces[i];
-    }
-}
-
-
-void ElasticRod::computeExternalForces(const std::vector<mg::Vec3D>& vertices,
-                                       std::vector<mg::Vec3D>& o_forces) const
-{
-    for (unsigned i = 0; i < vertices.size(); ++i)
-    {
-        if (m_isClamped.count(i))
-        {
-            continue;
-        }
-        o_forces[i] += mg::GRAVITY * m_pmass[i] - 0.001 * m_pvel[i];
-    }
-}
-
-void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
-                                      std::vector<mg::Vec3D>& o_forces) const
+void ElasticRod::accumulateInternalElasticForces(std::vector<mg::Vec3D>& o_forces)
 {
     std::vector<mg::Matrix3D> minusGKB(m_edges.size());
     std::vector<mg::Matrix3D> plusGKB(m_edges.size());
@@ -438,7 +383,7 @@ void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
 
     mg::Matrix23D GW;
     mg::Vec3D GH;
-    for (unsigned i = 0; i < vertices.size(); ++i)
+    for (unsigned i = 0; i < m_ppos.size(); ++i)
     {
         if (m_isClamped.count(i))
         {
@@ -479,12 +424,16 @@ void ElasticRod::computeElasticForces(const std::vector<mg::Vec3D>& vertices,
         }
 
 //        need to limit the force otherwise when e[i] ~ -e[i - 1] ||kb|| goes to infinity => force goes to infinity
-        if (mg::length_squared(o_forces[i]) > m_params->m_maxElasticForce * m_params->m_maxElasticForce)
-        {
-            o_forces[i].normalize();
-            o_forces[i] *= m_params->m_maxElasticForce;
-        }
+//        if (mg::length_squared(o_forces[i]) > m_params->m_maxElasticForce * m_params->m_maxElasticForce)
+//        {
+//            o_forces[i].normalize();
+//            o_forces[i] *= m_params->m_maxElasticForce;
+//        }
     }
+
+#ifdef DBUGG
+    m_elasticForce = o_forces;
+#endif
 }
 
 void ElasticRod::computeGradientKB(const std::vector<mg::Vec3D> &kb,
@@ -719,10 +668,12 @@ void ElasticRod::updateCurrentState()
     }
     computeMaterialFrame(m_theta, m_m1, m_m2);
 
-//    mg::Real E;
-//    computeEnergy(m_m1, m_m2, m_theta, E);
-//    std::cout<< "Theta:" << m_theta << std::endl;
-//    std::cout<< "Total Energy:" << E << std::endl;
+#ifdef DBUGG
+    mg::Real E;
+    computeEnergy(m_m1, m_m2, m_theta, E);
+    std::cout<< "Theta:" << m_theta << "\n";
+    std::cout<< "Total Energy: " << E << " MIN Energy: " << minE << std::endl;
+#endif
 }
 
 

@@ -64,8 +64,8 @@ void Scene::initialize()
 
 void Scene::update(mg::Real dt)
 {
-    m_hair->update(dt);
-//    m_spiral->update(dt);
+//    m_hair->update(dt);
+    m_spiral->update(dt);
 }
 
 void Scene::findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::vector<RenderObject*>& o_objects)
@@ -93,7 +93,7 @@ RenderObject *createBall(const Mesh* mesh)
 
 Hair* createHair(const RenderObject* object)
 {
-    std::vector<unsigned> fidx(20);
+    std::vector<unsigned> fidx(40);
     for (unsigned i = 0; i < fidx.size(); ++i)
     {
         fidx[i] = 2 * i;

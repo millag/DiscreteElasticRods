@@ -66,11 +66,21 @@ public:
               const ColumnVector& theta,
               const std::set<unsigned>& isClamped);
 
-    void update(mg::Real dt);
+///    solve internal distance constraints using PBD
+    void enforceInternalConstraints();
+
+///    calculate internal elastic forces for each position and accumulate the result in o_forces
+///    first compute valid state based on current position and edge data
+///    NOTE: the current state of the rod is not altered except when debug(DBUGG) is enabled
+///    When DBUGG is on computed forces are stored for visualization purpose
+    void accumulateInternalElasticForces(std::vector<mg::Vec3D>& o_forces);
+
+///    compute valid state based on current positions and edge data from previous frame
+    void updateCurrentState();
 
 public:
 
-//    ========= should be private - made public only for debug purposes ========
+//    ========= must be private - public only for debug purposes ========
 
 /// #vertices = n + 1
     std::vector<mg::Vec3D> m_ppos;
@@ -96,9 +106,12 @@ public:
 /// #m2 = #edges - m2[i] defines material axis m2(binormal) at e[i]
 /// NOTE: it is used also as temporary place holder for v axis of Bishop frame
     std::vector<mg::Vec3D> m_m2;
+
 /// #m_elasticForce = #positions - m_elasticForce[i] contains applied elastic force from last iteration
 /// NOTE: this is used for debug purpose only - in general theres no need to store it
+#ifdef DBUGG
     std::vector<mg::Vec3D> m_elasticForce;
+#endif
 
 private:
 /// #restEdgeL = #edges = n edge length
@@ -179,16 +192,7 @@ private:
                                 const mg::Vec3D& e1,
                                 mg::Vec3D& io_u) const;
 
-    void updateCurrentState();
 
-    void computeForces(const std::vector<mg::Vec3D>& vertices,
-                       std::vector<mg::Vec3D>& o_forces);
-
-    void computeExternalForces(const std::vector<mg::Vec3D>& vertices,
-                                std::vector<mg::Vec3D>& o_forces) const;
-
-    void computeElasticForces(const std::vector<mg::Vec3D>& vertices,
-                              std::vector<mg::Vec3D>& o_forces) const;
 
     void computeGradientKB(const std::vector<mg::Vec3D>& kb,
                            const std::vector<mg::Vec3D>& edges,

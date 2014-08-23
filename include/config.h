@@ -5,6 +5,7 @@
 #include <cml/cml.h>
 
 //#define MULTI_THREAD
+//#define DBUGG
 
 namespace mg
 {

@@ -287,7 +287,7 @@ void GLWindow::paintGL()
 //    }
 
 
-
+#ifndef DBUGG
     shader->use("Tube");
     shader->setShaderParam4f("Col1", 0.8, 0.8, 0.0, 1.0);
     shader->setShaderParam4f("Col2", 0.0, 0.0, 0.0, 1.0);
@@ -296,14 +296,16 @@ void GLWindow::paintGL()
     // load transform stack
     m_transform.reset();
     loadMatricesToShader();
+#endif
 
-    // draw spring lines
-//    glLineWidth(0.05);
-//    shader->use("DebugRod");
-//    shader->setShaderParam4f("Colour", 0.8, 0.8, 0.0, 1.0);
-//    // load transform stack
-//    m_transform.reset();
-//    loadMatricesToHairShader();
+#ifdef DBUGG
+    glLineWidth(0.05);
+    shader->use("DebugRod");
+    shader->setShaderParam4f("Colour", 0.8, 0.8, 0.0, 1.0);
+    // load transform stack
+    m_transform.reset();
+    loadMatricesToHairShader();
+#endif
 
     const std::vector<ElasticRod*>& strands = m_scene->getStrands();
     typedef std::vector<ElasticRod*>::const_iterator SIter;
@@ -440,7 +442,57 @@ void GLWindow::stopSimTimer()
 
 // ============================ utility functions ==========================
 
-void GLWindow::drawHairStrandDebug(const ElasticRod& strand)
+void GLWindow::buildVAOs(const std::vector<Mesh*>& meshList, std::vector<ngl::VertexArrayObject*>& o_VAOList) const
+{
+    assert(o_VAOList.size() == 0);
+    o_VAOList.resize(meshList.size(), NULL);
+
+    unsigned i = 0;
+    for (std::vector<Mesh*>::const_iterator it = meshList.begin(); it != meshList.end(); ++it)
+    {
+        if ((*it)->getNPrimitives() == 0)
+        {
+            ++i;
+            continue;
+        }
+
+        // create a vao as a series of GL_TRIANGLES
+        ngl::VertexArrayObject* vao = ngl::VertexArrayObject::createVOA(GL_TRIANGLES);
+        o_VAOList[i++] = vao;
+        // feed data to GPU
+        feedVAO(*(*it), *vao);
+    }
+}
+
+void GLWindow::feedVAO(const Mesh& mesh, ngl::VertexArrayObject& o_vao) const
+{
+    o_vao.bind();
+    // in this case we are going to set our data as the vertices above
+    // now we set the attribute pointer to be 0 (as this matches vertIn in our shader)
+    o_vao.setIndexedData(mesh.m_vertices.size() * sizeof(mg::Vec3D),
+                         mesh.m_vertices[0][0],
+                         mesh.m_vindices.size(),
+                         &mesh.m_vindices[0],
+                         GL_UNSIGNED_INT);
+    o_vao.setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
+
+    // now we set the attribute pointer to be 2 (as this matches normalIn in our shader)
+    o_vao.setIndexedData(mesh.m_normals.size() * sizeof(mg::Vec3D),
+                         mesh.m_normals[0][0],
+                         mesh.m_vindices.size(),
+                         &mesh.m_vindices[0],
+                         GL_UNSIGNED_INT);
+    o_vao.setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
+
+    o_vao.setNumIndices(mesh.m_vindices.size());
+
+    // now unbind
+    o_vao.unbind();
+}
+
+
+#ifdef DBUGG
+void GLWindow::drawHairStrand(const ElasticRod& strand)
 {
     if (m_strandVAO != NULL)
     {
@@ -523,61 +575,9 @@ void GLWindow::drawHairStrandDebug(const ElasticRod& strand)
     m_strandVAO->draw();
     m_strandVAO->unbind();
 }
+#endif
 
-
-
-
-void GLWindow::buildVAOs(const std::vector<Mesh*>& meshList, std::vector<ngl::VertexArrayObject*>& o_VAOList) const
-{
-    assert(o_VAOList.size() == 0);
-    o_VAOList.resize(meshList.size(), NULL);
-
-    unsigned i = 0;
-    for (std::vector<Mesh*>::const_iterator it = meshList.begin(); it != meshList.end(); ++it)
-    {
-        if ((*it)->getNPrimitives() == 0)
-        {
-            ++i;
-            continue;
-        }
-
-        // create a vao as a series of GL_TRIANGLES
-        ngl::VertexArrayObject* vao = ngl::VertexArrayObject::createVOA(GL_TRIANGLES);
-        o_VAOList[i++] = vao;
-        // feed data to GPU
-        feedVAO(*(*it), *vao);
-    }
-}
-
-void GLWindow::feedVAO(const Mesh& mesh, ngl::VertexArrayObject& o_vao) const
-{
-    o_vao.bind();
-    // in this case we are going to set our data as the vertices above
-    // now we set the attribute pointer to be 0 (as this matches vertIn in our shader)
-    o_vao.setIndexedData(mesh.m_vertices.size() * sizeof(mg::Vec3D),
-                         mesh.m_vertices[0][0],
-                         mesh.m_vindices.size(),
-                         &mesh.m_vindices[0],
-                         GL_UNSIGNED_INT);
-    o_vao.setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
-
-    // now we set the attribute pointer to be 2 (as this matches normalIn in our shader)
-    o_vao.setIndexedData(mesh.m_normals.size() * sizeof(mg::Vec3D),
-                         mesh.m_normals[0][0],
-                         mesh.m_vindices.size(),
-                         &mesh.m_vindices[0],
-                         GL_UNSIGNED_INT);
-    o_vao.setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
-
-    o_vao.setNumIndices(mesh.m_vindices.size());
-
-    // now unbind
-    o_vao.unbind();
-}
-
-
-
-
+#ifndef DBUGG
 void GLWindow::drawHairStrand(const ElasticRod& strand)
 {
     if (m_strandVAO != NULL)
@@ -630,3 +630,4 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
     m_strandVAO->draw();
     m_strandVAO->unbind();
 }
+#endif
