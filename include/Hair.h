@@ -3,6 +3,7 @@
 
 #include "ElasticRod.h"
 #include "RenderObject.h"
+#include "VoxelGrid.h"
 
 struct HairParams
 {
@@ -17,8 +18,20 @@ struct HairParams
     mg::Real m_thickness;
     unsigned m_nParticles;
 
+    mg::Real m_coulombFriction;
+    mg::Real m_selfCollisionDist;
+    mg::Real m_selfFriction;
+    mg::Real m_selfRepulsion;
+
     mg::Vec3D m_gravity;
     mg::Real m_drag;
+
+    bool m_resolveSelfCollisions;
+///     constraints are enforced using PBD(Position Based Dynamics) framework
+///     the parameter controls # of PBD iterations to be performed
+///     NOTE that PBD DOES NOT GUARANTEE exact enforcement but converges towards the solution
+///     higher value of iterations means higher precision but is more computationally expensive
+    unsigned m_pbdIter;
 
     RodParams* m_rodParams;
 };
@@ -34,14 +47,21 @@ public:
 
 public:
     HairParams* m_params;
-    std::vector<ElasticRod*> m_strands;
     const RenderObject* m_object;
     std::vector<unsigned> m_findices;
     std::vector<unsigned> m_vindices;
+    std::vector<ElasticRod*> m_strands;
 
 private:
+    void createGrid();
+    void resetGrid();
     void updateRod(ElasticRod& rod, mg::Real dt) const;
-    void accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const;
+    void accumulateExternalForces(ElasticRod &rod, std::vector<mg::Vec3D>& o_forces) const;
+    void applyCollisionConstraintsIteration(ElasticRod& rod) const;
+
+private:
+    AABB m_volume;
+    VoxelGrid* m_grid;
 };
 
 #endif // HAIR_H

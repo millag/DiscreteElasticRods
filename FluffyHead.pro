@@ -25,7 +25,8 @@ SOURCES += src/main.cpp \
     libs/dlib-18.9/dlib/all/source.cpp \
     src/Spiral.cpp \
     src/Hair.cpp \
-    src/HairGenerator.cpp
+    src/HairGenerator.cpp \
+    src/VoxelGrid.cpp
 
 INCLUDEPATH += ./include
 INCLUDEPATH += ./libs/cml-1_0_2/
@@ -39,13 +40,13 @@ HEADERS += include/MainWindow.h \
     include/RenderObject.h \
     include/AABB.h \
     include/TransformTool.h \
-    include/IServant.h \
     include/ElasticRod.h \
     include/cml_config.h \
     include/Spiral.h \
     include/Hair.h \
     include/HairGenerator.h \
-    include/config.h
+    include/config.h \
+    include/VoxelGrid.h
 
 
 FORMS += \

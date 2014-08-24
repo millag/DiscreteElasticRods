@@ -38,10 +38,8 @@ GLWindow::GLWindow(const QGLFormat _format, int _timer, QWidget *_parent ) : QGL
 GLWindow::~GLWindow()
 {
     std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
-    if (m_scene != NULL)
-    {
-        delete m_cam;
-    }
+
+    delete m_cam;
 
     ngl::NGLInit *init = ngl::NGLInit::instance();
     init->NGLQuit();
@@ -182,7 +180,6 @@ void GLWindow::initializeGL()
 
 
     ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
-
     prim->createLineGrid("grid", 10, 10, 10);
 
     // build VAO for each mesh in scene and store references in m_VAOList
@@ -234,6 +231,24 @@ void GLWindow::loadMatricesToHairShader()
     shader->setShaderParamFromMat4("M",M);
 }
 
+void GLWindow::loadMatricesToHairShader2()
+{
+    ngl::ShaderLib *shader=ngl::ShaderLib::instance();
+
+    ngl::Mat4 MV;
+    ngl::Mat4 MVP;
+    ngl::Mat3 normalMatrix;
+    ngl::Mat4 M;
+    M = m_transform.getMatrix();
+    MV = M * m_cameraTransform.getMatrix() * m_cam->getViewMatrix();
+    MVP = MV * m_cam->getProjectionMatrix();
+    normalMatrix = MV;
+    normalMatrix.inverse();
+    shader->setShaderParamFromMat4("MV",MV);
+    shader->setShaderParamFromMat4("MVP",MVP);
+    shader->setShaderParamFromMat3("normalMatrix",normalMatrix);
+}
+
 void GLWindow::setSelectedObject(RenderObject *object)
 {
     m_selectedObject = object;
@@ -262,29 +277,29 @@ void GLWindow::paintGL()
     // get an instance of the VBO primitives for drawing
     ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
 
-//    ngl::VertexArrayObject* vao;
-//    const std::vector<RenderObject*>& roList = m_scene->getRenderObjects();
-//    typedef std::vector<RenderObject*>::const_iterator ROIter;
-//    for (ROIter it = roList.begin(); it != roList.end(); ++it)
-//    {
-//        RenderObject* ro = (*it);
-//        m_transform.reset();
-//        {
-////            place object in world
-//            shader->use("Phong");
-//            m_transform.setMatrix(ro->getTransform());
-//            loadMatricesToShader();
+    ngl::VertexArrayObject* vao;
+    const std::vector<RenderObject*>& roList = m_scene->getRenderObjects();
+    typedef std::vector<RenderObject*>::const_iterator ROIter;
+    for (ROIter it = roList.begin(); it != roList.end(); ++it)
+    {
+        RenderObject* ro = (*it);
+        m_transform.reset();
+        {
+//            place object in world
+            shader->use("Phong");
+            m_transform.setMatrix(ro->getTransform());
+            loadMatricesToShader();
 
-////            actual draw
-//            vao =  m_VAOList.at(ro->getMeshId());
-//            if (vao == NULL)
-//                continue;
+//            actual draw
+            vao =  m_VAOList.at(ro->getMeshId());
+            if (vao == NULL)
+                continue;
 
-//            vao->bind();
-//            vao->draw();
-//            vao->unbind();
-//        }
-//    }
+            vao->bind();
+            vao->draw();
+            vao->unbind();
+        }
+    }
 
 
 #ifndef DBUGG
@@ -295,7 +310,7 @@ void GLWindow::paintGL()
     glPatchParameteri(GL_PATCH_VERTICES, 4);
     // load transform stack
     m_transform.reset();
-    loadMatricesToShader();
+    loadMatricesToHairShader2();
 #endif
 
 #ifdef DBUGG
@@ -318,7 +333,6 @@ void GLWindow::paintGL()
     m_transform.reset();
     loadMatricesToShader();
     prim->draw("grid");
-
 }
 
 

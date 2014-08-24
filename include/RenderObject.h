@@ -26,7 +26,7 @@ public:
     mg::Real getMeshBoundingRadius() const { return m_meshAABB.getBoundingRadius(); }
     const AABB& getMeshAABB() const { return m_meshAABB; }
 
-    bool isInsideObject(const mg::Vec3D& p, mg::Vec3D& o_p, mg::Vec3D& o_n) const;
+    mg::Real distanceToSurface(const mg::Vec3D& p, mg::Vec3D& o_collisionPoint, mg::Vec3D& o_normal) const;
 
 protected:
     void calcBoundaries();

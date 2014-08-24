@@ -17,30 +17,30 @@ public:
 //    reintialize values in cells
     void reset();
 //    insert particle performing trilinear interpolation
-    unsigned insertDensity(const ngl::Vec4& pos, ngl::Real val);
+    unsigned insertDensity(const mg::Vec3D& pos, mg::Real val);
 //    insert particle's velovity performing trilinear interpolation
-    unsigned insertVelocity(const ngl::Vec4& pos, ngl::Vec4 val);
+    unsigned insertVelocity(const mg::Vec3D& pos, const mg::Vec3D& val);
 //    calculate density at a point performing trilinear interpolation
-    ngl::Real getInterpolatedDensity(const ngl::Vec4& pos) const;
+    void getInterpolatedDensity(const mg::Vec3D& pos, mg::Real& o_density) const;
 //    calculate velocity at a point performing trilinear interpolation
-    ngl::Vec4 getInterpolatedVelocity(const ngl::Vec4& pos) const;
+    void getInterpolatedVelocity(const mg::Vec3D& pos, mg::Vec3D& o_velocity) const;
 
-protected:
+private:
 
     struct Voxel
     {
-        ngl::Real m_density;
-        ngl::Vec4 m_velocity;
+        mg::Real m_density;
+        mg::Vec3D m_velocity;
     };
 
     const AABB& m_volume;
     unsigned m_divisions;
     unsigned m_divisionsSqr;
-    ngl::Real m_voxelSize;
+    mg::Real m_voxelSize;
 
     std::vector<Voxel> m_voxels;
 
-    unsigned findVoxel(const ngl::Vec4& pos, unsigned& o_i, unsigned& o_j, unsigned &o_k, ngl::Vec3& o_voxelPos) const;
+    unsigned findVoxel(const mg::Vec3D& pos, unsigned& o_i, unsigned& o_j, unsigned &o_k, mg::Vec3D& o_voxelPos) const;
     unsigned getVoxelIdx(unsigned i, unsigned j, unsigned k) const;
 };
 

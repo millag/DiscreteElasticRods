@@ -22,7 +22,7 @@ public:
     mg::Real m_maxForce;
 
     unsigned m_nParticles;
-    unsigned m_nIterations;
+    unsigned m_pbdIter;
 
     std::vector<ElasticRod*> m_strands;
 

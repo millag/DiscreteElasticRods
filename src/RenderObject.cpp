@@ -94,20 +94,16 @@ void RenderObject::calcAABB()
     m_AABB.reshape(vmin, vmax);
 }
 
-bool RenderObject::isInsideObject(const mg::Vec3D& p, mg::Vec3D &o_p, mg::Vec3D &o_n) const
+mg::Real RenderObject::distanceToSurface(const mg::Vec3D& p, mg::Vec3D &o_collisionPoint, mg::Vec3D &o_normal) const
 {
-    o_n = p - getPosition();
-    mg::Real distSqr = o_n.length_squared();
+    o_normal = p - getPosition();
+    mg::Real dist = o_normal.length();
 
-    if (distSqr > getBoundingRadius() * getBoundingRadius())
+    if (dist > mg::ERR)
     {
-        return false;
-    }
-    if (distSqr > mg::ERR)
-    {
-        o_n.normalize();
+        o_normal /= dist;
     }
 
-    o_p =  getPosition() + o_n  * getBoundingRadius();
-    return true;
+    o_collisionPoint =  getPosition() + o_normal  * m_boundingRadius;
+    return (dist - m_boundingRadius);
 }

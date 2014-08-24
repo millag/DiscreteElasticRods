@@ -4,7 +4,7 @@
 #include "cml_config.h"
 #include <cml/cml.h>
 
-//#define MULTI_THREAD
+#define MULTI_THREAD
 //#define DBUGG
 
 namespace mg

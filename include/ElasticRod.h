@@ -14,7 +14,6 @@ struct RodParams
 {
     RodParams(mg::Real bendStiffness = 1.0,
               mg::Real twistStiffness = 1.0,
-              unsigned pbdIter = 4,
               mg::Real maxElasticForce = 1000);
 
     inline void setBendStiffness(const mg::Real& bendStiffness);
@@ -34,11 +33,6 @@ struct RodParams
 ///    and the area moment of twist J which in turn depends only on cross-section area
 ///    FIX: need to calculate twistStiffness by using the thickness and density
     mg::Real m_beta;
-///     constraints are enforced using PBD(Position Based Dynamics) framework
-///     the parameter controls # of PBD iterations to be performed
-///     NOTE that PBD DOES NOT GUARANTEE exact enforcement but converges towards the solution
-///     higher value of iterations means higher precision but is more computationally expensive
-    unsigned m_pbdIter;
 ///    parameter that limits elastic force magnitude
 ///    need to limit the force otherwise when e[i] ~ -e[i - 1], ||kb|| goes to inf
 ///    => elastic force goes to inf and simulation blows up
@@ -51,11 +45,12 @@ public:
 
     enum MINIMIZATION_STRATEGY {NONE, NEWTON, BFGS, BFGS_NUMERIC};
 
-///    NOTE: valid RodParams object is mandatory
     ElasticRod(const RodParams* params);
     ElasticRod(const RodParams* params, MINIMIZATION_STRATEGY strategy = BFGS, double minTolerance = 1e-6f, unsigned minMaxIter = 100);
-
     ~ElasticRod();
+
+    void setParams(const RodParams* params) ;
+    void setMinimizationStrategy(MINIMIZATION_STRATEGY strategy, double minTolerance = 1e-6f, unsigned minMaxIter = 100);
 
 /// calculations are carried out in the coordinate space of pos - you must assure everything is in same coordinate space
     void init(const std::vector<mg::Vec3D>& restpos,
@@ -67,7 +62,7 @@ public:
               const std::set<unsigned>& isClamped);
 
 ///    solve internal distance constraints using PBD
-    void enforceInternalConstraints();
+    void applyInternalConstraintsIteration();
 
 ///    calculate internal elastic forces for each position and accumulate the result in o_forces
 ///    first compute valid state based on current position and edge data
@@ -134,7 +129,7 @@ private:
 
 private:
 
-    ElasticRod(): m_params(NULL), m_minimization(NULL)
+    ElasticRod():m_params(NULL), m_minimization(NULL)
     { }
 
     struct MinimizationPImpl;

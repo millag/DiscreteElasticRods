@@ -6,8 +6,8 @@
 
 //====================================== Rod Params =======================================
 
-RodParams::RodParams(mg::Real bendStiffness, mg::Real twistStiffness, unsigned pbdIter, mg::Real maxElasticForce):
-    m_beta(twistStiffness), m_pbdIter(pbdIter), m_maxElasticForce(maxElasticForce)
+RodParams::RodParams(mg::Real bendStiffness, mg::Real twistStiffness, mg::Real maxElasticForce):
+    m_beta(twistStiffness), m_maxElasticForce(maxElasticForce)
 {
     setBendStiffness(bendStiffness);
 }
@@ -79,19 +79,16 @@ public:
 
 //====================================== ElasticRod implementation =======================================
 
-
 ElasticRod::ElasticRod(const RodParams *params)
 {
-    assert(params != NULL);
-
+    assert( params != NULL );
     m_params = params;
     m_minimization = new MinimizationPImpl(BFGS);
 }
 
 ElasticRod::ElasticRod(const RodParams *params, MINIMIZATION_STRATEGY strategy, double minTolerance, unsigned minMaxIter)
 {
-    assert(params != NULL);
-
+    assert( params != NULL );
     m_params = params;
     m_minimization = new MinimizationPImpl(strategy, minTolerance, minMaxIter);
 }
@@ -101,6 +98,18 @@ ElasticRod::~ElasticRod()
     delete m_minimization;
 }
 
+void ElasticRod::setParams(const RodParams* params)
+{
+    assert( params != NULL );
+    m_params = params;
+}
+
+void ElasticRod::setMinimizationStrategy(MINIMIZATION_STRATEGY strategy, double minTolerance, unsigned minMaxIter)
+{
+    m_minimization->m_strategy = strategy;
+    m_minimization->m_tolerance = minTolerance;
+    m_minimization->m_maxIter = minMaxIter;
+}
 
 void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
                       const mg::Vec3D& u0,
@@ -159,7 +168,7 @@ void ElasticRod::computeEdges(const std::vector<mg::Vec3D>& vertices,
     for (unsigned i = 0; i < vertices.size() - 1; ++i)
     {
         o_edges[i] = vertices[i + 1] - vertices[i];
-        assert( std::isfinite(mg::length_squared(o_edges[i])) );
+        assert( std::isfinite(o_edges[i].length_squared()) );
     }
 }
 
@@ -245,9 +254,9 @@ void ElasticRod::computeBishopFrame(const mg::Vec3D& u0,
     for (unsigned i = 1; i < edges.size(); ++i)
     {
 //        here sinPhi and cosPhi are derived from the length of kb ||kb|| = 2 * tan( phi/2 )
-        magnitude = mg::length_squared(o_kb[i]);
+        magnitude = mg::dot(o_kb[i], o_kb[i]);
         extractSinAndCos(magnitude, sinPhi, cosPhi);
-        assert(cosPhi >= 0 && cosPhi <= 1);
+        assert( cosPhi >= 0 && cosPhi <= 1 );
 
         if ( (1 - cosPhi) < mg::ERR )
         {
@@ -276,9 +285,9 @@ void ElasticRod::parallelTransportFrame(const mg::Vec3D& e0, const mg::Vec3D& e1
 
 //    here sinPhi and cosPhi are derived from the length of axis ||axis|| = 2 * tan( phi/2 )
     double sinPhi, cosPhi;
-    double magnitude = mg::length_squared(axis);
+    double magnitude = mg::dot(axis, axis);
     extractSinAndCos(magnitude, sinPhi, cosPhi);
-    assert(cosPhi >= 0 && cosPhi <= 1);
+    assert( cosPhi >= 0 && cosPhi <= 1 );
 
     if ( (1 - cosPhi) < mg::ERR )
     {
@@ -314,49 +323,37 @@ void ElasticRod::computeMaterialFrame(const ColumnVector &theta,
 }
 
 
-void ElasticRod::enforceInternalConstraints()
+void ElasticRod::applyInternalConstraintsIteration()
 {
     mg::Vec3D e;
     mg::Real l, l1, l2;
-    bool clamped_i, clamped_i1;
-    for (unsigned k = 0; k < m_params->m_pbdIter; ++k)
+    for (unsigned i = 0; i < m_ppos.size() - 1; ++i)
     {
-        for (unsigned i = 0; i < m_ppos.size() - 1; ++i)
+        bool clamped_i = m_isClamped.count(i);
+        bool clamped_i1 = m_isClamped.count(i + 1);
+
+        e = m_ppos[i + 1] - m_ppos[i];
+//            approximate e.length() with first order accurate Taylor expansion of square root function in the neightbourhood of (restLength^2)
+        l = 1 - 2 * m_restEdgeL[i] * m_restEdgeL[i] / (m_restEdgeL[i] * m_restEdgeL[i] +  mg::dot(e, e));
+
+        if (clamped_i)
         {
-            clamped_i = m_isClamped.count(i);
-            clamped_i1 = m_isClamped.count(i + 1);
-            if (clamped_i && clamped_i1)
-            {
-                continue;
-            }
-
-            e = m_ppos[i + 1] - m_ppos[i];
-            l = e.length();
-            if (l > mg::ERR)
-            {
-                e.normalize();
-            }
-            l = (l - m_restEdgeL[i]);
-
-            if (clamped_i)
-            {
-                l1 = 0;
-                l2 = -l;
-            }
-            else if (clamped_i1)
-            {
-                l1 = l;
-                l2 = 0;
-            }
-            else
-            {
-                l1 = m_pmass[i + 1] / (m_pmass[i] + m_pmass[i + 1]) * l;
-                l2 = -m_pmass[i] / (m_pmass[i] + m_pmass[i + 1]) * l;
-            }
-
-            m_ppos[i] += l1 * e;
-            m_ppos[i + 1] += l2 * e;
+            l1 = 0;
+            l2 = -l;
         }
+        else if (clamped_i1)
+        {
+            l1 = l;
+            l2 = 0;
+        }
+        else
+        {
+            l1 = m_pmass[i + 1] / (m_pmass[i] + m_pmass[i + 1]) * l;
+            l2 = -m_pmass[i] / (m_pmass[i] + m_pmass[i + 1]) * l;
+        }
+
+        m_ppos[i] += l1 * e;
+        m_ppos[i + 1] += l2 * e;
     }
 }
 
@@ -382,7 +379,7 @@ void ElasticRod::accumulateInternalElasticForces(std::vector<mg::Vec3D>& o_force
     computedEdQj(n, m_m1[n], m_m2[n], m_theta, J * m_params->m_B, dEdQn);
 
     mg::Matrix23D GW;
-    mg::Vec3D GH;
+    mg::Vec3D GH, term;
     for (unsigned i = 0; i < m_ppos.size(); ++i)
     {
         if (m_isClamped.count(i))
@@ -400,8 +397,9 @@ void ElasticRod::accumulateInternalElasticForces(std::vector<mg::Vec3D>& o_force
                                      J,
                                      GW);
 
-            o_forces[i] -= (mg::transpose(GW) * m_params->m_B * (wkj - m_restWprev[k])) / m_restRegionL[k];
-            assert( std::isfinite(mg::length_squared(o_forces[i])) );
+//            o_forces[i] -= (mg::transpose(GW) * m_params->m_B * (wkj - m_restWprev[k])) / m_restRegionL[k];
+//            assert( std::isfinite(o_forces[i].length_squared()) );
+            term = (mg::transpose(GW) * m_params->m_B * (wkj - m_restWprev[k]));
 
             computeW(m_kb[k], m_m1[k], m_m2[k], wkj);
             computeGradientCurvature(i, k, k,
@@ -410,9 +408,11 @@ void ElasticRod::accumulateInternalElasticForces(std::vector<mg::Vec3D>& o_force
                                      wkj,
                                      J,
                                      GW);
-
-            o_forces[i] -= (mg::transpose(GW) * m_params->m_B * (wkj - m_restWnext[k])) / m_restRegionL[k];
-            assert( std::isfinite(mg::length_squared(o_forces[i])) );
+//            o_forces[i] -= (mg::transpose(GW) * m_params->m_B * (wkj - m_restWnext[k])) / m_restRegionL[k];
+//            assert( std::isfinite(o_forces[i].length_squared()) );
+            term += (mg::transpose(GW) * m_params->m_B * (wkj - m_restWnext[k]));
+            o_forces[i] -= term / m_restRegionL[k];
+            assert( std::isfinite(o_forces[i].length_squared()) );
         }
 
 //    need to add  dE/dQn * gradient holonomy(GH) if we have clamped ends since not all twist angles minimize the energy
@@ -420,15 +420,15 @@ void ElasticRod::accumulateInternalElasticForces(std::vector<mg::Vec3D>& o_force
         {
             computeGradientHolonomy(i, n, minusGH, plusGH, eqGH, GH);
             o_forces[i] += dEdQn * GH;
-            assert( std::isfinite(mg::length_squared(o_forces[i])) );
+            assert( std::isfinite(o_forces[i].length_squared()) );
         }
 
 //        need to limit the force otherwise when e[i] ~ -e[i - 1] ||kb|| goes to infinity => force goes to infinity
-//        if (mg::length_squared(o_forces[i]) > m_params->m_maxElasticForce * m_params->m_maxElasticForce)
-//        {
-//            o_forces[i].normalize();
-//            o_forces[i] *= m_params->m_maxElasticForce;
-//        }
+        if (o_forces[i].length_squared() > m_params->m_maxElasticForce * m_params->m_maxElasticForce)
+        {
+            o_forces[i].normalize();
+            o_forces[i] *= m_params->m_maxElasticForce;
+        }
     }
 
 #ifdef DBUGG
@@ -484,9 +484,9 @@ void ElasticRod::computeGradientHolonomyTerms(const std::vector<mg::Vec3D> &kb,
         o_plusGH[i]  = -0.5 * kb[i] / m_restEdgeL[i];
         o_eqGH[i] = -(o_minusGH[i] + o_plusGH[i]);
 
-        assert( std::isfinite( mg::length_squared(o_minusGH[i]) ) );
-        assert( std::isfinite( mg::length_squared(o_plusGH[i]) ) );
-        assert( std::isfinite( mg::length_squared(o_eqGH[i]) ) );
+        assert( std::isfinite( o_minusGH[i].length_squared() ) );
+        assert( std::isfinite( o_plusGH[i].length_squared() ) );
+        assert( std::isfinite( o_eqGH[i].length_squared() ) );
     }
 }
 
@@ -501,7 +501,7 @@ void ElasticRod::computeGradientCurvature(unsigned i, unsigned k, unsigned j,
                                         const mg::Matrix2D &J,
                                         mg::Matrix23D &o_GW) const
 {
-    assert(k >= (i - 1) && (j == k || j == (k - 1)) && j < m_m1.size());
+    assert( k >= (i - 1) && (j == k || j == (k - 1)) && j < m_m1.size() );
 
 //    need to make o_GW zero 3x2 matrix
     o_GW.zero();

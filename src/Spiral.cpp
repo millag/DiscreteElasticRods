@@ -12,20 +12,20 @@ Spiral::Spiral(): m_object(NULL)
     m_maxForce = 1000;
 
     m_nParticles = 20;
-    m_nIterations = 4;
+    m_pbdIter = 4;
 
-    m_rodParams = new RodParams(m_bendStiffness, m_twistStiffness, m_nIterations, m_maxForce);
-    m_strands.reserve(100);
+    m_rodParams = new RodParams(m_bendStiffness, m_twistStiffness, m_maxForce);
+    m_strands.reserve(10);
 }
 
 Spiral::~Spiral()
 {
-    typedef std::vector<ElasticRod*>::const_iterator SIter;
-    for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
+    typedef std::vector<ElasticRod*>::iterator Iter;
+    for (Iter it = m_strands.begin(); it != m_strands.end(); ++it)
     {
         delete (*it);
     }
-
+    m_strands.clear();
     delete m_rodParams;
 }
 
@@ -81,12 +81,13 @@ void Spiral::init(const RenderObject* object)
         }
     }
 
-    for (unsigned i = 0; i < 1; ++i)
+    unsigned nStrands = 1;
+    for (unsigned i = 0; i < nStrands; ++i)
     {
-        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::BFGS);
+        ElasticRod* rod = new ElasticRod(m_rodParams, ElasticRod::BFGS);
 //        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
-        strand->init(restpos, u0, pos, vel, mass, theta, isClamped);
-        m_strands.push_back(strand);
+        rod->init(restpos, u0, pos, vel, mass, theta, isClamped);
+        m_strands.push_back(rod);
     }
 }
 
@@ -95,8 +96,8 @@ void Spiral::update(mg::Real dt)
     QElapsedTimer chronometer;
     chronometer.start();
 
-    typedef std::vector<ElasticRod*>::const_iterator SIter;
-    for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
+    typedef std::vector<ElasticRod*>::iterator Iter;
+    for (Iter it = m_strands.begin(); it != m_strands.end(); ++it)
     {
         (*it)->m_ppos[0] = m_object->getPosition();
         updateRod(**it, dt);
@@ -122,9 +123,12 @@ void Spiral::updateRod(ElasticRod& rod, mg::Real dt) const
         rod.m_ppos[i] += rod.m_pvel[i] * dt;
     }
 
-    rod.enforceInternalConstraints();
+    for (unsigned k = 0; k < m_pbdIter; ++k)
+    {
+        rod.applyInternalConstraintsIteration();
+    }
 
-//    update velocities:
+//    velocity correction using Verlet scheme:
     for (unsigned i = 0; i < rod.m_ppos.size(); ++i)
     {
         rod.m_pvel[i] = (rod.m_ppos[i] - prevPos[i]) / dt;

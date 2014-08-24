@@ -5,6 +5,8 @@
 #include <ngl/Camera.h>
 #include <ngl/Colour.h>
 #include <ngl/VertexArrayObject.h>
+#include <ngl/Obj.h>
+
 #include "Scene.h"
 #include "TransformTool.h"
 
@@ -163,6 +165,7 @@ private :
 // ============= various draw related utility functions ===============
     void loadMatricesToShader();
     void loadMatricesToHairShader();
+    void loadMatricesToHairShader2();
 
     void buildVAOs(const std::vector<Mesh*>& meshList, std::vector<ngl::VertexArrayObject*>& o_VAOList) const;
     void feedVAO(const Mesh& mesh, ngl::VertexArrayObject& o_vao) const;
