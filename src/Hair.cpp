@@ -44,7 +44,6 @@ Hair::Hair():m_object(NULL), m_grid(NULL)
         m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce);
 }
 
-
 Hair::~Hair()
 {
     reset();
@@ -206,12 +205,6 @@ void Hair::applyCollisionConstraintsIteration(ElasticRod& rod) const
         {
             rod.m_ppos[i] = collision_p;
         }
-
-//        if (dist < m_params->m_thickness)
-//        {
-//            rod.m_ppos[i] = collision_p + m_params->m_thickness * normal;
-//        }
-
     }
 }
 

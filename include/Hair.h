@@ -44,8 +44,8 @@ public:
     Hair();
     ~Hair();
 
-    void reset();
     void initialize();
+    void reset();
     void update(mg::Real dt);
 
 public:
