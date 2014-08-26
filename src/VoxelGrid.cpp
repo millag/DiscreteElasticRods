@@ -17,11 +17,14 @@ void VoxelGrid::initialize()
 void VoxelGrid::reset()
 {
     m_voxelSize = m_volume.getWidth() / (m_divisions - 1);
-    typedef std::vector<Voxel>::iterator Iter;
-    for (Iter it = m_voxels.begin(); it != m_voxels.end(); ++it)
+
+#ifdef MULTI_THREAD
+#pragma omp parallel for
+#endif
+    for (unsigned i = 0; i < m_voxels.size(); ++i)
     {
-        it->m_density = 0;
-        it->m_velocity.zero();
+        m_voxels[i].m_density = 0;
+        m_voxels[i].m_velocity.zero();
     }
 }
 

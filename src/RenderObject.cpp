@@ -29,7 +29,15 @@ void RenderObject::setMesh(const Mesh* _mesh)
 void RenderObject::setTransform(const mg::Matrix4D &t)
 {
     m_transform = t;
-    calcAABB();
+    typedef std::vector<CollisionEllipsoid>::iterator Iter;
+    for (Iter it = m_collisionShapes.begin(); it != m_collisionShapes.end(); ++it)
+    {
+        it->updateTransform(m_transform);
+    }
+
+    m_boundingRadius = mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EX).length();
+    m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EY).length());
+    m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EZ).length());
 }
 
 void RenderObject::calcBoundaries()
@@ -37,13 +45,14 @@ void RenderObject::calcBoundaries()
 
     if (!m_mesh || !m_mesh->m_vertices.size())
     {
-        m_meshAABB.reshape(mg::Vec3D(), mg::Vec3D());
-        m_AABB.reshape(mg::Vec3D(), mg::Vec3D());
+        m_meshAABB.reshape(mg::Vec3D(0,0,0), mg::Vec3D(0,0,0));
         return;
     }
 
     mg::Vec3D vmin = *(m_mesh->m_vertices.begin());
     mg::Vec3D vmax = vmin;
+    m_meshBoundingRadius = vmin.length_squared();
+
     typedef std::vector<mg::Vec3D>::const_iterator VIter;
     for (VIter it = m_mesh->m_vertices.begin() + 1; it != m_mesh->m_vertices.end(); ++it) {
         const mg::Vec3D &vert = (*it);
@@ -54,56 +63,38 @@ void RenderObject::calcBoundaries()
         vmax[0] = std::max(vert[0], vmax[0]);
         vmax[1] = std::max(vert[1], vmax[1]);
         vmax[2] = std::max(vert[2], vmax[2]);
+
+        mg::Real lengthSqr = vert.length_squared();
+        if (m_meshBoundingRadius < lengthSqr)
+        {
+            m_meshBoundingRadius = lengthSqr;
+        }
     }
 
     m_meshAABB.reshape(vmin, vmax);
-//  apply current transform and recalculate AABB
-    calcAABB();
-    m_boundingRadius = m_AABB.getBoundingRadius();
+    m_meshBoundingRadius = std::sqrt(m_meshBoundingRadius);
+
+    m_boundingRadius = mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EX).length();
+    m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EY).length());
+    m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EZ).length());
 }
 
-
-void RenderObject::calcAABB()
+void RenderObject::addCollisionShape(const CollisionEllipsoid& ellipsoid)
 {
-
-    std::vector<mg::Vec3D> corners;
-    corners.reserve(8);
-    corners.push_back( mg::transform_point(m_transform, m_meshAABB.getBLF()) );
-    corners.push_back( mg::transform_point(m_transform, m_meshAABB.getBLB()) );
-    corners.push_back( mg::transform_point(m_transform, m_meshAABB.getBRF()) );
-    corners.push_back( mg::transform_point(m_transform, m_meshAABB.getBRB()) );
-    corners.push_back( mg::transform_point(m_transform, m_meshAABB.getTRB()) );
-    corners.push_back( mg::transform_point(m_transform, m_meshAABB.getTRF()) );
-    corners.push_back( mg::transform_point(m_transform, m_meshAABB.getTLB()) );
-    corners.push_back( mg::transform_point(m_transform, m_meshAABB.getTLF()) );
-
-    mg::Vec3D vmin = *corners.begin();
-    mg::Vec3D vmax = vmin;
-    typedef std::vector<mg::Vec3D>::iterator VIter;
-    for (VIter it = corners.begin() + 1; it != corners.end(); ++it) {
-        const mg::Vec3D &vert = (*it);
-        vmin[0] = std::min(vert[0], vmin[0]);
-        vmin[1] = std::min(vert[1], vmin[1]);
-        vmin[2] = std::min(vert[2], vmin[2]);
-
-        vmax[0] = std::max(vert[0], vmax[0]);
-        vmax[1] = std::max(vert[1], vmax[1]);
-        vmax[2] = std::max(vert[2], vmax[2]);
-    }
-
-    m_AABB.reshape(vmin, vmax);
+    unsigned idx = m_collisionShapes.size();
+    m_collisionShapes.push_back(ellipsoid);
+    m_collisionShapes[idx].updateTransform(m_transform);
 }
 
-mg::Real RenderObject::distanceToSurface(const mg::Vec3D& p, mg::Vec3D &o_collisionPoint, mg::Vec3D &o_normal) const
+bool RenderObject::isInsideObject(const mg::Vec3D& p, mg::Vec3D &o_collisionPoint, mg::Vec3D &o_normal) const
 {
-    o_normal = p - getPosition();
-    mg::Real dist = o_normal.length();
-
-    if (dist > mg::ERR)
+    typedef std::vector<CollisionEllipsoid>::const_iterator Iter;
+    for (Iter it = m_collisionShapes.begin(); it != m_collisionShapes.end(); ++it)
     {
-        o_normal /= dist;
+        if (it->isInsideObject(p, o_collisionPoint, o_normal))
+        {
+            return true;
+        }
     }
-
-    o_collisionPoint =  getPosition() + o_normal  * m_boundingRadius;
-    return (dist - m_boundingRadius);
+    return false;
 }

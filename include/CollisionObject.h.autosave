@@ -1,0 +1,11 @@
+#ifndef COLLISIONOBJECT_H
+#define COLLISIONOBJECT_H
+
+#include "RenderObject.h"
+
+class CollisionObject
+{
+public:
+    CollisionObject(Render) {}
+};
+#endif // COLLISIONOBJECT_H

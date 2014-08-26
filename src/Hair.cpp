@@ -16,30 +16,32 @@ HairParams::~HairParams()
 Hair::Hair():m_object(NULL), m_grid(NULL)
 {
 //    init default hair params
-    m_params = new HairParams();
-    m_params->m_length = 3;
-    m_params->m_lengthVariance = 0.9;
-    m_params->m_helicalRadius = 0.2;
-    m_params->m_helicalPitch = 0.1;
-    m_params->m_density = 0.09;
-    m_params->m_thickness = 0.07;
-    m_params->m_nParticles = 12;
+        m_params = new HairParams();
+        m_params->m_length = 6;
+        m_params->m_lengthVariance = 1;
+        m_params->m_helicalRadius = 0.2;
+        m_params->m_helicalPitch = 0.13;
+        m_params->m_density = 0.01;
+        m_params->m_thickness = 0.07;
+        m_params->m_nParticles = 25;
 
-    m_params->m_coulombFriction = 0.2;
-    m_params->m_selfCollisionDist = 0.6;
-    m_params->m_selfFriction = 0.03;
-    m_params->m_selfRepulsion = 0.004;
+        m_params->m_gravity.set(0, -9.81, 0);
+        m_params->m_drag = 0.0001;
 
-    m_params->m_gravity.set(0, -9.81, 0);
-    m_params->m_drag = 0.0005;
+        m_params->m_resolveCollisions = 1;
+        m_params->m_coulombFriction = 0.2;
 
-    m_params->m_resolveSelfCollisions = 1;
-    m_params->m_pbdIter = 4;
+        m_params->m_resolveSelfInterations = 1;
+        m_params->m_selfInterationDist = 0.3;
+        m_params->m_selfStiction = 0.001;
+        m_params->m_selfRepulsion = 0.0001;
 
-    mg::Real bendStiffness = 0.003;
-    mg::Real twistStiffness = 0.0001;
-    mg::Real maxElasticForce = 1000;
-    m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce);
+        m_params->m_pbdIter = 4;
+
+        mg::Real bendStiffness = 0.0003;
+        mg::Real twistStiffness = 0.0001;
+        mg::Real maxElasticForce = 1000;
+        m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce);
 }
 
 
@@ -67,17 +69,25 @@ void Hair::reset()
     m_grid = NULL;
 }
 
-void Hair::createGrid()
+void Hair::initialize()
 {
-    mg::Vec3D offset = (m_params->m_length + m_params->m_lengthVariance) * mg::Vec3D(1, 1, 1);
-    m_volume.reshape(m_object->getAABB().getVMin() - offset, m_object->getAABB().getVMax() + offset);
+    assert( m_object != NULL );
+    assert( m_grid == NULL );
 
-    m_grid = new VoxelGrid(m_volume, m_volume.getWidth() / m_params->m_selfCollisionDist);
+    mg::Vec3D gridCenter = m_object->getPosition();
+    mg::Vec3D offset = (m_object->getBoundingRadius() + m_params->m_length + m_params->m_lengthVariance) * mg::Vec3D(1, 1, 1);
+    m_volume.reshape(gridCenter - offset, gridCenter + offset);
+
+    m_grid = new VoxelGrid(m_volume, m_volume.getWidth() / m_params->m_selfInterationDist);
     m_grid->initialize();
 }
 
 void Hair::resetGrid()
 {
+    mg::Vec3D gridCenter = m_object->getPosition();
+    mg::Vec3D offset = (m_object->getBoundingRadius() + m_params->m_length + m_params->m_lengthVariance) * mg::Vec3D(1, 1, 1);
+    m_volume.reshape(gridCenter - offset, gridCenter + offset);
+
     m_grid->reset();
 
     typedef std::vector<ElasticRod*>::iterator Iter;
@@ -103,20 +113,15 @@ void Hair::resetGrid()
 
 void Hair::update(mg::Real dt)
 {
-    assert(m_object != NULL);
+    assert( m_object != NULL );
+    assert( m_grid != NULL );
 
     QElapsedTimer chronometer;
     chronometer.start();
 
-    if (m_params->m_resolveSelfCollisions)
+    if (m_params->m_resolveSelfInterations)
     {
-        if (m_grid == NULL)
-        {
-            createGrid();
-        } else
-        {
-            resetGrid();
-        }
+        resetGrid();
     }
 
     const Mesh* mesh = m_object->getMesh();
@@ -140,7 +145,14 @@ void Hair::updateRod(ElasticRod& rod, mg::Real dt) const
 {
     std::vector<mg::Vec3D> forces(rod.m_ppos.size(), mg::Vec3D(0,0,0));
     rod.accumulateInternalElasticForces(forces);
-    accumulateExternalForces(rod, forces);
+
+    if (m_params->m_resolveSelfInterations)
+    {
+        accumulateExternalForcesWithSelfInterations(rod, forces);
+    } else
+    {
+        accumulateExternalForces(rod, forces);
+    }
 
 //    integrate centerline - semi- implicit Euler
     std::vector<mg::Vec3D> prevPos(rod.m_ppos.size());
@@ -151,10 +163,12 @@ void Hair::updateRod(ElasticRod& rod, mg::Real dt) const
         rod.m_ppos[i] += rod.m_pvel[i] * dt;
     }
 
-    for (unsigned k = 0; k < m_params->m_pbdIter; ++k)
+    if (m_params->m_resolveCollisions)
     {
-        applyCollisionConstraintsIteration(rod);
-        rod.applyInternalConstraintsIteration();
+        enforceConstraintsWithCollision(rod);
+    } else
+    {
+        enforceConstraints(rod);
     }
 
 //    velocity correction using Verlet scheme:
@@ -166,56 +180,64 @@ void Hair::updateRod(ElasticRod& rod, mg::Real dt) const
     rod.updateCurrentState();
 }
 
-//void Hair::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const
-//{
-//    for (unsigned i = 1; i < o_forces.size(); ++i)
-//    {
-//        if (!rod.m_isClamped.count(i))
-//        {
-//            o_forces[i] += m_params->m_gravity * rod.m_pmass[i] - m_params->m_drag * rod.m_pvel[i];
-//        }
-//    }
-//}
+void Hair::enforceConstraints(ElasticRod& rod) const
+{
+    for (unsigned k = 0; k < m_params->m_pbdIter; ++k)
+    {
+        rod.applyInternalConstraintsIteration();
+    }
+}
+
+void Hair::enforceConstraintsWithCollision(ElasticRod& rod) const
+{
+    for (unsigned k = 0; k < m_params->m_pbdIter; ++k)
+    {
+        applyCollisionConstraintsIteration(rod);
+        rod.applyInternalConstraintsIteration();
+    }
+}
 
 void Hair::applyCollisionConstraintsIteration(ElasticRod& rod) const
 {
     mg::Vec3D collision_p, normal;
     for ( unsigned i = 1; i < rod.m_ppos.size(); ++i)
     {
-        mg::Real dist = m_object->distanceToSurface(rod.m_ppos[i], collision_p, normal);
-        if (dist < m_params->m_thickness)
+        if (m_object->isInsideObject(rod.m_ppos[i], collision_p, normal))
         {
-            rod.m_ppos[i] = collision_p + m_params->m_thickness * normal;
+            rod.m_ppos[i] = collision_p;
         }
+
+//        if (dist < m_params->m_thickness)
+//        {
+//            rod.m_ppos[i] = collision_p + m_params->m_thickness * normal;
+//        }
 
     }
 }
 
-void Hair::accumulateExternalForces(ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const
+void Hair::accumulateExternalForcesWithSelfInterations(ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const
 {
     mg::Vec3D p1(0,0,0), p2(0,0,0), pressureGradient(0,0,0);
-    mg::Real dr = m_params->m_selfCollisionDist;
+    mg::Real dr = m_params->m_selfInterationDist;
     mg::Real density_p1, density_p2;
+
     for (unsigned i = 1; i < o_forces.size(); ++i)
     {
 //        gravity
         o_forces[i] += m_params->m_gravity * rod.m_pmass[i];
 //        drag
-        o_forces[i] += -m_params->m_drag * rod.m_pvel[i];
+        o_forces[i] -= m_params->m_drag * rod.m_pvel[i];
 
 
-//        self interactions
-        if (!m_params->m_resolveSelfCollisions)
-        {
-            continue;
-        }
+//        self interactions:
 
-//            calculate self friction
+//        self stiction acts as averaging of the velocity for near by particles
+//        the velocity however is not direcly averaged by trilinear interpolation is used to calculate the avg. value for particle's current position
         m_grid->getInterpolatedDensity(rod.m_ppos[i], density_p1);
         if ( density_p1 > mg::ERR)
         {
             m_grid->getInterpolatedVelocity(rod.m_ppos[i], p1);
-            rod.m_pvel[i] =  (1 - m_params->m_selfFriction) * rod.m_pvel[i] + m_params->m_selfFriction * p1 / density_p1;
+            rod.m_pvel[i] =  (1 - m_params->m_selfStiction) * rod.m_pvel[i] + m_params->m_selfStiction * p1 / density_p1;
         }
 
 //        self repulsion
@@ -241,6 +263,20 @@ void Hair::accumulateExternalForces(ElasticRod& rod, std::vector<mg::Vec3D>& o_f
 
     }
 }
+
+void Hair::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const
+{
+    for (unsigned i = 1; i < o_forces.size(); ++i)
+    {
+//        gravity
+        o_forces[i] += m_params->m_gravity * rod.m_pmass[i];
+//        drag
+        o_forces[i] -= m_params->m_drag * rod.m_pvel[i];
+    }
+}
+
+
+
 
 //for (SIter it = m_strands.begin(); it != m_strands.end(); ++it)
 //{
@@ -315,3 +351,31 @@ void Hair::accumulateExternalForces(ElasticRod& rod, std::vector<mg::Vec3D>& o_f
 //    mg::Real twistStiffness = 0.0001;
 //    mg::Real maxElasticForce = 1000;
 //    m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce);
+
+//// =========================== short and wavy ========================================
+
+
+//m_params = new HairParams();
+//m_params->m_length = 3;
+//m_params->m_lengthVariance = 0.9;
+//m_params->m_helicalRadius = 0.2;
+//m_params->m_helicalPitch = 0.07;
+//m_params->m_density = 0.09;
+//m_params->m_thickness = 0.07;
+//m_params->m_nParticles = 12;
+
+//m_params->m_coulombFriction = 0.2;
+//m_params->m_selfInterationDist = 0.6;
+//m_params->m_selfStiction = 0.03;
+//m_params->m_selfRepulsion = 0.004;
+
+//m_params->m_gravity.set(0, -9.81, 0);
+//m_params->m_drag = 0.0005;
+
+//m_params->m_useSelfInterations = 1;
+//m_params->m_pbdIter = 4;
+
+//mg::Real bendStiffness = 0.003;
+//mg::Real twistStiffness = 0.0001;
+//mg::Real maxElasticForce = 1000;
+//m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce)

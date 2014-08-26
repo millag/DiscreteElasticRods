@@ -18,15 +18,17 @@ struct HairParams
     mg::Real m_thickness;
     unsigned m_nParticles;
 
-    mg::Real m_coulombFriction;
-    mg::Real m_selfCollisionDist;
-    mg::Real m_selfFriction;
-    mg::Real m_selfRepulsion;
-
     mg::Vec3D m_gravity;
     mg::Real m_drag;
 
-    bool m_resolveSelfCollisions;
+    bool m_resolveCollisions;
+    mg::Real m_coulombFriction;
+
+    bool m_resolveSelfInterations;
+    mg::Real m_selfInterationDist;
+    mg::Real m_selfStiction;
+    mg::Real m_selfRepulsion;
+
 ///     constraints are enforced using PBD(Position Based Dynamics) framework
 ///     the parameter controls # of PBD iterations to be performed
 ///     NOTE that PBD DOES NOT GUARANTEE exact enforcement but converges towards the solution
@@ -43,6 +45,7 @@ public:
     ~Hair();
 
     void reset();
+    void initialize();
     void update(mg::Real dt);
 
 public:
@@ -53,12 +56,13 @@ public:
     std::vector<ElasticRod*> m_strands;
 
 private:
-    void createGrid();
     void resetGrid();
     void updateRod(ElasticRod& rod, mg::Real dt) const;
-    void accumulateExternalForces(ElasticRod &rod, std::vector<mg::Vec3D>& o_forces) const;
+    void accumulateExternalForces(const ElasticRod &rod, std::vector<mg::Vec3D>& o_forces) const;
+    void accumulateExternalForcesWithSelfInterations(ElasticRod &rod, std::vector<mg::Vec3D>& o_forces) const;
+    void enforceConstraints(ElasticRod& rod) const;
+    void enforceConstraintsWithCollision(ElasticRod& rod) const;
     void applyCollisionConstraintsIteration(ElasticRod& rod) const;
-
 private:
     AABB m_volume;
     VoxelGrid* m_grid;

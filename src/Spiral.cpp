@@ -96,10 +96,11 @@ void Spiral::update(mg::Real dt)
     QElapsedTimer chronometer;
     chronometer.start();
 
+    mg::Vec3D center = m_object->getPosition();
     typedef std::vector<ElasticRod*>::iterator Iter;
     for (Iter it = m_strands.begin(); it != m_strands.end(); ++it)
     {
-        (*it)->m_ppos[0] = m_object->getPosition();
+        (*it)->m_ppos[0] = center;
         updateRod(**it, dt);
     }
 

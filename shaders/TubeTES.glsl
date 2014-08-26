@@ -75,9 +75,9 @@ void main ()
     vec3 center = catmull_rom_cubic(v);
     tangent_fr = (catmull_rom_cubic( max(0.0, v - 0.5 * DT) ) - catmull_rom_cubic( min(v + 0.5 * DT, 1.0) )) / DT;
 
-    vec3 normal = normal_es[1];
+//    vec3 normal = normal_es[1];
 //    vec3 normal = catmull_rom_cubic_normal(v);
-//    vec3 normal = slerp_normal(v);
+    vec3 normal = slerp_normal(v);
     vec3 binormal = normalize( cross(tangent_fr, normal) );
 
     float theta = u * TWO_PI;

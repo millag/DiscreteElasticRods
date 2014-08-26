@@ -88,7 +88,15 @@ RenderObject *createBall(const Mesh* mesh)
     mg::matrix_uniform_scale(transform, (mg::Real)1);
     mg::matrix_set_translation(transform, (mg::Real)0, (mg::Real)0, (mg::Real)0);
 
-    return new RenderObject(mesh, transform, -1);
+    RenderObject* object = new RenderObject(mesh, transform, -1);
+    mg::Real radius = object->getMeshBoundingRadius();
+
+    mg::Matrix4D shape;
+    mg::matrix_scale(shape, radius, radius, radius);
+    mg::matrix_set_translation(shape, object->getMeshAABB().getCenter());
+    object->addCollisionShape(shape);
+
+    return object;
 }
 
 Hair* createHair(const RenderObject* object)

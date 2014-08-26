@@ -3,7 +3,7 @@
 #include "Utils.h"
 
 
-AABB::AABB():m_vmin(),m_vmax(),m_boundingRadius(0)
+AABB::AABB():m_vmin(0,0,0),m_vmax(0,0,0),m_boundingRadius(0)
 { }
 
 AABB::AABB(const mg::Vec3D &_vmin, const mg::Vec3D &_vmax):m_vmin(_vmin),m_vmax(_vmax),m_boundingRadius(0)

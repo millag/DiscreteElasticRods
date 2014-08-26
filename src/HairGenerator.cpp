@@ -57,6 +57,8 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
         generateHelicalRod(*o_hair.m_params, p, n, u, *rod);
         o_hair.m_strands[i] = rod;
     }
+
+    o_hair.initialize();
 }
 
 void HairGenerator::generateStraightHair(const RenderObject* object, const std::vector<unsigned>& findices, Hair& o_hair)
@@ -106,6 +108,8 @@ void HairGenerator::generateStraightHair(const RenderObject* object, const std::
         generateStraightRod(*o_hair.m_params, p, n, u, *rod);
         o_hair.m_strands[i] = rod;
     }
+
+    o_hair.initialize();
 }
 
 void HairGenerator::generateHelicalRod(const HairParams& params,

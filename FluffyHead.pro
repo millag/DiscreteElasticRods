@@ -22,11 +22,12 @@ SOURCES += src/main.cpp \
     src/RenderObject.cpp \
     src/AABB.cpp \
     src/ElasticRod.cpp \
-    libs/dlib-18.9/dlib/all/source.cpp \
     src/Spiral.cpp \
     src/Hair.cpp \
     src/HairGenerator.cpp \
-    src/VoxelGrid.cpp
+    src/VoxelGrid.cpp \
+    src/CollisionEllipsoid.cpp \
+    src/Loader.cpp
 
 INCLUDEPATH += ./include
 INCLUDEPATH += ./libs/cml-1_0_2/
@@ -46,7 +47,9 @@ HEADERS += include/MainWindow.h \
     include/Hair.h \
     include/HairGenerator.h \
     include/config.h \
-    include/VoxelGrid.h
+    include/VoxelGrid.h \
+    include/CollisionEllipsoid.h \
+    include/Loader.h
 
 
 FORMS += \
