@@ -26,12 +26,14 @@ SOURCES += src/main.cpp \
     src/Hair.cpp \
     src/HairGenerator.cpp \
     src/VoxelGrid.cpp \
-    src/CollisionEllipsoid.cpp \
-    src/Loader.cpp
+    src/Loader.cpp \
+    src/ObjLoader.cpp \
+    src/CollisionShape.cpp
 
 INCLUDEPATH += ./include
 INCLUDEPATH += ./libs/cml-1_0_2/
 INCLUDEPATH += ./libs/dlib-18.9/
+INCLUDEPATH += ./libs/tiny_obj/
 
 HEADERS += include/MainWindow.h \
            include/GLWindow.h \
@@ -48,8 +50,9 @@ HEADERS += include/MainWindow.h \
     include/HairGenerator.h \
     include/config.h \
     include/VoxelGrid.h \
-    include/CollisionEllipsoid.h \
-    include/Loader.h
+    include/Loader.h \
+    include/ObjLoader.h \
+    include/CollisionShape.h
 
 
 FORMS += \
@@ -69,7 +72,9 @@ OTHER_FILES+= shaders/Phong.fs \
     shaders/DebugVert.glsl \
     shaders/DebugGeom.glsl \
     shaders/DebugFrag.glsl \
-    shaders/TubeTES.glsl
+    shaders/TubeTES.glsl \
+    assets/MayaGetSelectedPrimitives.py \
+    assets/scene1.mg
 
 DESTDIR=./
 CONFIG += console
