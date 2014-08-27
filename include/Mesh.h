@@ -22,7 +22,7 @@ public:
 
 public:
     static Mesh* createSphere(int id, unsigned divu = 20, unsigned divv = 10);
-    static void calcNormals(Mesh& o_mesh, ShadingMode::Enum mode);
+    static void computeNormals(Mesh& o_mesh, ShadingMode::Enum mode);
 
 public:
     std::vector<mg::Vec3D> m_vertices;

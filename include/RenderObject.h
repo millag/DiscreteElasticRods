@@ -3,7 +3,7 @@
 
 #include "Mesh.h"
 #include "AABB.h"
-#include "CollisionEllipsoid.h"
+#include "CollisionShape.h"
 
 
 class RenderObject
@@ -24,7 +24,7 @@ public:
     mg::Real getMeshBoundingRadius() const { return m_meshBoundingRadius; }
     const AABB& getMeshAABB() const { return m_meshAABB; }
 
-    void addCollisionShape(const CollisionEllipsoid& ellipsoid);
+    void addCollisionShape(const CollisionShape& shape);
     bool isInsideObject(const mg::Vec3D& p, mg::Vec3D& o_collisionPoint, mg::Vec3D& o_normal) const;
 
 protected:
@@ -37,7 +37,7 @@ protected:
     mg::Real m_meshBoundingRadius;
     mg::Real m_boundingRadius;
 
-    std::vector<CollisionEllipsoid> m_collisionShapes;
+    std::vector<CollisionShape> m_collisionShapes;
 
     int m_shaderId;
 };

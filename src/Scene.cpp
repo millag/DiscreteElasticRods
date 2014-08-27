@@ -1,9 +1,4 @@
 #include "Scene.h"
-#include "Utils.h"
-#include "HairGenerator.h"
-
-RenderObject* createBall(const Mesh* mesh);
-Hair* createHair(const RenderObject* object);
 
 //===================================== Scene ===========================================
 
@@ -40,25 +35,7 @@ Scene::~Scene()
 
 void Scene::initialize()
 {
-    m_meshes.reserve(10);
-    m_renderObjects.reserve(10);
-
-//    initialize scene bounding volume
-    mg::Real size = 30;
-    m_boundingVolume.reshape(mg::Vec3D(-size, -size, -size), mg::Vec3D(size, size, size));
-
-    unsigned meshId = m_meshes.size();
-    m_meshMap["ball"] = meshId;
-    Mesh* mesh = Mesh::createSphere(meshId);
-    m_meshes.push_back(mesh);
-
-    RenderObject* ball = createBall(mesh);
-    m_renderObjects.push_back(ball);
-
-    m_hair = createHair(ball);
-
-    m_spiral = new Spiral();
-    m_spiral->init(ball);
+//    TODO
 }
 
 
@@ -78,37 +55,4 @@ void Scene::findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::
             o_objects.push_back(*it);
         }
     }
-}
-
-//====================================== utility functions =============================================
-
-RenderObject *createBall(const Mesh* mesh)
-{
-    mg::Matrix4D transform;
-    mg::matrix_uniform_scale(transform, (mg::Real)1);
-    mg::matrix_set_translation(transform, (mg::Real)0, (mg::Real)0, (mg::Real)0);
-
-    RenderObject* object = new RenderObject(mesh, transform, -1);
-    mg::Real radius = object->getMeshBoundingRadius();
-
-    mg::Matrix4D shape;
-    mg::matrix_scale(shape, radius, radius, radius);
-    mg::matrix_set_translation(shape, object->getMeshAABB().getCenter());
-    object->addCollisionShape(shape);
-
-    return object;
-}
-
-Hair* createHair(const RenderObject* object)
-{
-    std::vector<unsigned> fidx(60);
-    for (unsigned i = 0; i < fidx.size(); ++i)
-    {
-        fidx[i] = 2 * i;
-    }
-
-    Hair* hair = new Hair();
-    HairGenerator::generateCurlyHair(object, fidx, *hair);
-
-    return hair;
 }

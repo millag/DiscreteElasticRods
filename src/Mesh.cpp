@@ -32,7 +32,7 @@ unsigned Mesh::getPrimitiveOffset(unsigned primitiveIdx) const
 }
 
 //TODO: mode is always ignored - GOURAUD assumed
-void Mesh::calcNormals(Mesh& o_mesh, ShadingMode::Enum mode)
+void Mesh::computeNormals(Mesh& o_mesh, ShadingMode::Enum mode)
 {
     o_mesh.m_normals.resize(o_mesh.m_vertices.size(), mg::Vec3D(0,0,0));
 
@@ -116,6 +116,6 @@ Mesh* Mesh::createSphere(int id, unsigned divu, unsigned divv)
         }
     }
 
-    Mesh::calcNormals( *mesh,  Mesh::ShadingMode::GOURAUD );
+    Mesh::computeNormals( *mesh,  Mesh::ShadingMode::GOURAUD );
     return mesh;
 }

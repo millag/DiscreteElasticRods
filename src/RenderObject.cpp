@@ -29,7 +29,7 @@ void RenderObject::setMesh(const Mesh* _mesh)
 void RenderObject::setTransform(const mg::Matrix4D &t)
 {
     m_transform = t;
-    typedef std::vector<CollisionEllipsoid>::iterator Iter;
+    typedef std::vector<CollisionShape>::iterator Iter;
     for (Iter it = m_collisionShapes.begin(); it != m_collisionShapes.end(); ++it)
     {
         it->updateTransform(m_transform);
@@ -79,16 +79,16 @@ void RenderObject::calcBoundaries()
     m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EZ).length());
 }
 
-void RenderObject::addCollisionShape(const CollisionEllipsoid& ellipsoid)
+void RenderObject::addCollisionShape(const CollisionShape& shape)
 {
     unsigned idx = m_collisionShapes.size();
-    m_collisionShapes.push_back(ellipsoid);
+    m_collisionShapes.push_back(shape);
     m_collisionShapes[idx].updateTransform(m_transform);
 }
 
 bool RenderObject::isInsideObject(const mg::Vec3D& p, mg::Vec3D &o_collisionPoint, mg::Vec3D &o_normal) const
 {
-    typedef std::vector<CollisionEllipsoid>::const_iterator Iter;
+    typedef std::vector<CollisionShape>::const_iterator Iter;
     for (Iter it = m_collisionShapes.begin(); it != m_collisionShapes.end(); ++it)
     {
         if (it->isInsideObject(p, o_collisionPoint, o_normal))

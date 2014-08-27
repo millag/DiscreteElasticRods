@@ -1,12 +1,14 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
-#include "ElasticRod.h"
+#include "Loader.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainWindow)
 {
     // create our scene
-    m_scene = new Scene();
+    Loader loader;
+//    m_scene = loader.loadScene("assets/scene1.scene");
+    m_scene = loader.loadTestScene();
     m_scene->initialize();
 
     // create an openGL format and pass to the new GLWidget

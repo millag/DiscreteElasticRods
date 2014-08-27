@@ -9,8 +9,8 @@ public:
     Loader();
     ~Loader();
 
-    Scene* loadScene(const std::string& fileName);
-
+    Scene* loadScene(const char *);
+    Scene* loadTestScene();
 private:
 
     struct PImpl;

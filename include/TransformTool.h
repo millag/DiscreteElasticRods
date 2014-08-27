@@ -4,6 +4,7 @@
 #include <ngl/Mat4.h>
 #include "config.h"
 
+/// TODO: need serious refactoring NO COMMENT :(
 class TransformTool
 {
 public:
@@ -127,74 +128,5 @@ private:
     ngl::Mat4 m_matrix;
 };
 
-
-//class TransformTool
-//{
-//public:
-//    TransformTool() { reset(); }
-
-//    void reset()
-//    {
-//        m_angle0 = m_angle1 = m_angle2 = 0;
-//        m_scaleX = m_scaleY = m_scaleZ = 1;
-//        m_translation.set(0,0,0);
-//        m_transform.identity();
-//    }
-
-//    ngl::Mat4 getMatrix()
-//    {
-//        getTransform();
-
-//        ngl::Mat4 m;
-//        m.m_00 = m_transform(0,0);
-//        m.m_01 = m_transform(1,0);
-//        m.m_02 = m_transform(2,0);
-//        m.m_03 = m_transform(3,0);
-
-//        m.m_10 = m_transform(0,1);
-//        m.m_11 = m_transform(1,1);
-//        m.m_12 = m_transform(2,1);
-//        m.m_13 = m_transform(3,1);
-
-//        m.m_20 = m_transform(0,2);
-//        m.m_21 = m_transform(1,2);
-//        m.m_22 = m_transform(2,2);
-//        m.m_23 = m_transform(3,2);
-
-//        m.m_30 = m_transform(0,3);
-//        m.m_31 = m_transform(1,3);
-//        m.m_32 = m_transform(2,3);
-//        m.m_33 = m_transform(3,3);
-
-//        ngl::Mat4 tr;
-//        tr.translate(m_translation[0], m_translation[1], m_translation[2]);
-//        return m;
-//    }
-
-//    void setTransform(const mg::Matrix4D& transform)
-//    {
-//        m_transform = transform;
-//        mg::matrix_decompose_SRT(m_transform,
-//                                 m_scaleX, m_scaleY, m_scaleZ,
-//                                 m_angle0, m_angle1, m_angle2,
-//                                 mg::euler_order_yxz,
-//                                 m_translation);
-//    }
-
-//    const mg::Matrix4D& getTransform()
-//    {
-//        mg::matrix_affine_transform(m_transform, m_angle0, m_angle1, m_angle2, mg::euler_order_yxz, m_translation);
-//        return m_transform;
-//    }
-
-//    mg::Real m_angle0;
-//    mg::Real m_angle1;
-//    mg::Real m_angle2;
-//    mg::Real m_scaleX;
-//    mg::Real m_scaleY;
-//    mg::Real m_scaleZ;
-//    mg::Vec3D m_translation;
-//    mg::Matrix4D m_transform;
-//};
 
 #endif // TRANSFORMTOOL_H

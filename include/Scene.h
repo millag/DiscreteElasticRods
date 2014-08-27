@@ -9,6 +9,8 @@
 #include "Hair.h"
 #include "Spiral.h"
 
+class Loader;
+
 class Scene
 {
 public:
@@ -32,7 +34,9 @@ private:
     Spiral* m_spiral;
     std::vector<RenderObject*> m_renderObjects;
     std::vector<Mesh*> m_meshes;
-    std::map<std::string, unsigned> m_meshMap;
+
+private:
+    friend class Loader;
 };
 
 #endif // SCENE_H

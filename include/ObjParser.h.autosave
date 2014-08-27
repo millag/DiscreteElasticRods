@@ -1,0 +1,26 @@
+#ifndef OBJPARSER_H
+#define OBJPARSER_H
+
+#include <vector>
+#include "config.h"
+
+class ObjParser 
+{ 
+public: 
+    ObjParser(const char *filename);
+    
+    Vertex getInt3(const char*& token); 
+    int fix_v(int index) { return(index > 0 ? index - 1 : (index == 0 ? 0 : (int)v.size() + index)); } 
+    int fix_vt(int index) { return(index > 0 ? index - 1 : (index == 0 ? 0 : (int)vt.size() + index)); } 
+    int fix_vn(int index) { return(index > 0 ? index - 1 : (index == 0 ? 0 : (int)vn.size() + index)); } 
+    std::vector<mg::Vec3D> v, vn; 
+    std::vector<Vec2f> vt; 
+    std::vector<std::vector<Vertex> > curGroup; 
+    std::map<std::string, std::shared_ptr<Material> > materials; 
+    std::shared_ptr<Material> curMaterial; 
+    void loadMTL(const std::string &mtlFilename); 
+    void flushFaceGroup(); 
+    uint32_t getVertex(std::map<Vertex, uint32_t>&, std::vector<Vec3f>&, std::vector<Vec3f>&, std::vector<Vec2f>&, const Vertex&); 
+    std::vector<std::shared_ptr<Primitive> > model; };
+
+#endif // OBJPARSER_H

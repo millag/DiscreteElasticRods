@@ -76,7 +76,6 @@ void GLWindow::initializeGL()
     // grab an instance of shader manager
     ngl::ShaderLib *shader=ngl::ShaderLib::instance();
 
-
     // we are creating a shader called Phong
     shader->createShaderProgram("Phong");
     // now we are going to create empty shaders for Frag and Vert

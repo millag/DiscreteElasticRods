@@ -26,7 +26,6 @@ public:
     mg::Real getWidth() const { return m_boxSize[0]; }
     mg::Real getHeight() const { return m_boxSize[1]; }
     mg::Real getDepth() const { return m_boxSize[2]; }
-    mg::Real getBoundingRadius() const { return m_boundingRadius; }
 
     void reshape(const mg::Vec3D& _vmin,  const mg::Vec3D& _vmax);
 
@@ -36,7 +35,6 @@ protected:
     mg::Vec3D m_vmin;
     mg::Vec3D m_vmax;
     mg::Vec3D m_boxSize;
-    mg::Real m_boundingRadius;
 
 };
 
