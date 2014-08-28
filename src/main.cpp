@@ -1,6 +1,8 @@
 #include <QApplication>
 #include "MainWindow.h"
+#include "ObjLoader.h"
 
+#include <cstdlib>
 
 int main(int argc, char *argv[])
 {

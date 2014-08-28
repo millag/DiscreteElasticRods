@@ -26,8 +26,10 @@ void CollisionShape::updateTransform(const mg::Matrix4D& transform)
     m_globalShapeInverse = mg::inverse(m_globalShape);
 }
 
+// Citation Begin
+// code borrowed and modified from http://code.google.com/p/opencloth/
 
-bool CollisionShape::isInsideObject(const mg::Vec3D& p, mg::Vec3D &o_collisionPoint, mg::Vec3D &o_normal) const
+bool CollisionShape::isInside(const mg::Vec3D& p, mg::Vec3D &o_collisionPoint, mg::Vec3D &o_normal) const
 {
     mg::Vec3D local_p = mg::transform_point(m_globalShapeInverse, p);
     mg::Real distance = local_p.length_squared();
@@ -52,3 +54,5 @@ bool CollisionShape::isInsideObject(const mg::Vec3D& p, mg::Vec3D &o_collisionPo
 
     return true;
 }
+
+// Citation End

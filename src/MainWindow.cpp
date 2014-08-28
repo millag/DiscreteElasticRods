@@ -7,8 +7,8 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainW
 {
     // create our scene
     Loader loader;
-//    m_scene = loader.loadScene("assets/scene1.scene");
-    m_scene = loader.loadTestScene();
+    m_scene = loader.loadScene("assets/scene1.scene");
+//    m_scene = loader.loadTestScene();
     m_scene->initialize();
 
     // create an openGL format and pass to the new GLWidget

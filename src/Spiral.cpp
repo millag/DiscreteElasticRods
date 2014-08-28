@@ -41,7 +41,7 @@ void Spiral::init(const RenderObject* object)
     ColumnVector theta(m_nParticles - 1);
     std::set<unsigned> isClamped;
 
-    mg::Vec3D center(m_object->getPosition());
+    mg::Vec3D center(m_object->getCenter());
     mg::Vec3D dirx = mg::Vec3D(1, 0, 0);
     mg::Vec3D diry = mg::Vec3D(0, -1, 0);
     mg::Vec3D dirz = mg::Vec3D(0, 0, 1);
@@ -96,7 +96,7 @@ void Spiral::update(mg::Real dt)
     QElapsedTimer chronometer;
     chronometer.start();
 
-    mg::Vec3D center = m_object->getPosition();
+    mg::Vec3D center = m_object->getCenter();
     typedef std::vector<ElasticRod*>::iterator Iter;
     for (Iter it = m_strands.begin(); it != m_strands.end(); ++it)
     {
@@ -162,7 +162,7 @@ void Spiral::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec
 //    ColumnVector theta(m_nParticles - 1);
 //    std::set<unsigned> isClamped;
 
-//    mg::Vec3D center(m_object->getPosition());
+//    mg::Vec3D center(m_object->getCenter());
 //    mg::Vec3D dirx = mg::Vec3D(1, 0, 0);
 //    mg::Vec3D diry = mg::Vec3D(0, 1, 0);
 //    mg::Vec3D dirz = mg::Vec3D(0, 0, 1);

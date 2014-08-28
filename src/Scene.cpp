@@ -1,7 +1,5 @@
 #include "Scene.h"
 
-//===================================== Scene ===========================================
-
 Scene::Scene(): m_hair(NULL), m_spiral(NULL) { }
 
 Scene::~Scene()
@@ -35,7 +33,7 @@ Scene::~Scene()
 
 void Scene::initialize()
 {
-//    TODO
+//    TODO:implement
 }
 
 
@@ -50,7 +48,7 @@ void Scene::findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::
     typedef std::vector<RenderObject*>::const_iterator Iter;
     for (Iter it = m_renderObjects.begin(); it != m_renderObjects.end(); ++it)
     {
-        if ((pos - (*it)->getPosition()).length() < dist + (*it)->getBoundingRadius())
+        if ((pos - (*it)->getCenter()).length() < dist + (*it)->getBoundingRadius())
         {
             o_objects.push_back(*it);
         }

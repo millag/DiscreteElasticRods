@@ -18,30 +18,31 @@ Hair::Hair():m_object(NULL), m_grid(NULL)
 //    init default hair params
     m_params = new HairParams();
     m_params->m_length = 6;
-    m_params->m_lengthVariance = 2;
-    m_params->m_helicalRadius = 0.2;
-    m_params->m_helicalPitch = 0.13;
-    m_params->m_density = 0.005;
-    m_params->m_thickness = 0.07;
-    m_params->m_nParticles = 15;
-
-    m_params->m_gravity.set(0, -9.81, 0);
-    m_params->m_drag = 0.0001;
+    m_params->m_lengthVariance = 0.1;
+    m_params->m_helicalRadius = 0.38;
+    m_params->m_helicalPitch = 0.18;
+    m_params->m_density = 0.09;
+    m_params->m_thickness = 0.06;
+    m_params->m_nParticles = 10;
 
     m_params->m_resolveCollisions = 1;
     m_params->m_coulombFriction = 0.2;
 
+    m_params->m_gravity.set(0, -9.81, 0);
+    m_params->m_drag = 0.001;
+
     m_params->m_resolveSelfInterations = 1;
-    m_params->m_selfInterationDist = 0.4;
-    m_params->m_selfStiction = 0.001;
-    m_params->m_selfRepulsion = 0.0001;
+    m_params->m_selfInterationDist = 0.6;
+    m_params->m_selfStiction = 0.05;
+    m_params->m_selfRepulsion = 0.003;
 
     m_params->m_pbdIter = 4;
 
-    mg::Real bendStiffness = 0.0003;
+    mg::Real bendStiffness = 0.005;
     mg::Real twistStiffness = 0.0001;
     mg::Real maxElasticForce = 1000;
     m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce);
+
 }
 
 Hair::~Hair()
@@ -73,7 +74,7 @@ void Hair::initialize()
     assert( m_object != NULL );
     assert( m_grid == NULL );
 
-    mg::Vec3D gridCenter = m_object->getPosition();
+    mg::Vec3D gridCenter = m_object->getCenter();
     mg::Vec3D offset = (m_object->getBoundingRadius() + m_params->m_length + m_params->m_lengthVariance) * mg::Vec3D(1, 1, 1);
     m_volume.reshape(gridCenter - offset, gridCenter + offset);
 
@@ -83,7 +84,7 @@ void Hair::initialize()
 
 void Hair::resetGrid()
 {
-    mg::Vec3D gridCenter = m_object->getPosition();
+    mg::Vec3D gridCenter = m_object->getCenter();
     mg::Vec3D offset = (m_object->getBoundingRadius() + m_params->m_length + m_params->m_lengthVariance) * mg::Vec3D(1, 1, 1);
     m_volume.reshape(gridCenter - offset, gridCenter + offset);
 
@@ -348,26 +349,56 @@ void Hair::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D
 
 
 //m_params = new HairParams();
-//m_params->m_length = 3;
+//m_params->m_length = 4;
 //m_params->m_lengthVariance = 0.9;
-//m_params->m_helicalRadius = 0.2;
-//m_params->m_helicalPitch = 0.07;
+//m_params->m_helicalRadius = 0.25;
+//m_params->m_helicalPitch = 0.17;
 //m_params->m_density = 0.09;
-//m_params->m_thickness = 0.07;
-//m_params->m_nParticles = 12;
+//m_params->m_thickness = 0.06;
+//m_params->m_nParticles = 10;
 
+//m_params->m_resolveCollisions = 1;
 //m_params->m_coulombFriction = 0.2;
-//m_params->m_selfInterationDist = 0.6;
-//m_params->m_selfStiction = 0.03;
-//m_params->m_selfRepulsion = 0.004;
 
 //m_params->m_gravity.set(0, -9.81, 0);
-//m_params->m_drag = 0.0005;
+//m_params->m_drag = 0.002;
 
-//m_params->m_useSelfInterations = 1;
+//m_params->m_resolveSelfInterations = 1;
+//m_params->m_selfInterationDist = 0.6;
+//m_params->m_selfStiction = 0.04;
+//m_params->m_selfRepulsion = 0.005;
+
 //m_params->m_pbdIter = 4;
 
 //mg::Real bendStiffness = 0.003;
 //mg::Real twistStiffness = 0.0001;
 //mg::Real maxElasticForce = 1000;
-//m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce)
+//m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce);
+
+//// =========================== long and curly ========================================
+//    m_params = new HairParams();
+//    m_params->m_length = 6;
+//    m_params->m_lengthVariance = 2;
+//    m_params->m_helicalRadius = 0.2;
+//    m_params->m_helicalPitch = 0.13;
+//    m_params->m_density = 0.005;
+//    m_params->m_thickness = 0.07;
+//    m_params->m_nParticles = 15;
+
+//    m_params->m_gravity.set(0, -9.81, 0);
+//    m_params->m_drag = 0.0001;
+
+//    m_params->m_resolveCollisions = 1;
+//    m_params->m_coulombFriction = 0.2;
+
+//    m_params->m_resolveSelfInterations = 0;
+//    m_params->m_selfInterationDist = 0.4;
+//    m_params->m_selfStiction = 0.001;
+//    m_params->m_selfRepulsion = 0.0001;
+
+//    m_params->m_pbdIter = 4;
+
+//    mg::Real bendStiffness = 0.0003;
+//    mg::Real twistStiffness = 0.0001;
+//    mg::Real maxElasticForce = 1000;
+//    m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce);

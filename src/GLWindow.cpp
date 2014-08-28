@@ -54,7 +54,7 @@ void GLWindow::initializeGL()
 {
     m_cameraTransform.m_angle0 = 0;
     m_cameraTransform.m_angle1 = 0;
-    m_cameraTransform.m_translation.set(0,0,-7);
+    m_cameraTransform.m_translation.set(0,0,-20);
 
     ngl::NGLInit::instance();
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);			   // Grey Background
@@ -303,9 +303,9 @@ void GLWindow::paintGL()
 
 #ifndef DBUGG
     shader->use("Tube");
-    shader->setShaderParam4f("Col1", 0.8, 0.8, 0.0, 1.0);
-    shader->setShaderParam4f("Col2", 0.0, 0.0, 0.0, 1.0);
-    shader->setShaderParam1f("Radius", 0.06);
+    shader->setShaderParam4f("Col1", 0.47, 0.4, 0.0, 1.0);
+    shader->setShaderParam4f("Col2", 0.4, 0.4, 0.0, 1.0);
+    shader->setShaderParam1f("Radius", 0.1);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
     // load transform stack
     m_transform.reset();
@@ -438,6 +438,8 @@ void GLWindow::mouseReleaseEvent ( QMouseEvent * _event )
 
 void GLWindow::timerEvent( QTimerEvent *_event)
 {
+    m_scene->update(0.01);
+    m_scene->update(0.01);
     m_scene->update(0.01);
     updateGL();
 }

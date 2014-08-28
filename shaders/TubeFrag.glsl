@@ -49,7 +49,7 @@ void main()
     vec3 H = normalize( L + V );
 
 
-    float repeatCount = 6;
+    float repeatCount = 15;
     float whichStripe = floor(uv_fr.x * repeatCount);
     vec4 col = mix(Col1, Col2, mod( whichStripe, 2));
 

@@ -2,13 +2,6 @@
 #include <limits>
 
 
-Mesh::Mesh(unsigned id, PrimitiveMode::Enum mode):
-    m_id(id), m_mode(mode)
-{ }
-
-Mesh::~Mesh()
-{ }
-
 unsigned Mesh::getNPrimitives() const
 {
     switch (m_mode)

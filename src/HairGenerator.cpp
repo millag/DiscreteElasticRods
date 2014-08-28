@@ -130,13 +130,15 @@ void HairGenerator::generateHelicalRod(const HairParams& params,
     mg::Real volume = length * params.m_thickness * params.m_thickness * mg::Constants::pi();
     mg::Real pmass = params.m_density * volume / (params.m_nParticles - 1);
 
+    mg::Real sign = mg::randf(0.0, 1.0);
+    sign =  (sign < 0.5)? -1.0 : 1.0;
     mg::Real angle = params.m_length / std::sqrt(params.m_helicalRadius * params.m_helicalRadius + params.m_helicalPitch * params.m_helicalPitch);
     angle /= (params.m_nParticles - 1);
     mg::Real phase = mg::randf(0, mg::Constants::two_pi());
     for (unsigned i = 0; i < o_rod.m_ppos.size(); ++i)
     {
 //        calc point on unit circle
-        o_rod.m_ppos[i] = (std::cos(phase + i * angle) * diru  + std::sin(phase + i * angle) * dirv - (std::cos(phase) * diru  + std::sin(phase) * dirv));
+        o_rod.m_ppos[i] = (std::cos(phase + i *sign * angle) * diru  + std::sin(phase + i * sign * angle) * dirv - (std::cos(phase) * diru  + std::sin(phase) * dirv));
 //        place point on helix
         o_rod.m_ppos[i] = o_rod.m_ppos[i]* params.m_helicalRadius + params.m_helicalPitch * (i * angle) * dirn;
 //        move helix to position

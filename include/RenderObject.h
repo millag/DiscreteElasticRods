@@ -16,13 +16,14 @@ public:
     const Mesh* getMesh() const;
     void setMesh(const Mesh* _mesh);
 
-    const mg::Matrix4D& getTransform() const { return m_transform; }
+    inline const mg::Matrix4D& getTransform() const { return m_transform; }
     void setTransform(const mg::Matrix4D& t);
-    mg::Vec3D getPosition() const  { return mg::matrix_get_translation(m_transform); }
+    inline mg::Vec3D getPosition() const  { return mg::matrix_get_translation(m_transform); }
 
-    mg::Real getBoundingRadius() const { return m_boundingRadius; }
-    mg::Real getMeshBoundingRadius() const { return m_meshBoundingRadius; }
-    const AABB& getMeshAABB() const { return m_meshAABB; }
+    inline mg::Vec3D getCenter() const  { return mg::transform_point(m_transform, m_meshAABB.getCenter()); }
+    inline mg::Real getBoundingRadius() const { return m_boundingRadius; }
+    inline mg::Real getMeshBoundingRadius() const { return m_meshBoundingRadius; }
+    inline const AABB& getMeshAABB() const { return m_meshAABB; }
 
     void addCollisionShape(const CollisionShape& shape);
     bool isInsideObject(const mg::Vec3D& p, mg::Vec3D& o_collisionPoint, mg::Vec3D& o_normal) const;

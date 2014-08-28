@@ -14,8 +14,8 @@ MOC_DIR=moc
 CONFIG-=app_bundle
 QT+=gui opengl core
 SOURCES += src/main.cpp \
-           src/MainWindow.cpp \
-           src/GLWindow.cpp \
+    src/MainWindow.cpp \
+    src/GLWindow.cpp \
     src/Utils.cpp \
     src/Scene.cpp \
     src/Mesh.cpp \
@@ -33,10 +33,10 @@ SOURCES += src/main.cpp \
 INCLUDEPATH += ./include
 INCLUDEPATH += ./libs/cml-1_0_2/
 INCLUDEPATH += ./libs/dlib-18.9/
-INCLUDEPATH += ./libs/tiny_obj/
+INCLUDEPATH += ./libs/NGL/include/
 
 HEADERS += include/MainWindow.h \
-           include/GLWindow.h \
+    include/GLWindow.h \
     include/Utils.h \
     include/Scene.h \
     include/Mesh.h \
@@ -59,7 +59,7 @@ FORMS += \
     ui/MainWindow.ui
 
 OTHER_FILES+= shaders/Phong.fs \
-              shaders/Phong.vs \
+    shaders/Phong.vs \
     shaders/PhongVertex.glsl \
     shaders/PhongFragment.glsl \
     shaders/ColourFrag.glsl \
@@ -74,7 +74,10 @@ OTHER_FILES+= shaders/Phong.fs \
     shaders/DebugFrag.glsl \
     shaders/TubeTES.glsl \
     assets/MayaGetSelectedPrimitives.py \
-    assets/scene1.mg
+    assets/scene1.mg \
+    assets/shape1.obj \
+    assets/medusa2.obj \
+    assets/medusa1.obj
 
 DESTDIR=./
 CONFIG += console
@@ -92,11 +95,12 @@ macx:INCLUDEPATH+=/usr/local/include/
 linux-g++:QMAKE_CXXFLAGS +=  -march=native
 linux-g++-64:QMAKE_CXXFLAGS +=  -march=native
 # define the _DEBUG flag for the graphics lib
-DEFINES +=NGL_DEBUG
+DEFINES += NGL_DEBUG
 
 unix:LIBS += -L/usr/local/lib
 # add the ngl lib
-unix:LIBS +=  -L/$(HOME)/NGL/lib -l NGL
+unix:LIBS += -L./libs/NGL/lib -l NGL
+#unix:LIBS +=  -L/$(HOME)/NGL/lib -l NGL
 
 # now if we are under unix and not on a Mac (i.e. linux) define GLEW
 linux-*{
@@ -108,7 +112,7 @@ DEPENDPATH+=include
 # if we are on a mac define DARWIN
 macx:DEFINES += DARWIN
 # this is where to look for includes
-INCLUDEPATH += $$(HOME)/NGL/include/
+#INCLUDEPATH += $$(HOME)/NGL/include/
 
 win32: {
 				PRE_TARGETDEPS+=C:/NGL/lib/NGL.lib
