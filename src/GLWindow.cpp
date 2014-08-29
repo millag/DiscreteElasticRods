@@ -438,9 +438,7 @@ void GLWindow::mouseReleaseEvent ( QMouseEvent * _event )
 
 void GLWindow::timerEvent( QTimerEvent *_event)
 {
-    m_scene->update(0.01);
-    m_scene->update(0.01);
-    m_scene->update(0.01);
+    m_scene->update(0.025);
     updateGL();
 }
 

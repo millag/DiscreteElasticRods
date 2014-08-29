@@ -1,15 +1,12 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <string>
 #include <vector>
-#include <string>
-#include <map>
 
 #include "Hair.h"
 #include "Spiral.h"
 
-class Loader;
+class SceneLoader;
 
 class Scene
 {
@@ -21,7 +18,7 @@ public:
     void update(mg::Real dt);
 
     inline const AABB& getBoundingVolume() const { return m_boundingVolume; }
-    inline const std::vector<ElasticRod*>& getStrands() const { return m_hair->m_strands; }
+    inline const std::vector<ElasticRod*>& getStrands() const { return m_hairs[0]->m_strands; }
     inline const std::vector<RenderObject*>& getRenderObjects() const { return m_renderObjects; }
     inline const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
 
@@ -30,13 +27,13 @@ public:
 private:
     AABB m_boundingVolume;
 
-    Hair* m_hair;
     Spiral* m_spiral;
+    std::vector<Hair*> m_hairs;
     std::vector<RenderObject*> m_renderObjects;
     std::vector<Mesh*> m_meshes;
 
 private:
-    friend class Loader;
+    friend class SceneLoader;
 };
 
 #endif // SCENE_H

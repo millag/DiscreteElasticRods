@@ -1,31 +1,31 @@
 #include "Scene.h"
 
-Scene::Scene(): m_hair(NULL), m_spiral(NULL) { }
+Scene::Scene():m_spiral(NULL) { }
 
 Scene::~Scene()
 {
-
-//    delete hair
-    if (m_hair != NULL)
-    {
-        delete m_hair;
-    }
-
     if (m_spiral != NULL)
     {
         delete m_spiral;
     }
 
+//    delete hair objects
+    typedef std::vector<Hair*>::const_iterator Iter;
+    for (Iter it = m_hairs.begin(); it != m_hairs.end(); ++it)
+    {
+        delete (*it);
+    }
+
 //    delete render objects
-    typedef std::vector<RenderObject*>::const_iterator ROIter;
-    for (ROIter it = m_renderObjects.begin(); it != m_renderObjects.end(); ++it)
+    typedef std::vector<RenderObject*>::const_iterator RIter;
+    for (RIter it = m_renderObjects.begin(); it != m_renderObjects.end(); ++it)
     {
         delete (*it);
     }
 
 //    delete meshes
-    typedef std::vector<Mesh*>::const_iterator GIter;
-    for (GIter it = m_meshes.begin(); it != m_meshes.end(); ++it)
+    typedef std::vector<Mesh*>::const_iterator MIter;
+    for (MIter it = m_meshes.begin(); it != m_meshes.end(); ++it)
     {
         delete (*it);
     }
@@ -39,7 +39,7 @@ void Scene::initialize()
 
 void Scene::update(mg::Real dt)
 {
-    m_hair->update(dt);
+    m_hairs[0]->update(dt);
 //    m_spiral->update(dt);
 }
 

@@ -52,7 +52,8 @@ HEADERS += include/MainWindow.h \
     include/VoxelGrid.h \
     include/Loader.h \
     include/ObjLoader.h \
-    include/CollisionShape.h
+    include/CollisionShape.h \
+    include/BasicParser.h
 
 
 FORMS += \
@@ -75,7 +76,6 @@ OTHER_FILES+= shaders/Phong.fs \
     shaders/TubeTES.glsl \
     assets/MayaGetSelectedPrimitives.py \
     assets/scene1.mg \
-    assets/shape1.obj \
     assets/medusa2.obj \
     assets/medusa1.obj
 

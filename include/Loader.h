@@ -3,14 +3,16 @@
 
 #include "Scene.h"
 
-class Loader
+class SceneLoader
 {
 public:
-    Loader();
-    ~Loader();
 
-    Scene* loadScene(const char *);
+    SceneLoader();
+    ~SceneLoader();
+
+    Scene* loadScene(const char *filename);
     Scene* loadTestScene();
+    Mesh* loadMesh(const char *fileName);
 private:
 
     struct PImpl;

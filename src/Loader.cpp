@@ -1,72 +1,82 @@
 #include "Loader.h"
+#include <map>
 
 #include "ObjLoader.h"
 #include "HairGenerator.h"
+#include "BasicParser.h"
 
-struct Loader::PImpl
+struct mesh_object
 {
-    Mesh* loadMesh(const char *fileName);
+    mesh_object():m_id(-1) { }
+    long int m_id;
+    std::string m_filename;
 };
 
-Loader::Loader()
+struct object_3D
+{
+    object_3D():m_id(-1), m_meshId(-1) { m_transform.identity(); }
+    long int m_id;
+    long int m_meshId;
+    mg::Matrix4D m_transform;
+    std::vector<mg::Matrix4D> m_collisionShapes;
+};
+
+struct hair_object
+{
+    hair_object():m_id(-1), m_objId(-1), m_faceCnt(0) { }
+    long int m_id;
+    long int m_objId;
+    std::string m_type;
+    unsigned m_faceCnt;
+    std::vector<unsigned> m_faceList;
+};
+
+struct hair_params
+{
+    hair_params():m_id(-1), m_hairId(-1) { }
+    long int m_id;
+    long int m_hairId;
+//    TODO: add all other props
+};
+
+struct scene_object
+{
+    std::map<unsigned, mesh_object> m_meshMap;
+    std::map<unsigned, object_3D> m_object3DMap;
+    std::map<unsigned, hair_object> m_hairMap;
+    std::map<unsigned, hair_params> m_hairParamsMap;
+};
+
+
+
+
+struct SceneLoader::PImpl
+{
+public:
+    inline std::string &stripComment(std::string& s);
+    bool parseScene(std::ifstream& ifs, scene_object& o_scene);
+    bool parseMesh(std::ifstream& ifs, scene_object& o_scene);
+    bool parseObject3D(std::ifstream& ifs, scene_object& o_scene);
+    bool parseHairObject(std::ifstream& ifs, scene_object& o_scene);
+    bool parseHairParams(std::ifstream& ifs, scene_object& o_scene);
+
+    unsigned m_lineNumber;
+};
+
+
+
+
+SceneLoader::SceneLoader()
 {
     m_impl = new PImpl();
 }
 
-Loader::~Loader()
+SceneLoader::~SceneLoader()
 {
     delete m_impl;
 }
 
-Scene* Loader::loadScene(const char*)
-{
-    Scene* scene = new Scene();
-
-    mg::Real size = 30;
-    scene->m_boundingVolume.reshape(mg::Vec3D(-size, -size, -size), mg::Vec3D(size, size, size));
-
-    Mesh* mesh = m_impl->loadMesh("assets/medusa1.obj");
-    unsigned meshId = scene->m_meshes.size();
-    mesh->setId(meshId);
-    scene->m_meshes.push_back(mesh);
-
-    mg::Matrix4D transform;
-    transform.identity();
-    RenderObject* object = new RenderObject(mesh, transform);
-    scene->m_renderObjects.push_back(object);
-
-    mg::Matrix4D shape, rot;
-    mg::matrix_rotation_euler(shape, mg::rad((mg::Real)-23.853), (mg::Real)0, (mg::Real)0, mg::euler_order_xyz);
-    mg::matrix_scale(rot, (mg::Real)1.967, (mg::Real)2.953, (mg::Real)2.355);
-    shape = shape * rot;
-    mg::matrix_set_translation(shape, (mg::Real)0, (mg::Real)2.664, (mg::Real)0);
-    object->addCollisionShape(shape);
-
-    unsigned nFidx = 224;
-    unsigned fidx[] = {861, 862, 863, 864, 875, 876, 877, 878, 879, 880, 881, 882, 883, 884, 891, 892, 893, 894, 895, 896,
-                       897, 898, 899, 900, 901, 902, 903, 904, 909, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920,
-                       1336, 1337, 1338, 1339, 1344, 1345, 1346, 1347, 1348, 1349, 1350, 1351, 1352, 1353, 1354, 1355, 1356,
-                       1357, 1358, 1359, 1363, 1364, 1365, 1366, 1367, 1368, 1369, 1370, 1371, 1372, 1373, 1374, 1375, 1376,
-                       1377, 1378, 1379, 1380, 1381, 1382, 1383, 1384, 1385, 1386, 1387, 1388, 1389, 1390, 1391, 1392, 1393,
-                       1394, 1395, 1396, 1397, 1398, 1399, 1400, 1401, 1402, 1403, 1404, 1405, 1406, 1407, 1408, 1409, 1413,
-                       1416, 1417, 1420, 1421, 3334, 3335, 3336, 3337, 3348, 3349, 3350, 3351, 3352, 3353, 3354, 3355, 3356,
-                       3357, 3364, 3365, 3366, 3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374, 3375, 3376, 3377, 3382, 3383,
-                       3384, 3385, 3386, 3387, 3388, 3389, 3390, 3391, 3392, 3393, 3804, 3805, 3806, 3807, 3812, 3813, 3814,
-                       3815, 3816, 3817, 3818, 3819, 3820, 3821, 3822, 3823, 3824, 3825, 3826, 3827, 3831, 3832, 3833, 3834,
-                       3835, 3836, 3837, 3838, 3839, 3840, 3841, 3842, 3843, 3844, 3845, 3846, 3847, 3848, 3849, 3850, 3851,
-                       3852, 3853, 3854, 3855, 3856, 3857, 3858, 3859, 3860, 3861, 3862, 3863, 3864, 3865, 3866, 3867, 3868,
-                       3869, 3870, 3872, 3873, 3874, 3875, 3876, 3877, 3878, 3879, 3880, 3881, 3882, 3883};
-    std::vector<unsigned> findices(nFidx);
-    std::copy(fidx, fidx + nFidx, findices.begin());
-
-    scene->m_hair = new Hair();
-    HairGenerator::generateCurlyHair(object, findices, *scene->m_hair);
-
-    return scene;
-}
-
-
-Scene* Loader::loadTestScene()
+Scene* SceneLoader::loadTestScene()
 {
     Scene* scene = new Scene();
 
@@ -91,12 +101,13 @@ Scene* Loader::loadTestScene()
         fidx[i] = 2 * i;
     }
 //    create hair object
-    scene->m_hair = new Hair();
+    Hair* hair = new Hair();
+    scene->m_hairs.push_back(hair);
 //    generate hair
-    HairGenerator::generateCurlyHair(object, fidx, *scene->m_hair);
+    HairGenerator::generateCurlyHair(object, fidx, *hair);
 
 //    add collision shape for the object
-    mg::Real radius = object->getMeshBoundingRadius() + scene->m_hair->m_params->m_thickness;
+    mg::Real radius = object->getMeshBoundingRadius() + hair->m_params->m_thickness;
     mg::Matrix4D shape;
     mg::matrix_scale(shape, radius, radius, radius);
     mg::matrix_set_translation(shape, object->getMeshAABB().getCenter());
@@ -109,7 +120,98 @@ Scene* Loader::loadTestScene()
 }
 
 
-Mesh *Loader::PImpl::loadMesh(const char* fileName)
+Scene* SceneLoader::loadScene(const char* filename)
+{
+
+    if (filename == NULL)
+        return false;
+
+    std::ifstream ifs;
+    ifs.open(filename, std::ios::in);
+    if (ifs.fail())
+    {
+        std::cerr << "Can't open file " << filename << std::endl;
+        ifs.close();
+        return NULL;
+    }
+
+    scene_object scene_obj;
+    bool success = m_impl->parseScene(ifs, scene_obj);
+    if (!success)
+    {
+        std::cerr << "Error parsing file " << filename  <<
+                     "\nError at line: " << m_impl->m_lineNumber << std::endl;
+        ifs.close();
+        return NULL;
+    }
+
+//    construct scene
+    Scene* scene = new Scene();
+
+    mg::Real size = 30;
+    scene->m_boundingVolume.reshape(mg::Vec3D(-size, -size, -size), mg::Vec3D(size, size, size));
+
+//    create meshes
+    typedef std::map<unsigned, mesh_object>::iterator MIter;
+    for (MIter it = scene_obj.m_meshMap.begin(); it != scene_obj.m_meshMap.end(); ++it)
+    {
+        Mesh* mesh = loadMesh(it->second.m_filename.c_str());
+        if (mesh == NULL)
+        {
+            it->second.m_id = -1;
+            continue;
+        }
+        it->second.m_id = scene->m_meshes.size();
+        mesh->setId(it->second.m_id);
+        scene->m_meshes.push_back(mesh);
+    }
+//    create render objects
+    typedef std::map<unsigned, object_3D>::iterator OIter;
+    for (OIter it = scene_obj.m_object3DMap.begin(); it != scene_obj.m_object3DMap.end(); ++it)
+    {
+        if (!scene_obj.m_meshMap.count(it->second.m_meshId) || scene_obj.m_meshMap[it->second.m_meshId].m_id < 0)
+        {
+            it->second.m_id = -1;
+            continue;
+        }
+        unsigned idx = scene_obj.m_meshMap[it->second.m_meshId].m_id;
+        RenderObject* object = new RenderObject(scene->m_meshes[idx], it->second.m_transform);
+        for (unsigned i = 0; i < it->second.m_collisionShapes.size(); ++i)
+        {
+            object->addCollisionShape(it->second.m_collisionShapes[i]);
+        }
+        it->second.m_id = scene->m_renderObjects.size();
+        scene->m_renderObjects.push_back(object);
+    }
+//    create hair objects
+    typedef std::map<unsigned, hair_object>::iterator Iter;
+    for (Iter it = scene_obj.m_hairMap.begin(); it != scene_obj.m_hairMap.end(); ++it)
+    {
+        if (!scene_obj.m_object3DMap.count(it->second.m_objId) || scene_obj.m_object3DMap[it->second.m_objId].m_id < 0)
+        {
+            it->second.m_id = -1;
+            continue;
+        }
+
+        unsigned idx = scene_obj.m_object3DMap[it->second.m_objId].m_id;
+        Hair* hair = new Hair();
+        it->second.m_id = scene->m_hairs.size();
+        scene->m_hairs.push_back(hair);
+        if (it->second.m_type.compare("straight"))
+        {
+            HairGenerator::generateCurlyHair(scene->m_renderObjects[idx], it->second.m_faceList, *hair);
+        } else
+        {
+            HairGenerator::generateStraightHair(scene->m_renderObjects[idx], it->second.m_faceList, *hair);
+        }
+    }
+
+    ifs.close();
+    return scene;
+}
+
+
+Mesh *SceneLoader::loadMesh(const char* fileName)
 {
     ObjLoader loader;
     if (!loader.loadFile(fileName))
@@ -137,3 +239,365 @@ Mesh *Loader::PImpl::loadMesh(const char* fileName)
 }
 
 
+inline std::string &SceneLoader::PImpl::stripComment(std::string& s)
+{
+    std::size_t found = s.find('#');
+    if (found == std::string::npos)
+        return s;
+    return s.erase(found, s.size());
+}
+
+bool SceneLoader::PImpl::parseScene(std::ifstream &ifs, scene_object &o_scene)
+{
+    bool success = true;
+
+    std::string token;
+    while (ifs.peek() != EOF)
+    {
+        std::getline(ifs, token, '\n');
+        ++m_lineNumber;
+
+        stripComment(token);
+        BasicParser::trim(token);
+
+        if (token.empty())
+        {
+            continue;
+        }
+
+        if (token.compare("mesh") == 0)
+        {
+            success = parseMesh(ifs, o_scene);
+            if (!success)
+            {
+                break;
+            }
+            continue;
+        }
+
+        if (token.compare("object3D") == 0)
+        {
+            success = parseObject3D(ifs, o_scene);
+            if (!success)
+            {
+                break;
+            }
+            continue;
+        }
+
+        if (token.compare("hair") == 0)
+        {
+            success = parseHairObject(ifs, o_scene);
+            if (!success)
+            {
+                break;
+            }
+            continue;
+        }
+
+        if (token.compare("hairParams") == 0)
+        {
+            success = parseHairParams(ifs, o_scene);
+            if (!success)
+            {
+                break;
+            }
+            continue;
+        }
+
+        success = false;
+        std::cerr << "Unknown token[" << token << "] found at line "<< m_lineNumber << std::endl;
+        break;
+    }
+
+    return success;
+}
+
+bool SceneLoader::PImpl::parseMesh(std::ifstream &ifs, scene_object &o_scene)
+{
+    bool success = false;
+
+    mesh_object mesh;
+
+    std::string line;
+    std::string token;
+    while (ifs.peek() != EOF)
+    {
+        std::getline(ifs, line, '\n');
+        ++m_lineNumber;
+
+        stripComment(line);
+        BasicParser::trim(line);
+        if (line.empty())
+        {
+            continue;
+        }
+
+        token = BasicParser::parseToken(line);
+        if (token.compare("id") == 0)
+        {
+            line.erase(0, token.length());
+            mesh.m_id = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("filename") == 0)
+        {
+            line.erase(0, token.length());
+            mesh.m_filename = BasicParser::trim(line);
+            continue;
+        }
+
+        if (token.compare("/mesh") == 0)
+        {
+            success = true;
+            break;
+        }
+
+        success = false;
+        std::cerr << "Unknown token[" << token << "] found at line "<< m_lineNumber << std::endl;
+        break;
+
+    }
+
+    if (!success || mesh.m_id < 0 || o_scene.m_meshMap.count(mesh.m_id))
+    {
+        success = false;
+    } else
+    {
+        o_scene.m_meshMap[mesh.m_id] = mesh;
+    }
+    return success;
+}
+
+
+bool SceneLoader::PImpl::parseObject3D(std::ifstream &ifs, scene_object &o_scene)
+{
+    bool success = false;
+
+    object_3D object;
+
+    std::string line;
+    std::string token;
+    while (ifs.peek() != EOF)
+    {
+        std::getline(ifs, line, '\n');
+        ++m_lineNumber;
+
+        stripComment(line);
+        BasicParser::trim(line);
+        if (line.empty())
+        {
+            continue;
+        }
+
+        token = BasicParser::parseToken(line);
+        if (token.compare("id") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_id = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("meshId") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_meshId = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("transform") == 0)
+        {
+            line.erase(0, token.length());
+            BasicParser::parseMatrix4D(line, object.m_transform);
+            continue;
+        }
+
+        if (token.compare("collisionShape") == 0)
+        {
+            line.erase(0, token.length());
+            unsigned idx = object.m_collisionShapes.size();
+            object.m_collisionShapes.resize(idx + 1);
+            BasicParser::parseMatrix4D(line, object.m_collisionShapes[idx]);
+            continue;
+        }
+
+        if (token.compare("/object3D") == 0)
+        {
+            success = true;
+            break;
+        }
+
+        success = false;
+        std::cerr << "Unknown token[" << token << "] found at line "<< m_lineNumber << std::endl;
+        break;
+
+    }
+
+    if (!success || object.m_id < 0 || object.m_meshId < 0 || o_scene.m_object3DMap.count(object.m_id))
+    {
+        success = false;
+    } else
+    {
+        o_scene.m_object3DMap[object.m_id] = object;
+    }
+    return success;
+}
+
+bool SceneLoader::PImpl::parseHairObject(std::ifstream& ifs, scene_object& o_scene)
+{
+    bool success = false;
+
+    hair_object object;
+
+    std::string line;
+    std::string token;
+    while (ifs.peek() != EOF)
+    {
+        std::getline(ifs, line, '\n');
+        ++m_lineNumber;
+
+        stripComment(line);
+        BasicParser::trim(line);
+        if (line.empty())
+        {
+            continue;
+        }
+
+        token = BasicParser::parseToken(line);
+        if (token.compare("id") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_id = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("objId") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_objId = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("type") == 0)
+        {
+            line.erase(0, token.length());
+            BasicParser::ltrim(line);
+            object.m_type = BasicParser::parseWord(line);
+            continue;
+        }
+
+        if (token.compare("faceCnt") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_faceCnt = BasicParser::parseInt(line);
+            object.m_faceList.resize(object.m_faceCnt);
+            continue;
+        }
+
+        if (token.compare("faceList") == 0)
+        {
+            line.erase(0, token.length());
+            BasicParser::parseIntList(line, object.m_faceList);
+            continue;
+        }
+
+        if (token.compare("/hair") == 0)
+        {
+            success = true;
+            break;
+        }
+
+        success = false;
+        std::cerr << "Unknown token[" << token << "] found at line "<< m_lineNumber << std::endl;
+        break;
+
+    }
+
+    if (!success || object.m_id < 0 || object.m_objId < 0 || o_scene.m_hairMap.count(object.m_id))
+    {
+        success = false;
+    } else
+    {
+        o_scene.m_hairMap[object.m_id] = object;
+    }
+    return success;
+}
+
+bool SceneLoader::PImpl::parseHairParams(std::ifstream& ifs, scene_object& o_scene)
+{
+    bool success = false;
+
+    hair_params object;
+
+    std::string line;
+    std::string token;
+    while (ifs.peek() != EOF)
+    {
+        std::getline(ifs, line, '\n');
+        ++m_lineNumber;
+
+        stripComment(line);
+        BasicParser::trim(line);
+        if (line.empty())
+        {
+            continue;
+        }
+
+        token = BasicParser::parseToken(line);
+        if (token.compare("id") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_id = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("hairId") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_hairId = BasicParser::parseInt(line);
+            continue;
+        }
+
+//        if (token.compare("type") == 0)
+//        {
+//            line.erase(0, token.length());
+//            object.m_type = BasicParser::parseWord(line);
+//            continue;
+//        }
+
+//        if (token.compare("faceCnt") == 0)
+//        {
+//            line.erase(0, token.length());
+//            object.m_faceCnt = BasicParser::parseInt(line);
+//            continue;
+//        }
+
+//        if (token.compare("faceList") == 0)
+//        {
+//            line.erase(0, token.length());
+//            object.m_faceCnt = BasicParser::parseInt(line);
+//            continue;
+//        }
+
+        if (token.compare("/hairParams") == 0)
+        {
+            success = true;
+            break;
+        }
+
+        success = false;
+        std::cerr << "Unknown token[" << token << "] found at line "<< m_lineNumber << std::endl;
+        break;
+
+    }
+
+    if (!success || object.m_id < 0 || object.m_hairId < 0 || o_scene.m_hairParamsMap.count(object.m_id))
+    {
+        success = false;
+    } else
+    {
+        o_scene.m_hairParamsMap[object.m_id] = object;
+    }
+    return success;
+}
