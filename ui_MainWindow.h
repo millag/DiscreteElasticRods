@@ -35,6 +35,7 @@ public:
     QWidget *centralwidget;
     QGridLayout *s_mainWindowGridLayout;
     QSpacerItem *horizontalSpacer;
+    QSpacerItem *verticalSpacer;
     QGroupBox *groupBox;
     QGridLayout *gridLayout_3;
     QLabel *label_3;
@@ -47,14 +48,14 @@ public:
     QGridLayout *gridLayout;
     QLabel *label;
     QComboBox *m_selected;
-    QSpacerItem *verticalSpacer;
     QGroupBox *groupBox_2;
     QGridLayout *gridLayout_2;
+    QPushButton *simBtn;
     QDoubleSpinBox *m_dt;
-    QLabel *label_6;
-    QLabel *label_7;
     QSpinBox *m_timerValue;
-    QPushButton *m_sim;
+    QLabel *label_7;
+    QLabel *label_6;
+    QPushButton *expBtn;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -70,6 +71,10 @@ public:
         horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
         s_mainWindowGridLayout->addItem(horizontalSpacer, 0, 0, 1, 1);
+
+        verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+        s_mainWindowGridLayout->addItem(verticalSpacer, 3, 1, 1, 1);
 
         groupBox = new QGroupBox(centralwidget);
         groupBox->setObjectName(QStringLiteral("groupBox"));
@@ -138,14 +143,17 @@ public:
 
         s_mainWindowGridLayout->addWidget(s_transformGB, 0, 1, 1, 1);
 
-        verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
-
-        s_mainWindowGridLayout->addItem(verticalSpacer, 3, 1, 1, 1);
-
         groupBox_2 = new QGroupBox(centralwidget);
         groupBox_2->setObjectName(QStringLiteral("groupBox_2"));
         gridLayout_2 = new QGridLayout(groupBox_2);
         gridLayout_2->setObjectName(QStringLiteral("gridLayout_2"));
+        simBtn = new QPushButton(groupBox_2);
+        simBtn->setObjectName(QStringLiteral("simBtn"));
+        simBtn->setCheckable(true);
+        simBtn->setChecked(false);
+
+        gridLayout_2->addWidget(simBtn, 2, 1, 1, 1);
+
         m_dt = new QDoubleSpinBox(groupBox_2);
         m_dt->setObjectName(QStringLiteral("m_dt"));
         m_dt->setDecimals(3);
@@ -156,16 +164,6 @@ public:
 
         gridLayout_2->addWidget(m_dt, 0, 1, 1, 1);
 
-        label_6 = new QLabel(groupBox_2);
-        label_6->setObjectName(QStringLiteral("label_6"));
-
-        gridLayout_2->addWidget(label_6, 0, 0, 1, 1);
-
-        label_7 = new QLabel(groupBox_2);
-        label_7->setObjectName(QStringLiteral("label_7"));
-
-        gridLayout_2->addWidget(label_7, 1, 0, 1, 1);
-
         m_timerValue = new QSpinBox(groupBox_2);
         m_timerValue->setObjectName(QStringLiteral("m_timerValue"));
         m_timerValue->setMaximum(1000);
@@ -173,12 +171,20 @@ public:
 
         gridLayout_2->addWidget(m_timerValue, 1, 1, 1, 1);
 
-        m_sim = new QPushButton(groupBox_2);
-        m_sim->setObjectName(QStringLiteral("m_sim"));
-        m_sim->setCheckable(true);
-        m_sim->setChecked(true);
+        label_7 = new QLabel(groupBox_2);
+        label_7->setObjectName(QStringLiteral("label_7"));
 
-        gridLayout_2->addWidget(m_sim, 2, 1, 1, 1);
+        gridLayout_2->addWidget(label_7, 1, 0, 1, 1);
+
+        label_6 = new QLabel(groupBox_2);
+        label_6->setObjectName(QStringLiteral("label_6"));
+
+        gridLayout_2->addWidget(label_6, 0, 0, 1, 1);
+
+        expBtn = new QPushButton(groupBox_2);
+        expBtn->setObjectName(QStringLiteral("expBtn"));
+
+        gridLayout_2->addWidget(expBtn, 3, 1, 1, 1);
 
 
         s_mainWindowGridLayout->addWidget(groupBox_2, 2, 1, 1, 1);
@@ -207,9 +213,10 @@ public:
         s_transformGB->setTitle(QApplication::translate("MainWindow", "Select Object", 0));
         label->setText(QApplication::translate("MainWindow", "Selected Object", 0));
         groupBox_2->setTitle(QApplication::translate("MainWindow", "Simulation", 0));
-        label_6->setText(QApplication::translate("MainWindow", "dt step", 0));
+        simBtn->setText(QApplication::translate("MainWindow", "sim", 0));
         label_7->setText(QApplication::translate("MainWindow", "timer (ms)", 0));
-        m_sim->setText(QApplication::translate("MainWindow", "sim", 0));
+        label_6->setText(QApplication::translate("MainWindow", "dt step", 0));
+        expBtn->setText(QApplication::translate("MainWindow", "export", 0));
     } // retranslateUi
 
 };

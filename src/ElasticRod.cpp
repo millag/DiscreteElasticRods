@@ -6,19 +6,24 @@
 
 //====================================== Rod Params =======================================
 
-RodParams::RodParams(mg::Real bendStiffness, mg::Real twistStiffness, mg::Real maxElasticForce):
-    m_beta(twistStiffness), m_maxElasticForce(maxElasticForce)
+ElasticRodParams::ElasticRodParams(mg::Real bendStiffness,
+                                   mg::Real twistStiffness,
+                                   mg::Real maxElasticForce,
+                                   MINIMIZATION_STRATEGY strategy,
+                                   double tolerance,
+                                   unsigned maxIter):
+    m_beta(twistStiffness), m_maxElasticForce(maxElasticForce), m_strategy(strategy), m_tolerance(tolerance), m_maxIter(maxIter)
 {
     setBendStiffness(bendStiffness);
 }
 
-inline void RodParams::setBendStiffness(const mg::Real& bendStiffness)
+inline void ElasticRodParams::setBendStiffness(const mg::Real& bendStiffness)
 {
     m_B.identity();
     m_B *= bendStiffness;
 }
 
-inline void RodParams::setTwistStiffness(const mg::Real& twistStiffness)
+inline void ElasticRodParams::setTwistStiffness(const mg::Real& twistStiffness)
 {
     m_beta = twistStiffness;
 }
@@ -31,20 +36,10 @@ inline void RodParams::setTwistStiffness(const mg::Real& twistStiffness)
 struct ElasticRod::MinimizationPImpl
 {
 public:
-    MinimizationPImpl(MINIMIZATION_STRATEGY strategy, double tolerance = 1e-6f, unsigned maxIter = 100);
-    ~MinimizationPImpl();
+    MinimizationPImpl() { }
+    ~MinimizationPImpl() { }
 
     double minimize(const ElasticRod *rod, ColumnVector& io_theta);
-
-public:
-///     elastic force computations relies on potential enery minimization of the rod
-///     with respect to twist angle of the material frame
-///     energy minimization is implemented using dlib numeric library
-///     the following parameters control tolerance and max iterartion of the minimization strategy
-///     consult dlib documentation for reference
-    MINIMIZATION_STRATEGY m_strategy;
-    double m_tolerance;
-    unsigned m_maxIter;
 
 public:
 
@@ -79,36 +74,16 @@ public:
 
 //====================================== ElasticRod implementation =======================================
 
-ElasticRod::ElasticRod(const RodParams *params)
+ElasticRod::ElasticRod(const ElasticRodParams *params)
 {
     assert( params != NULL );
     m_params = params;
-    m_minimization = new MinimizationPImpl(BFGS);
-}
-
-ElasticRod::ElasticRod(const RodParams *params, MINIMIZATION_STRATEGY strategy, double minTolerance, unsigned minMaxIter)
-{
-    assert( params != NULL );
-    m_params = params;
-    m_minimization = new MinimizationPImpl(strategy, minTolerance, minMaxIter);
+    m_minimization = new MinimizationPImpl();
 }
 
 ElasticRod::~ElasticRod()
 {
     delete m_minimization;
-}
-
-void ElasticRod::setParams(const RodParams* params)
-{
-    assert( params != NULL );
-    m_params = params;
-}
-
-void ElasticRod::setMinimizationStrategy(MINIMIZATION_STRATEGY strategy, double minTolerance, unsigned minMaxIter)
-{
-    m_minimization->m_strategy = strategy;
-    m_minimization->m_tolerance = minTolerance;
-    m_minimization->m_maxIter = minMaxIter;
 }
 
 void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
@@ -662,7 +637,7 @@ void ElasticRod::updateCurrentState()
     computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
 
     double minE = 0;
-    if (m_minimization->m_strategy != NONE)
+    if (m_params->m_strategy != ElasticRodParams::NONE)
     {
         minE = m_minimization->minimize(this, m_theta);
     }
@@ -680,13 +655,6 @@ void ElasticRod::updateCurrentState()
 
 
 //====================================== MinimizationPImpl implementation =======================================
-
-ElasticRod::MinimizationPImpl::MinimizationPImpl(MINIMIZATION_STRATEGY strategy, double tolerance, unsigned maxIter):
-    m_strategy(strategy), m_tolerance(tolerance), m_maxIter(maxIter)
-{ }
-
-ElasticRod::MinimizationPImpl::~MinimizationPImpl()
-{ }
 
 void ElasticRod::MinimizationPImpl::extractThetaVars(const ElasticRod *rod, const ColumnVector& theta, ColumnVector& o_thetaVars)
 {
@@ -728,26 +696,26 @@ double ElasticRod::MinimizationPImpl::minimize(const ElasticRod* rod, ColumnVect
     extractThetaVars(rod, io_theta, thetaVars);
 
     double minE = -1;
-    switch (m_strategy) {
-    case BFGS_NUMERIC:
+    switch (rod->m_params->m_strategy) {
+    case ElasticRodParams::BFGS_NUMERIC:
         minE = dlib::find_min(dlib::bfgs_search_strategy(),
-                             dlib::objective_delta_stop_strategy(m_tolerance, m_maxIter),
+                             dlib::objective_delta_stop_strategy(rod->m_params->m_tolerance, rod->m_params->m_maxIter),
                              m_evaluate,
                              dlib::derivative(m_evaluate),
                              thetaVars,
                              0.0);
         break;
-    case BFGS:
+    case ElasticRodParams::BFGS:
         minE = dlib::find_min(dlib::bfgs_search_strategy(),
-                             dlib::objective_delta_stop_strategy(m_tolerance, m_maxIter),
+                             dlib::objective_delta_stop_strategy(rod->m_params->m_tolerance, rod->m_params->m_maxIter),
                              m_evaluate,
                              m_evaluateGradient,
                              thetaVars,
                              0.0);
         break;
-    case NEWTON:
+    case ElasticRodParams::NEWTON:
         minE = dlib::find_min(dlib::newton_search_strategy(m_evaluateHessian),
-                             dlib::objective_delta_stop_strategy(m_tolerance, m_maxIter),
+                             dlib::objective_delta_stop_strategy(rod->m_params->m_tolerance, rod->m_params->m_maxIter),
                              m_evaluate,
                              m_evaluateGradient,
                              thetaVars,

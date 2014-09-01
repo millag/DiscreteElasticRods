@@ -26,9 +26,10 @@ SOURCES += src/main.cpp \
     src/Hair.cpp \
     src/HairGenerator.cpp \
     src/VoxelGrid.cpp \
-    src/Loader.cpp \
     src/ObjLoader.cpp \
-    src/CollisionShape.cpp
+    src/CollisionShape.cpp \
+    src/SceneLoader.cpp \
+    src/HairExporter.cpp
 
 INCLUDEPATH += ./include
 INCLUDEPATH += ./libs/cml-1_0_2/
@@ -50,10 +51,11 @@ HEADERS += include/MainWindow.h \
     include/HairGenerator.h \
     include/config.h \
     include/VoxelGrid.h \
-    include/Loader.h \
     include/ObjLoader.h \
     include/CollisionShape.h \
-    include/BasicParser.h
+    include/BasicParser.h \
+    include/SceneLoader.h \
+    include/HairExporter.h
 
 
 FORMS += \
@@ -76,7 +78,6 @@ OTHER_FILES+= shaders/Phong.fs \
     shaders/TubeTES.glsl \
     assets/MayaGetSelectedPrimitives.py \
     assets/scene1.mg \
-    assets/medusa2.obj \
     assets/medusa1.obj
 
 DESTDIR=./

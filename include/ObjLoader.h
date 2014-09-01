@@ -1,5 +1,5 @@
-#ifndef OBJPARSER_H
-#define OBJPARSER_H
+#ifndef OBJLOADER_H
+#define OBJLOADER_H
 
 #include <vector>
 #include "config.h"
@@ -38,4 +38,4 @@ private:
     std::vector<unsigned> m_vnindices;
 };
 
-#endif // OBJPARSER_H
+#endif // OBJLOADER_H

@@ -22,7 +22,7 @@ filename assets/medusa1.obj
 # euler_angle_x euler_angle_y, euler_angle_z scale_x scale_y scale_z translate_x translate_y translate_z
 # rotation is in xyz order
 # transform translates to 4x4 column major matrix placing the object in space
-# collisionShape is a sequence of 16 values and translates to 4x4 column major matrix
+# collisionShape is defined as transform and translates to 4x4 column major matrix
 # collisionShape defines an ellipsoid with which hair will collide
 # there might be more than one collisionShape defined for the object
 object3D
@@ -61,5 +61,31 @@ faceList 883 884 887 888 891 892 895 896 899 900 901 902 903 904 905 906 907 908
 hairParams
 id 1
 hairId 1
-/hairParams
+# length
+# lengthVariance
+# helicalRadius
+# helicalPitch
+# density
+# thickness
+# nParticles
 
+# resolveCollisions
+
+# gravity
+# drag
+
+# resolveSelfInteractions
+# selfInteractionDist
+# selfStiction
+# selfRepulsion
+
+# pbdIter
+
+# bendStiffness
+# twistStiffness
+# maxElasticForce
+
+# minimizationMethod
+# minimizationTolerance
+# minimizationMaxIter
+/hairParams

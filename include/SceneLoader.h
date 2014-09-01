@@ -1,5 +1,5 @@
-#ifndef LOADER_H
-#define LOADER_H
+#ifndef SCENELOADER_H
+#define SCENELOADER_H
 
 #include "Scene.h"
 
@@ -19,4 +19,4 @@ private:
     PImpl* m_impl;
 };
 
-#endif // LOADER_H
+#endif // SCENELOADER_H

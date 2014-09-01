@@ -1,5 +1,5 @@
-#ifndef COLLISIONOBJECT_H
-#define COLLISIONOBJECT_H
+#ifndef COLLISIONSHAPE_H
+#define COLLISIONSHAPE_H
 
 #include "config.h"
 
@@ -20,4 +20,4 @@ protected:
     mg::Matrix4D m_globalShape;
     mg::Matrix4D m_globalShapeInverse;
 };
-#endif // COLLISIONOBJECT_H
+#endif // COLLISIONSHAPE_H

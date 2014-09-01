@@ -1,5 +1,5 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef BASICPARSER_H
+#define BASICPARSER_H
 
 #include "config.h"
 
@@ -121,4 +121,4 @@ public:
 
 };
 
-#endif // PARSER_H
+#endif // BASICPARSER_H

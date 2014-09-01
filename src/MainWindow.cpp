@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
-#include "Loader.h"
+#include "SceneLoader.h"
+#include "HairExporter.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainWindow)
@@ -29,26 +30,18 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainW
 
     // now we wire up the UI components to the slots
     connect(m_ui->m_selected, SIGNAL(currentIndexChanged(int)), this, SLOT(selectRenderObject(int)));
-    connect(m_ui->m_move, SIGNAL(valueChanged(double)), this, SLOT(setPosition(double)));
-    connect(m_ui->m_sim, SIGNAL(clicked(bool)), this, SLOT(toggleSim(bool)));
     connect(m_ui->m_timerValue, SIGNAL(valueChanged(int)), m_gl, SLOT(setTimerDuration(int)));
+    connect(m_ui->simBtn, SIGNAL(clicked(bool)), this, SLOT(toggleSim(bool)));
+    connect(m_ui->expBtn, SIGNAL(clicked()), this, SLOT(exportSim()));
 
-    m_ui->m_sim->click();
 }
 
-//----------------------------------------------------------------------------------------------------------------------
 MainWindow::~MainWindow()
 {
     delete m_scene;
     delete m_ui;
 }
 
-void MainWindow::setPosition(double _v)
-{
-
-}
-
-//----------------------------------------------------------------------------------------------------------------------
 void MainWindow::selectRenderObject(int index)
 {
     index = index - 1;
@@ -56,7 +49,6 @@ void MainWindow::selectRenderObject(int index)
     m_gl->setSelectedObject(object);
 }
 
-//----------------------------------------------------------------------------------------------------------------------
 void MainWindow::toggleSim(bool s)
 {
     if(s == true)
@@ -68,6 +60,13 @@ void MainWindow::toggleSim(bool s)
 		m_gl->stopSimTimer();
 	}
 }
+
+void MainWindow::exportSim()
+{
+    HairExporter exporter;
+    exporter.exportHair("animation/curves_reversed.obj", m_scene->getStrands());
+}
+
 
 void MainWindow::populateUI()
 {

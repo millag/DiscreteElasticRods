@@ -22,8 +22,6 @@ public:
     inline const std::vector<RenderObject*>& getRenderObjects() const { return m_renderObjects; }
     inline const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
 
-    void findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::vector<RenderObject*>& o_objects);
-
 private:
     AABB m_boundingVolume;
 

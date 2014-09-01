@@ -1,5 +1,5 @@
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #include "cml_config.h"
 #include <cml/cml.h>
@@ -32,4 +32,4 @@ namespace mg
 
 
 
-#endif // TYPES_H
+#endif // CONFIG_H

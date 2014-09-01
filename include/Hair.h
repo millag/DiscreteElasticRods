@@ -5,6 +5,7 @@
 #include "RenderObject.h"
 #include "VoxelGrid.h"
 
+
 struct HairParams
 {
     HairParams();
@@ -35,7 +36,7 @@ struct HairParams
 ///     higher value of iterations means higher precision but is more computationally expensive
     unsigned m_pbdIter;
 
-    RodParams* m_rodParams;
+    ElasticRodParams* m_rodParams;
 };
 
 class Hair

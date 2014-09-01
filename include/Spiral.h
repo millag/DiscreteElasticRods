@@ -21,13 +21,17 @@ public:
     mg::Real m_twistStiffness;
     mg::Real m_maxForce;
 
+    mg::Real m_offset;
+
     unsigned m_nParticles;
     unsigned m_pbdIter;
 
     std::vector<ElasticRod*> m_strands;
 
 private:
-    RodParams* m_rodParams;
+    ElasticRodParams* m_rodParams1;
+    ElasticRodParams* m_rodParams2;
+    ElasticRodParams* m_rodParams3;
     const RenderObject* m_object;
 
 private:

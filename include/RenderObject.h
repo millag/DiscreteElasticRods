@@ -1,5 +1,5 @@
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
+#ifndef RENDEROBJECT_H
+#define RENDEROBJECT_H
 
 #include "Mesh.h"
 #include "AABB.h"
@@ -43,4 +43,4 @@ protected:
     int m_shaderId;
 };
 
-#endif // GEOMETRY_H
+#endif // RENDEROBJECT_H

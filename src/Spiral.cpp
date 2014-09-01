@@ -7,14 +7,18 @@ Spiral::Spiral(): m_object(NULL)
     m_radius = 0.2;
     m_lenght = 4.0;
 
-    m_bendStiffness = 0.5;
+    m_bendStiffness = 0.4;
     m_twistStiffness = 0.7;
     m_maxForce = 1000;
+
+    m_offset = 3;
 
     m_nParticles = 20;
     m_pbdIter = 4;
 
-    m_rodParams = new RodParams(m_bendStiffness, m_twistStiffness, m_maxForce);
+    m_rodParams1 = new ElasticRodParams(m_bendStiffness, m_twistStiffness, m_maxForce, ElasticRodParams::NEWTON);
+    m_rodParams2 = new ElasticRodParams(m_bendStiffness, m_twistStiffness, m_maxForce, ElasticRodParams::BFGS);
+    m_rodParams3 = new ElasticRodParams(m_bendStiffness, m_twistStiffness, m_maxForce, ElasticRodParams::NONE);
     m_strands.reserve(10);
 }
 
@@ -26,7 +30,9 @@ Spiral::~Spiral()
         delete (*it);
     }
     m_strands.clear();
-    delete m_rodParams;
+    delete m_rodParams1;
+    delete m_rodParams2;
+    delete m_rodParams3;
 }
 
 void Spiral::init(const RenderObject* object)
@@ -81,14 +87,31 @@ void Spiral::init(const RenderObject* object)
         }
     }
 
-    unsigned nStrands = 1;
-    for (unsigned i = 0; i < nStrands; ++i)
-    {
-        ElasticRod* rod = new ElasticRod(m_rodParams, ElasticRod::BFGS);
+    ElasticRod* rod = new ElasticRod(m_rodParams1);
 //        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
-        rod->init(restpos, u0, pos, vel, mass, theta, isClamped);
-        m_strands.push_back(rod);
+    rod->init(restpos, u0, pos, vel, mass, theta, isClamped);
+    m_strands.push_back(rod);
+
+    for (unsigned i = 0; i < pos.size(); ++i)
+    {
+        pos[i] -= m_offset * dirx;
     }
+
+    rod = new ElasticRod(m_rodParams2);
+//        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
+    rod->init(restpos, u0, pos, vel, mass, theta, isClamped);
+    m_strands.push_back(rod);
+
+
+    for (unsigned i = 0; i < pos.size(); ++i)
+    {
+        pos[i] += 2 * m_offset * dirx;
+    }
+
+    rod = new ElasticRod(m_rodParams3);
+//        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
+    rod->init(restpos, u0, pos, vel, mass, theta, isClamped);
+    m_strands.push_back(rod);
 }
 
 void Spiral::update(mg::Real dt)
@@ -97,12 +120,15 @@ void Spiral::update(mg::Real dt)
     chronometer.start();
 
     mg::Vec3D center = m_object->getCenter();
-    typedef std::vector<ElasticRod*>::iterator Iter;
-    for (Iter it = m_strands.begin(); it != m_strands.end(); ++it)
-    {
-        (*it)->m_ppos[0] = center;
-        updateRod(**it, dt);
-    }
+
+    m_strands[0]->m_ppos[0] = center;
+    updateRod(*m_strands[0], dt);
+
+    m_strands[1]->m_ppos[0] = center - m_offset * mg::Vec3D(1, 0, 0);
+    updateRod(*m_strands[1], dt);
+
+    m_strands[2]->m_ppos[0] = center + m_offset * mg::Vec3D(1, 0, 0);
+    updateRod(*m_strands[2], dt);
 
     std::cout << "TIME update ms: " << chronometer.elapsed() << std::endl;
     chronometer.restart();
@@ -195,7 +221,7 @@ void Spiral::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec
 
 //    for (unsigned i = 0; i < 1; ++i)
 //    {
-//        ElasticRod* strand = new ElasticRod(m_rodParams, ElasticRod::BFGS);
+//        ElasticRod* strand = new ElasticRod(m_rodParams);
 ////        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
 //        strand->init(restpos, -dirz, pos, vel, mass, theta, isClamped);
 //        m_strands.push_back(strand);

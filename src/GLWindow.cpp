@@ -304,7 +304,7 @@ void GLWindow::paintGL()
 #ifndef DBUGG
     shader->use("Tube");
     shader->setShaderParam4f("Col1", 0.47, 0.4, 0.0, 1.0);
-    shader->setShaderParam4f("Col2", 0.4, 0.4, 0.0, 1.0);
+    shader->setShaderParam4f("Col2", 0.0, 0.0, 0.0, 1.0);
     shader->setShaderParam1f("Radius", 0.1);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
     // load transform stack
@@ -438,7 +438,8 @@ void GLWindow::mouseReleaseEvent ( QMouseEvent * _event )
 
 void GLWindow::timerEvent( QTimerEvent *_event)
 {
-    m_scene->update(0.025);
+    m_scene->update(0.01);
+//    m_scene->update(0.01);
     updateGL();
 }
 

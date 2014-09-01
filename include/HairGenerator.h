@@ -1,5 +1,5 @@
-#ifndef HAIRSTRAND_H
-#define HAIRSTRAND_H
+#ifndef HAIRGENERATOR_H
+#define HAIRGENERATOR_H
 
 #include "Hair.h"
 
@@ -20,4 +20,4 @@ public:
                              ElasticRod& o_rod);
 };
 
-#endif // HAIRSTRAND_H
+#endif // HAIRGENERATOR_H

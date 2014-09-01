@@ -42,15 +42,3 @@ void Scene::update(mg::Real dt)
     m_hairs[0]->update(dt);
 //    m_spiral->update(dt);
 }
-
-void Scene::findObjectsWithinDistance(const mg::Vec3D& pos, mg::Real dist, std::vector<RenderObject*>& o_objects)
-{
-    typedef std::vector<RenderObject*>::const_iterator Iter;
-    for (Iter it = m_renderObjects.begin(); it != m_renderObjects.end(); ++it)
-    {
-        if ((pos - (*it)->getCenter()).length() < dist + (*it)->getBoundingRadius())
-        {
-            o_objects.push_back(*it);
-        }
-    }
-}
