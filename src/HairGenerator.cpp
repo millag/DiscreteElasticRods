@@ -39,14 +39,16 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
 
     o_hair.m_strands.resize( o_hair.m_vindices.size() );
 
+    mg::Matrix4D transform = object->getTransform();
+    mg::Matrix4D transformInv = mg::inverse(object->getTransform()).transpose();
 #ifdef MULTI_THREAD
 #pragma omp parallel for
 #endif
     for (unsigned i = 0; i < o_hair.m_vindices.size(); ++i)
     {
         unsigned idx = o_hair.m_vindices[i];
-        mg::Vec3D p = mg::transform_point(object->getTransform(), mesh->m_vertices[ idx ]);
-        mg::Vec3D n = mg::transform_vector(object->getTransform(), mesh->m_normals[ idx ]);
+        mg::Vec3D p = mg::transform_point(transform, mesh->m_vertices[ idx ]);
+        mg::Vec3D n = mg::transform_vector(transformInv, mesh->m_normals[ idx ]);
         mg::Vec3D u = mg::EY;
         if (fabs(1 - fabs(mg::dot(n, u))) < mg::ERR)
         {
@@ -90,14 +92,16 @@ void HairGenerator::generateStraightHair(const RenderObject* object, const std::
 
     o_hair.m_strands.resize( o_hair.m_vindices.size() );
 
+    mg::Matrix4D transform = object->getTransform();
+    mg::Matrix4D transformInv = mg::inverse(object->getTransform()).transpose();
 #ifdef MULTI_THREAD
 #pragma omp parallel for
 #endif
     for (unsigned i = 0; i < o_hair.m_vindices.size(); ++i)
     {
         unsigned idx = o_hair.m_vindices[i];
-        mg::Vec3D p = mg::transform_point(object->getTransform(), mesh->m_vertices[ idx ]);
-        mg::Vec3D n = mg::transform_vector(object->getTransform(), mesh->m_normals[ idx ]);
+        mg::Vec3D p = mg::transform_point(transform, mesh->m_vertices[ idx ]);
+        mg::Vec3D n = mg::transform_vector(transformInv, mesh->m_normals[ idx ]);
         mg::Vec3D u = mg::EY;
         if (fabs(1 - fabs(mg::dot(n, u))) < mg::ERR)
         {

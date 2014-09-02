@@ -19,7 +19,7 @@ bool ObjLoader::loadFile(const char *filename)
     ifs.open(filename, std::ios::in);
     if (ifs.fail())
     {
-        std::cerr << "can't open file " + std::string(filename) << std::endl;
+        std::cerr << "Can't open file " + std::string(filename) << std::endl;
         ifs.close();
         return false;
     }

@@ -15,6 +15,52 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="s_mainWindowGridLayout">
+    <item row="3" column="1">
+     <widget class="QGroupBox" name="groupBox_3">
+      <property name="title">
+       <string>Export Animation</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_5">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>file prefix</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QPushButton" name="m_expBtn">
+         <property name="text">
+          <string>export</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="m_filePrefix">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>default_</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPushButton" name="m_selectDirBtn">
+         <property name="text">
+          <string>select dir</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
     <item row="0" column="0">
      <spacer name="horizontalSpacer">
       <property name="orientation">
@@ -24,19 +70,6 @@
        <size>
         <width>40</width>
         <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="3" column="1">
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
        </size>
       </property>
      </spacer>
@@ -142,14 +175,27 @@
       </layout>
      </widget>
     </item>
+    <item row="4" column="1">
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
     <item row="2" column="1">
      <widget class="QGroupBox" name="groupBox_2">
       <property name="title">
        <string>Simulation</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="2" column="1">
-        <widget class="QPushButton" name="simBtn">
+       <item row="4" column="1">
+        <widget class="QPushButton" name="m_simBtn">
          <property name="text">
           <string>sim</string>
          </property>
@@ -162,35 +208,25 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QDoubleSpinBox" name="m_dt">
+        <widget class="QDoubleSpinBox" name="m_timeStep">
          <property name="decimals">
-          <number>3</number>
+          <number>6</number>
          </property>
          <property name="minimum">
-          <double>0.001000000000000</double>
+          <double>0.000001000000000</double>
          </property>
          <property name="maximum">
-          <double>4.000000000000000</double>
+          <double>0.300000000000000</double>
          </property>
          <property name="singleStep">
           <double>0.001000000000000</double>
          </property>
          <property name="value">
-          <double>0.033000000000000</double>
+          <double>0.010000000000000</double>
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QSpinBox" name="m_timerValue">
-         <property name="maximum">
-          <number>1000</number>
-         </property>
-         <property name="value">
-          <number>33</number>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
+       <item row="2" column="0">
         <widget class="QLabel" name="label_7">
          <property name="text">
           <string>timer (ms)</string>
@@ -200,14 +236,34 @@
        <item row="0" column="0">
         <widget class="QLabel" name="label_6">
          <property name="text">
-          <string>dt step</string>
+          <string>time step</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
-        <widget class="QPushButton" name="expBtn">
+       <item row="2" column="1">
+        <widget class="QSpinBox" name="m_timerUpdate">
+         <property name="maximum">
+          <number>1000</number>
+         </property>
+         <property name="value">
+          <number>33</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>export</string>
+          <string>iter per time step</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QSpinBox" name="m_simIter">
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
          </property>
         </widget>
        </item>

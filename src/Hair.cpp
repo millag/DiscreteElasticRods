@@ -1,5 +1,4 @@
 #include "Hair.h"
-#include <QElapsedTimer>
 #include "Utils.h"
 
 HairParams::HairParams(): m_rodParams(NULL)
@@ -17,32 +16,31 @@ Hair::Hair():m_object(NULL), m_grid(NULL)
 {
 //    init default hair params
     m_params = new HairParams();
-    m_params->m_length = 7;
-    m_params->m_lengthVariance = 0.1;
-    m_params->m_helicalRadius = 0.38;
-    m_params->m_helicalPitch = 0.18;
-    m_params->m_density = 0.04;
-    m_params->m_thickness = 0.06;
+    m_params->m_length = 6;
+    m_params->m_lengthVariance = 2;
+    m_params->m_helicalRadius = 0.3;
+    m_params->m_helicalPitch = 0.13;
+    m_params->m_density = 0.005;
+    m_params->m_thickness = 0.07;
     m_params->m_nParticles = 15;
+
+    m_params->m_gravity.set(0, -9.81, 0);
+    m_params->m_drag = 0.0001;
 
     m_params->m_resolveCollisions = 1;
     m_params->m_coulombFriction = 0.2;
 
-    m_params->m_gravity.set(0, -9.81, 0);
-    m_params->m_drag = 0.0005;
-
     m_params->m_resolveSelfInterations = 1;
-    m_params->m_selfInterationDist = 0.5;
-    m_params->m_selfStiction = 0.003;
-    m_params->m_selfRepulsion = 0.001;
+    m_params->m_selfInterationDist = 0.4;
+    m_params->m_selfStiction = 0.001;
+    m_params->m_selfRepulsion = 0.0001;
 
-    m_params->m_pbdIter = 8;
+    m_params->m_pbdIter = 6;
 
-    mg::Real bendStiffness = 0.003;
+    mg::Real bendStiffness = 0.0003;
     mg::Real twistStiffness = 0.0001;
     mg::Real maxElasticForce = 1000;
     m_params->m_rodParams = new ElasticRodParams(bendStiffness, twistStiffness, maxElasticForce, ElasticRodParams::NONE);
-
 }
 
 Hair::~Hair()
@@ -116,9 +114,6 @@ void Hair::update(mg::Real dt)
     assert( m_object != NULL );
     assert( m_grid != NULL );
 
-    QElapsedTimer chronometer;
-    chronometer.start();
-
     if (m_params->m_resolveSelfInterations)
     {
         resetGrid();
@@ -134,9 +129,6 @@ void Hair::update(mg::Real dt)
         m_strands[i]->m_ppos[0] = mg::transform_point(m_object->getTransform(), mesh->m_vertices[ m_vindices[i] ]);
         updateRod(*m_strands[i], dt);
     }
-
-    std::cout << "TIME update ms: " << chronometer.elapsed() << std::endl;
-    chronometer.restart();
 }
 
 /* semi-implicit Euler with Verlet scheme for velocity update */
@@ -373,7 +365,7 @@ void Hair::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D
 //mg::Real bendStiffness = 0.003;
 //mg::Real twistStiffness = 0.0001;
 //mg::Real maxElasticForce = 1000;
-//m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce);
+//m_params->m_rodParams = new ElasticRodParams(bendStiffness, twistStiffness, maxElasticForce, ElasticRodParams::NONE);
 
 //// =========================== long and curly ========================================
 //    m_params = new HairParams();
@@ -402,3 +394,31 @@ void Hair::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D
 //    mg::Real twistStiffness = 0.0001;
 //    mg::Real maxElasticForce = 1000;
 //    m_params->m_rodParams = new RodParams(bendStiffness, twistStiffness, maxElasticForce);
+
+//// =========================== long and curly 2========================================
+//m_params = new HairParams();
+//m_params->m_length = 8;
+//m_params->m_lengthVariance = 0.1;
+//m_params->m_helicalRadius = 0.38;
+//m_params->m_helicalPitch = 0.18;
+//m_params->m_density = 0.01;
+//m_params->m_thickness = 0.06;
+//m_params->m_nParticles = 15;
+
+//m_params->m_resolveCollisions = 1;
+//m_params->m_coulombFriction = 0.2;
+
+//m_params->m_gravity.set(0, -9.81, 0);
+//m_params->m_drag = 0.0001;
+
+//m_params->m_resolveSelfInterations = 1;
+//m_params->m_selfInterationDist = 0.5;
+//m_params->m_selfStiction = 0.001;
+//m_params->m_selfRepulsion = 0.0001;
+
+//m_params->m_pbdIter = 8;
+
+//mg::Real bendStiffness = 0.001;
+//mg::Real twistStiffness = 0.0001;
+//mg::Real maxElasticForce = 1000;
+//m_params->m_rodParams = new ElasticRodParams(bendStiffness, twistStiffness, maxElasticForce, ElasticRodParams::NONE);

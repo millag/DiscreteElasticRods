@@ -85,7 +85,7 @@ Scene* SceneLoader::loadTestScene()
 
 //    create mesh
     unsigned meshId = scene->m_meshes.size();
-    Mesh* mesh = Mesh::createSphere(meshId);
+    Mesh* mesh = Mesh::createSphere(meshId, 20, 10);
     scene->m_meshes.push_back(mesh);
 //    create render object
     mg::Matrix4D transform;
@@ -95,7 +95,7 @@ Scene* SceneLoader::loadTestScene()
     RenderObject* object = new RenderObject(mesh, transform, -1);
     scene->m_renderObjects.push_back(object);
 
-    std::vector<unsigned> fidx(120);
+    std::vector<unsigned> fidx(object->getMesh()->getNPrimitives() / 2);
     for (unsigned i = 0; i < fidx.size(); ++i)
     {
         fidx[i] = 2 * i;

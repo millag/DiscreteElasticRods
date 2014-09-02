@@ -1,5 +1,4 @@
 #include "Spiral.h"
-#include <QElapsedTimer>
 #include "Utils.h"
 
 Spiral::Spiral(): m_object(NULL)
@@ -116,9 +115,6 @@ void Spiral::init(const RenderObject* object)
 
 void Spiral::update(mg::Real dt)
 {
-    QElapsedTimer chronometer;
-    chronometer.start();
-
     mg::Vec3D center = m_object->getCenter();
 
     m_strands[0]->m_ppos[0] = center;
@@ -129,9 +125,6 @@ void Spiral::update(mg::Real dt)
 
     m_strands[2]->m_ppos[0] = center + m_offset * mg::Vec3D(1, 0, 0);
     updateRod(*m_strands[2], dt);
-
-    std::cout << "TIME update ms: " << chronometer.elapsed() << std::endl;
-    chronometer.restart();
 }
 
 /* semi-implicit Euler with Verlet scheme for velocity update */

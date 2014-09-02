@@ -15,7 +15,7 @@
 #include "Utils.h"
 
 //----------------------------------------------------------------------------------------------------------------------
-GLWindow::GLWindow(const QGLFormat _format, int _timer, QWidget *_parent ) : QGLWidget( _format, _parent )
+GLWindow::GLWindow(const QGLFormat _format, QWidget *_parent ) : QGLWidget( _format, _parent )
 {
     // re-size the widget to that of the parent (in this case the GLFrame passed in on construction)
     this->resize(_parent->size());
@@ -27,12 +27,8 @@ GLWindow::GLWindow(const QGLFormat _format, int _timer, QWidget *_parent ) : QGL
     m_selectedObject = NULL;
     m_rotate = false;
     m_zoom = false;
-    m_pan = false;
 
     m_strandVAO = NULL;
-
-    m_timerValue = _timer;
-    startSimTimer();
 }
 
 GLWindow::~GLWindow()
@@ -405,9 +401,6 @@ void GLWindow::mousePressEvent ( QMouseEvent * _event  )
         case Qt::RightButton:
             m_zoom = true;
             break;
-        case Qt::MidButton:
-            m_pan = true;
-            break;
 
         default:
             break;
@@ -427,31 +420,10 @@ void GLWindow::mouseReleaseEvent ( QMouseEvent * _event )
         case Qt::RightButton:
             m_zoom = false;
             break;
-        case Qt::MidButton:
-            m_pan = false;
-            break;
 
         default:
             break;
     }
-}
-
-void GLWindow::timerEvent( QTimerEvent *_event)
-{
-    m_scene->update(0.01);
-//    m_scene->update(0.01);
-    updateGL();
-}
-
-void GLWindow::startSimTimer()
-{
-
-    m_timer = startTimer(m_timerValue);
-}
-
-void GLWindow::stopSimTimer()
-{
-    killTimer(m_timer);
 }
 
 // ============================ utility functions ==========================

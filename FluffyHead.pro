@@ -29,7 +29,7 @@ SOURCES += src/main.cpp \
     src/ObjLoader.cpp \
     src/CollisionShape.cpp \
     src/SceneLoader.cpp \
-    src/HairExporter.cpp
+    src/Exporter.cpp
 
 INCLUDEPATH += ./include
 INCLUDEPATH += ./libs/cml-1_0_2/
@@ -55,7 +55,7 @@ HEADERS += include/MainWindow.h \
     include/CollisionShape.h \
     include/BasicParser.h \
     include/SceneLoader.h \
-    include/HairExporter.h
+    include/Exporter.h
 
 
 FORMS += \

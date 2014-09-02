@@ -19,6 +19,7 @@ public:
 
     inline const AABB& getBoundingVolume() const { return m_boundingVolume; }
     inline const std::vector<ElasticRod*>& getStrands() const { return m_hairs[0]->m_strands; }
+    inline const Hair* getHair() const { return m_hairs[0]; }
     inline const std::vector<RenderObject*>& getRenderObjects() const { return m_renderObjects; }
     inline const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
 
