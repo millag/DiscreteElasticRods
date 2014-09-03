@@ -150,7 +150,7 @@ void HairGenerator::generateHelicalRod(const HairParams& params,
 //        init velocity and mass
         o_rod.m_pvel[i].zero();
         o_rod.m_pmass[i] =  pmass;
-        if (i < static_cast<unsigned>(o_rod.m_theta.size()))
+        if (i < (unsigned)o_rod.m_theta.size())
         {
             o_rod.m_theta(i) = 0;
         }
@@ -190,7 +190,7 @@ void HairGenerator::generateStraightRod(const HairParams& params,
 //        init velocity and mass
         o_rod.m_pvel[i].zero();
         o_rod.m_pmass[i] = pmass;
-        if (i < static_cast<unsigned>(o_rod.m_theta.size()))
+        if (i < (unsigned)o_rod.m_theta.size())
         {
             o_rod.m_theta(i) = 0;
         }

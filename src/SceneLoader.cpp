@@ -26,25 +26,43 @@ struct hair_object
     hair_object():m_id(-1), m_objId(-1), m_faceCnt(0) { }
     long int m_id;
     long int m_objId;
-    std::string m_type;
     unsigned m_faceCnt;
     std::vector<unsigned> m_faceList;
+
+    std::string m_type;
+    double m_length;
+    double m_lengthVariance;
+    double m_helicalRadius;
+    double m_helicalPitch;
+    double m_density;
+    double m_thickness;
+    long int m_nParticles;
+
+    mg::Vec3D m_netForce;
+    double m_drag;
+
+    long int m_resolveCollisions;
+    long int m_resolveSelfInterations;
+    double m_selfInterationDist;
+    double m_selfStiction;
+    double m_selfRepulsion;
+
+    long int m_pbdIter;
+    double m_bendStiffness;
+    double m_twistStiffness;
+    double m_maxElasticForce;
+
+    ElasticRodParams::MINIMIZATION_STRATEGY m_minimizationStrategy;
+    double m_minimizationTolerance;
+    long int m_minimizationMaxIter;
 };
 
-struct hair_params
-{
-    hair_params():m_id(-1), m_hairId(-1) { }
-    long int m_id;
-    long int m_hairId;
-//    TODO: add all other props
-};
 
 struct scene_object
 {
     std::map<unsigned, mesh_object> m_meshMap;
     std::map<unsigned, object_3D> m_object3DMap;
     std::map<unsigned, hair_object> m_hairMap;
-    std::map<unsigned, hair_params> m_hairParamsMap;
 };
 
 
@@ -58,7 +76,6 @@ public:
     bool parseMesh(std::ifstream& ifs, scene_object& o_scene);
     bool parseObject3D(std::ifstream& ifs, scene_object& o_scene);
     bool parseHairObject(std::ifstream& ifs, scene_object& o_scene);
-    bool parseHairParams(std::ifstream& ifs, scene_object& o_scene);
 
     unsigned m_lineNumber;
 };
@@ -184,8 +201,8 @@ Scene* SceneLoader::loadScene(const char* filename)
         scene->m_renderObjects.push_back(object);
     }
 //    create hair objects
-    typedef std::map<unsigned, hair_object>::iterator Iter;
-    for (Iter it = scene_obj.m_hairMap.begin(); it != scene_obj.m_hairMap.end(); ++it)
+    typedef std::map<unsigned, hair_object>::iterator HIter;
+    for (HIter it = scene_obj.m_hairMap.begin(); it != scene_obj.m_hairMap.end(); ++it)
     {
         if (!scene_obj.m_object3DMap.count(it->second.m_objId) || scene_obj.m_object3DMap[it->second.m_objId].m_id < 0)
         {
@@ -195,15 +212,46 @@ Scene* SceneLoader::loadScene(const char* filename)
 
         unsigned idx = scene_obj.m_object3DMap[it->second.m_objId].m_id;
         Hair* hair = new Hair();
-        it->second.m_id = scene->m_hairs.size();
-        scene->m_hairs.push_back(hair);
-        if (it->second.m_type.compare("straight"))
+
+//        assign hair props
+        hair->m_params->m_length = it->second.m_length;
+        hair->m_params->m_lengthVariance = it->second.m_lengthVariance;
+        hair->m_params->m_helicalRadius = it->second.m_helicalRadius;
+        hair->m_params->m_helicalPitch = it->second.m_helicalPitch;
+        hair->m_params->m_density = it->second.m_density;
+        hair->m_params->m_thickness = it->second.m_thickness;
+        hair->m_params->m_nParticles = it->second.m_nParticles;
+
+        hair->m_params->m_gravity = it->second.m_netForce;
+        hair->m_params->m_drag = it->second.m_drag;
+
+        hair->m_params->m_resolveCollisions = it->second.m_resolveCollisions;
+        hair->m_params->m_resolveSelfInterations = it->second.m_resolveSelfInterations;
+        hair->m_params->m_selfInterationDist = it->second.m_selfInterationDist;
+        hair->m_params->m_selfStiction = it->second.m_selfStiction;
+        hair->m_params->m_selfRepulsion = it->second.m_selfRepulsion;
+
+        hair->m_params->m_pbdIter = it->second.m_pbdIter;
+        hair->m_params->m_rodParams->setBendStiffness(it->second.m_bendStiffness);
+        hair->m_params->m_rodParams->setTwistStiffness(it->second.m_twistStiffness);
+        hair->m_params->m_rodParams->m_maxElasticForce = it->second.m_maxElasticForce;
+
+
+        hair->m_params->m_rodParams->m_strategy = it->second.m_minimizationStrategy;
+        hair->m_params->m_rodParams->m_tolerance = it->second.m_minimizationTolerance;
+        hair->m_params->m_rodParams->m_maxIter = it->second.m_minimizationMaxIter;
+
+//        generate hair strands
+        if (it->second.m_type.compare("curly") == 0)
         {
             HairGenerator::generateCurlyHair(scene->m_renderObjects[idx], it->second.m_faceList, *hair);
         } else
         {
             HairGenerator::generateStraightHair(scene->m_renderObjects[idx], it->second.m_faceList, *hair);
         }
+
+        it->second.m_id = scene->m_hairs.size();
+        scene->m_hairs.push_back(hair);
     }
 
     ifs.close();
@@ -288,16 +336,6 @@ bool SceneLoader::PImpl::parseScene(std::ifstream &ifs, scene_object &o_scene)
         if (token.compare("hair") == 0)
         {
             success = parseHairObject(ifs, o_scene);
-            if (!success)
-            {
-                break;
-            }
-            continue;
-        }
-
-        if (token.compare("hairParams") == 0)
-        {
-            success = parseHairParams(ifs, o_scene);
             if (!success)
             {
                 break;
@@ -479,14 +517,6 @@ bool SceneLoader::PImpl::parseHairObject(std::ifstream& ifs, scene_object& o_sce
             continue;
         }
 
-        if (token.compare("type") == 0)
-        {
-            line.erase(0, token.length());
-            BasicParser::ltrim(line);
-            object.m_type = BasicParser::parseWord(line);
-            continue;
-        }
-
         if (token.compare("faceCnt") == 0)
         {
             line.erase(0, token.length());
@@ -501,6 +531,173 @@ bool SceneLoader::PImpl::parseHairObject(std::ifstream& ifs, scene_object& o_sce
             BasicParser::parseIntList(line, object.m_faceList);
             continue;
         }
+
+        if (token.compare("type") == 0)
+        {
+            line.erase(0, token.length());
+            BasicParser::ltrim(line);
+            object.m_type = BasicParser::parseWord(line);
+            continue;
+        }
+
+        if (token.compare("length") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_length = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("lengthVariance") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_lengthVariance = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("helicalRadius") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_helicalRadius = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("helicalPitch") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_helicalPitch = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("density") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_density = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("thickness") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_thickness = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("nParticles") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_nParticles = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("netForce") == 0)
+        {
+            line.erase(0, token.length());
+            BasicParser::parseVec3D(line, object.m_netForce);
+            continue;
+        }
+
+        if (token.compare("drag") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_drag = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("resolveCollisions") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_resolveCollisions = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("resolveSelfInteractions") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_resolveSelfInterations = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("selfInteractionDist") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_selfInterationDist = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("selfStiction") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_selfStiction = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("selfRepulsion") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_selfRepulsion = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("pbdIter") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_pbdIter = BasicParser::parseInt(line);
+            continue;
+        }
+
+        if (token.compare("bendStiffness") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_bendStiffness = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("twistStiffness") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_twistStiffness = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("maxElasticForce") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_maxElasticForce = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("minimizationMethod") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_minimizationStrategy = ElasticRodParams::NONE;
+
+            std::string word = BasicParser::parseWord(BasicParser::ltrim(line));
+            if (word.compare("newton") == 0)
+            {
+                object.m_minimizationStrategy =  ElasticRodParams::NEWTON;
+            }
+            else if (word.compare("bfgs") == 0)
+            {
+                object.m_minimizationStrategy =  ElasticRodParams::BFGS;
+            }
+
+            continue;
+        }
+
+        if (token.compare("minimizationTolerance") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_minimizationTolerance = BasicParser::parseDouble(line);
+            continue;
+        }
+
+        if (token.compare("minimizationMaxIter") == 0)
+        {
+            line.erase(0, token.length());
+            object.m_minimizationMaxIter = BasicParser::parseInt(line);
+            continue;
+        }
+
 
         if (token.compare("/hair") == 0)
         {
@@ -520,84 +717,6 @@ bool SceneLoader::PImpl::parseHairObject(std::ifstream& ifs, scene_object& o_sce
     } else
     {
         o_scene.m_hairMap[object.m_id] = object;
-    }
-    return success;
-}
-
-bool SceneLoader::PImpl::parseHairParams(std::ifstream& ifs, scene_object& o_scene)
-{
-    bool success = false;
-
-    hair_params object;
-
-    std::string line;
-    std::string token;
-    while (ifs.peek() != EOF)
-    {
-        std::getline(ifs, line, '\n');
-        ++m_lineNumber;
-
-        stripComment(line);
-        BasicParser::trim(line);
-        if (line.empty())
-        {
-            continue;
-        }
-
-        token = BasicParser::parseToken(line);
-        if (token.compare("id") == 0)
-        {
-            line.erase(0, token.length());
-            object.m_id = BasicParser::parseInt(line);
-            continue;
-        }
-
-        if (token.compare("hairId") == 0)
-        {
-            line.erase(0, token.length());
-            object.m_hairId = BasicParser::parseInt(line);
-            continue;
-        }
-
-//        if (token.compare("type") == 0)
-//        {
-//            line.erase(0, token.length());
-//            object.m_type = BasicParser::parseWord(line);
-//            continue;
-//        }
-
-//        if (token.compare("faceCnt") == 0)
-//        {
-//            line.erase(0, token.length());
-//            object.m_faceCnt = BasicParser::parseInt(line);
-//            continue;
-//        }
-
-//        if (token.compare("faceList") == 0)
-//        {
-//            line.erase(0, token.length());
-//            object.m_faceCnt = BasicParser::parseInt(line);
-//            continue;
-//        }
-
-        if (token.compare("/hairParams") == 0)
-        {
-            success = true;
-            break;
-        }
-
-        success = false;
-        std::cerr << "Unknown token[" << token << "] found at line "<< m_lineNumber << std::endl;
-        break;
-
-    }
-
-    if (!success || object.m_id < 0 || object.m_hairId < 0 || o_scene.m_hairParamsMap.count(object.m_id))
-    {
-        success = false;
-    } else
-    {
-        o_scene.m_hairParamsMap[object.m_id] = object;
     }
     return success;
 }

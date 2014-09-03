@@ -4,33 +4,6 @@
 #include <dlib/optimization.h>
 #include "Utils.h"
 
-//====================================== Rod Params =======================================
-
-ElasticRodParams::ElasticRodParams(mg::Real bendStiffness,
-                                   mg::Real twistStiffness,
-                                   mg::Real maxElasticForce,
-                                   MINIMIZATION_STRATEGY strategy,
-                                   double tolerance,
-                                   unsigned maxIter):
-    m_beta(twistStiffness), m_maxElasticForce(maxElasticForce), m_strategy(strategy), m_tolerance(tolerance), m_maxIter(maxIter)
-{
-    setBendStiffness(bendStiffness);
-}
-
-inline void ElasticRodParams::setBendStiffness(const mg::Real& bendStiffness)
-{
-    m_B.identity();
-    m_B *= bendStiffness;
-}
-
-inline void ElasticRodParams::setTwistStiffness(const mg::Real& twistStiffness)
-{
-    m_beta = twistStiffness;
-}
-
-
-
-
 //====================================== MinimizationPImpl definition - minimize Energy with respect to twist angle theta =======================================
 
 struct ElasticRod::MinimizationPImpl
@@ -98,7 +71,7 @@ void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
     assert( pos.size() == restpos.size() );
     assert( pos.size() == vel.size() );
     assert( pos.size() == mass.size() );
-    assert( static_cast<unsigned>(theta.size()) == (pos.size() - 1) );
+    assert( (unsigned)theta.size() == (pos.size() - 1) );
 
     m_u0 = u0;
     m_ppos = pos;
@@ -362,7 +335,7 @@ void ElasticRod::accumulateInternalElasticForces(std::vector<mg::Vec3D>& o_force
             continue;
         }
 
-        for (unsigned k = std::max(static_cast<int>(i) - 1, 1); k < m_edges.size(); ++k)
+        for (unsigned k = std::max((int)i - 1, 1); k < m_edges.size(); ++k)
         {
             computeW(m_kb[k], m_m1[k - 1], m_m2[k - 1], wkj);
             computeGradientCurvature(i, k, k - 1,
@@ -743,7 +716,7 @@ double ElasticRod::MinimizationPImpl::evaluate::operator ()(const ColumnVector& 
 
     mg::Real E;
     m_rod->computeEnergy(m1, m2, theta_full, E);
-    return static_cast<double>(E);
+    return (double)E;
 }
 
 ColumnVector ElasticRod::MinimizationPImpl::evaluateGradient::operator ()(const ColumnVector &theta) const

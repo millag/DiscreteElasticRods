@@ -584,12 +584,12 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
     }
 
     std::vector<unsigned> indices( (strand.m_ppos.size() - 1) * 4 );
-    int nPoints = static_cast<int>(strand.m_ppos.size());
+    int nPoints = (int)strand.m_ppos.size();
     for (int i = -1; i < nPoints - 2; ++i)
     {
         for (int j = 0; j < 4; ++j)
         {
-            assert( (i + 1) >= 0 && (4*(i + 1) + j) < static_cast<int>(indices.size()));
+            assert( (i + 1) >= 0 && (4*(i + 1) + j) < (int)indices.size());
             indices[4*(i + 1) + j] = std::min(std::max(0, i + j), nPoints - 1);
         }
     }

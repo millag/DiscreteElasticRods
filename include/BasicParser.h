@@ -62,7 +62,7 @@ public:
         return s.substr(0, it - s.begin());
     }
 
-    static inline float parseFloat(const std::string &s)
+    static inline double parseDouble(const std::string &s)
     {
         return std::strtod(s.c_str(), NULL);
     }

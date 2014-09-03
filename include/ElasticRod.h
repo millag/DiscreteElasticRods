@@ -22,10 +22,22 @@ public:
               mg::Real maxElasticForce = 1000,
               MINIMIZATION_STRATEGY strategy = BFGS,
               double tolerance = 1e-6f,
-              unsigned maxIter = 100);
+              unsigned maxIter = 100):
+        m_beta(twistStiffness), m_maxElasticForce(maxElasticForce), m_strategy(strategy), m_tolerance(tolerance), m_maxIter(maxIter)
+    {
+        setBendStiffness(bendStiffness);
+    }
 
-    inline void setBendStiffness(const mg::Real& bendStiffness);
-    inline void setTwistStiffness(const mg::Real& twistStiffness);
+    inline void setBendStiffness(const mg::Real& bendStiffness)
+    {
+        m_B.identity();
+        m_B *= bendStiffness;
+    }
+
+    inline void setTwistStiffness(const mg::Real& twistStiffness)
+    {
+        m_beta = twistStiffness;
+    }
 
 ///    bending stiffness B = [EI1 0  ]   =  [bendStiffnes  0           ]
 ///                          [0   EI2]      [0             bendStiffnes]

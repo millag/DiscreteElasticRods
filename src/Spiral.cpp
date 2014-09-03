@@ -80,7 +80,7 @@ void Spiral::init(const RenderObject* object)
 
         vel[i].zero();
         mass[i] = 0.05;
-        if (i < static_cast<unsigned>(theta.size()))
+        if (i < (unsigned)theta.size())
         {
             theta(i) = 0;
         }
@@ -206,7 +206,7 @@ void Spiral::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec
 
 //        vel[i].zero();
 //        mass[i] = 0.001;
-//        if (i < static_cast<unsigned>(theta.size()))
+//        if (i < (unsigned)theta.size())
 //        {
 //            theta(i) = 0;
 //        }
