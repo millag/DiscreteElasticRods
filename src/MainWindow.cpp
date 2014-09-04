@@ -11,7 +11,7 @@ Exporter exporter;
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainWindow)
 {
     // create our scene
-    m_scene = loader.loadScene("assets/scene1.mg");
+    m_scene = loader.loadScene("assets/scene2_long_straight.mg");
 //    m_scene = loader.loadTestScene();
     m_scene->initialize();
 
@@ -20,31 +20,33 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainW
     format.setVersion(3, 2);
     format.setProfile(QGLFormat::CoreProfile);
 
-
 	// setup the user interface
 	m_ui->setupUi(this);
     // create our GL window for drawing the scene
     m_gl = new GLWindow(format, this);
     m_gl->setScene(m_scene);
     // add glWindow to the UI
-    m_ui->s_mainWindowGridLayout->addWidget(m_gl, 0, 0, 5, 1);
+    m_ui->s_mainWindowGridLayout->addWidget(m_gl, 0, 0, 6, 1);
 
     m_exportDir = "animation";
+    m_selectedObject = NULL;
+    m_gl->setSelection(false);
+    m_animationBuffer.setCapacity(3600);
 
     populateUI();
-
     // now we wire up the UI components to the slots
     connect(m_ui->m_selected, SIGNAL(currentIndexChanged(int)), this, SLOT(selectRenderObject(int)));
     connect(m_ui->m_timerUpdate, SIGNAL(valueChanged(int)), m_gl, SLOT(setTimerUpdateDuration(int)));
     connect(m_ui->m_simBtn, SIGNAL(clicked(bool)), this, SLOT(toggleSim(bool)));
-    connect(m_ui->m_expBtn, SIGNAL(clicked(bool)), this, SLOT(exportSim(bool)));
+    connect(m_ui->m_recordBtn, SIGNAL(clicked(bool)), this, SLOT(toggleRecord(bool)));
     connect(m_ui->m_selectDirBtn, SIGNAL(clicked()), this, SLOT(selectExportDirectory()));
+    connect(m_ui->m_expBtn, SIGNAL(clicked()), this, SLOT(exportSim()));
 
-    connect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(timerEvent()));
+    connect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(updateEvent()));
+    connect(&m_recordTimer, SIGNAL(timeout()), this, SLOT(recordEvent()));
 
     m_chronometer.start();
     toggleSim(m_ui->m_simBtn->isChecked());
-    exportSim(m_ui->m_expBtn->isChecked());
 }
 
 MainWindow::~MainWindow()
@@ -55,43 +57,60 @@ MainWindow::~MainWindow()
 
 void MainWindow::toggleSim(bool s)
 {
-    if(s == true)
+    if(!s)
     {
-        startSim();
+        m_updateTimer.stop();
+        m_chronometer.restart();
+        return;
     }
-    else
-    {
-        stopSim();
-    }
-}
 
-void MainWindow::startSim()
-{
     m_updateTimer.start(m_ui->m_timerUpdate->value());
     m_chronometer.restart();
 }
 
-void MainWindow::stopSim()
-{
-    m_updateTimer.stop();
-    m_chronometer.restart();
-}
-
-void MainWindow::timerEvent()
+void MainWindow::updateEvent()
 {
     std::cout << "TIME: " << m_chronometer.elapsed() << std::endl;
     std::cout << "FPS: " << (float)mg::SEC / m_chronometer.restart() << std::endl;
 
+    if (m_selectedObject != NULL)
+    {
+        m_selectedObject->setTransform(m_gl->getSelectionTransform());
+    }
+
     for (int i = 0; i < m_ui->m_simIter->value(); ++i)
     {
         m_scene->update(m_ui->m_timeStep->value());
-//        m_scene->update(0.01);
     }
-    if (m_frame >= 0)
-    {
-        exportFrame();
-    }
+
     m_gl->updateGL();
+}
+
+void MainWindow::toggleRecord(bool s)
+{
+    if(!s)
+    {
+        m_recordTimer.stop();
+        return;
+    }
+    m_animationBuffer.setCapacity(60 * 1000 / m_ui->m_timerUpdate->value());
+    m_animationBuffer.saveHairState(m_scene->getHairById(0));
+    m_recordTimer.start(m_ui->m_timerUpdate->value());
+}
+
+void MainWindow::recordEvent()
+{
+    if (m_scene->getHairById(0) == NULL)
+    {
+        std::cerr << "No hair object found. Skipping..." << std::endl;
+        return;
+    }
+
+    mg::Matrix4D transform = m_gl->getSelectionTransform();
+    RenderObject* object = m_scene->getRenderObjects()[ m_scene->getHairById(0)->m_object->getId() ];
+
+    m_animationBuffer.saveFrame(transform);
+    object->setTransform(transform);
 }
 
 void MainWindow::setTimerUpdateDuration(int ms)
@@ -102,8 +121,15 @@ void MainWindow::setTimerUpdateDuration(int ms)
 void MainWindow::selectRenderObject(int index)
 {
     index = index - 1;
-    RenderObject* object = (index < 0)? NULL : m_scene->getRenderObjects()[index];
-    m_gl->setSelectedObject(object);
+    if (index < 0)
+    {
+        m_selectedObject = NULL;
+        m_gl->setSelection(false);
+        return;
+    }
+    m_selectedObject = m_scene->getRenderObjects()[index];
+    m_gl->setSelection(true);
+    m_gl->setSelectionTransform(m_selectedObject->getTransform());
 }
 
 void MainWindow::selectExportDirectory()
@@ -121,20 +147,19 @@ void MainWindow::selectExportDirectory()
     m_exportDir = dir;
 }
 
-void MainWindow::exportSim(bool v)
+void MainWindow::exportSim()
 {
-    if (!v)
-    {
-        m_frame = -1;
-        return;
-    }
     if (m_ui->m_filePrefix->text().isEmpty())
     {
-        std::cerr << "Pls specify export file name" << std::endl;
+        std::cerr << "Specify export file name" << std::endl;
         return;
     }
 
-    m_frame = 0;
+    if(m_animationBuffer.size() == 0)
+    {
+        std::cerr << "No data to export" << std::endl;
+        return;
+    }
 
     QDir parentDir(m_exportDir);
     m_exportGeoDir = m_ui->m_filePrefix->text().append("geo");
@@ -150,18 +175,31 @@ void MainWindow::exportSim(bool v)
         parentDir.mkdir(m_exportCurvDir);
         m_exportCurvDir = parentDir.filePath(m_exportCurvDir);
     }
+
+    m_animationBuffer.restoreHairState(m_scene->getHairById(0));
+    RenderObject* object = m_scene->getRenderObjects()[ m_scene->getHairById(0)->m_object->getId() ];
+    for (unsigned frame = 0; frame < m_animationBuffer.size(); ++frame)
+    {
+        object->setTransform(m_animationBuffer.getFrame(frame));
+
+        for (int i = 0; i < m_ui->m_simIter->value(); ++i)
+        {
+            m_scene->update(m_ui->m_timeStep->value());
+        }
+
+        exportFrame(frame);
+    }
 }
 
-void MainWindow::exportFrame()
+void MainWindow::exportFrame(unsigned frame)
 {
     QDir dir(m_exportGeoDir);
-    QString filename = dir.filePath(m_ui->m_filePrefix->text().append("geo_%1.obj").arg(m_frame));
-    exporter.exportGeometry(filename.toLocal8Bit(), *m_scene->getHair()->m_object);
+    QString filename = dir.filePath(m_ui->m_filePrefix->text().append("geo_%1.obj").arg(frame));
+    exporter.exportGeometry(filename.toLocal8Bit(), *m_scene->getHairById(0)->m_object);
 
     dir.setPath(m_exportCurvDir);
-    filename = dir.filePath(m_ui->m_filePrefix->text().append("curv_%1.obj").arg(m_frame));
-    exporter.exportCurves(filename.toLocal8Bit(), m_scene->getHair()->m_strands);
-    ++m_frame;
+    filename = dir.filePath(m_ui->m_filePrefix->text().append("curv_%1.obj").arg(frame));
+    exporter.exportCurves(filename.toLocal8Bit(), m_scene->getHairById(0)->m_strands);
 }
 
 void MainWindow::populateUI()

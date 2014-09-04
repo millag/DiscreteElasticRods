@@ -2,29 +2,27 @@
 #include <cassert>
 #include "Utils.h"
 
-RenderObject::RenderObject(const Mesh* _mesh, const mg::Matrix4D &_transform, int _shaderId):
-    m_mesh(_mesh), m_transform(_transform), m_shaderId(_shaderId)
+RenderObject::RenderObject(unsigned id, const Mesh *mesh):
+    m_id(id), m_mesh(mesh)
+{
+    m_transform.identity();
+    calcBoundaries();
+}
+
+RenderObject::RenderObject(const Mesh* mesh, const mg::Matrix4D &transform):
+    m_id(-1), m_mesh(mesh), m_transform(transform)
+{
+    calcBoundaries();
+}
+
+RenderObject::RenderObject(unsigned id, const Mesh* mesh, const mg::Matrix4D& transform):
+    m_id(id), m_mesh(mesh), m_transform(transform)
 {
     calcBoundaries();
 }
 
 
-unsigned RenderObject::getMeshId() const
-{
-    assert(m_mesh != NULL);
-    return m_mesh->getId();
-}
 
-const Mesh* RenderObject::getMesh() const
-{
-    return m_mesh;
-}
-
-void RenderObject::setMesh(const Mesh* _mesh)
-{
-    m_mesh = _mesh;
-    calcBoundaries();
-}
 
 void RenderObject::setTransform(const mg::Matrix4D &t)
 {

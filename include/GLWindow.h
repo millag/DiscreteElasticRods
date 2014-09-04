@@ -47,32 +47,44 @@ public :
 //----------------------------------------------------------------------------------------------------------------------
     inline void setScene(Scene *scene) { m_scene = scene; }
 
-    void setSelectedObject(RenderObject *object);
+    inline void setSelection(bool selection)
+    {
+        m_selection = selection;
+        m_selectionTransform.reset();
+    }
+
+    inline bool getSelection() const { return m_selection; }
+
+    inline void setSelectionTransform(const mg::Matrix4D& transform) { m_selectionTransform.setTransform(transform); }
+    inline mg::Matrix4D getSelectionTransform() { return m_selectionTransform.getTransform(); }
 
 private :
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief scene to render
 //----------------------------------------------------------------------------------------------------------------------
-    Scene *m_scene;
+    const Scene *m_scene;
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief Our Camera
 //----------------------------------------------------------------------------------------------------------------------
     ngl::Camera *m_cam;
+
+
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief array of VAO objects created for each mesh in scene, used for fast rendering
 //----------------------------------------------------------------------------------------------------------------------
     std::vector<ngl::VertexArrayObject*> m_VAOList;
     ngl::VertexArrayObject* m_strandVAO;
+
+
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief flag that marks that transformations calculated on mouse movement apply to an object and not the camera
+//----------------------------------------------------------------------------------------------------------------------
+    bool m_selection;
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief selected object to which transformations calculated on mouse movement are applied
 /// if NULL camera is modified
 //----------------------------------------------------------------------------------------------------------------------
-    RenderObject* m_selectedObject;
-//----------------------------------------------------------------------------------------------------------------------
-/// @brief selected object to which transformations calculated on mouse movement are applied
-/// if NULL camera is modified
-//----------------------------------------------------------------------------------------------------------------------
-    TransformTool m_selectedTransform;
+    TransformTool m_selectionTransform;
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief selected object to which transformations calculated on mouse movement are applied
 /// if NULL camera is modified
@@ -84,6 +96,8 @@ private :
 /// @brief our transformation stack used for drawing
 //----------------------------------------------------------------------------------------------------------------------
     Transformation m_transform;
+
+
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief flag to indicate if the mouse button is pressed when dragging
 //----------------------------------------------------------------------------------------------------------------------

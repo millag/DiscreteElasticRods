@@ -33,12 +33,31 @@ Scene::~Scene()
 
 void Scene::initialize()
 {
-//    TODO:implement
+    for (unsigned i = 0; i < m_meshes.size(); ++i)
+    {
+        m_meshes[i]->setId(i);
+    }
+
+    for (unsigned i = 0; i < m_renderObjects.size(); ++i)
+    {
+        m_renderObjects[i]->setId(i);
+    }
+
+    for (unsigned i = 0; i < m_hairs.size(); ++i)
+    {
+        m_hairs[i]->setId(i);
+    }
 }
 
 
 void Scene::update(mg::Real dt)
 {
-    m_hairs[0]->update(dt);
+    typedef std::vector<Hair*>::iterator Iter;
+    for (Iter it = m_hairs.begin(); it != m_hairs.end(); ++it)
+    {
+        (*it)->update(dt);
+    }
+
+//    m_hairs[0]->update(dt);
 //    m_spiral->update(dt);
 }

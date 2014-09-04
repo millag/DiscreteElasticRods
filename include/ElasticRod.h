@@ -4,11 +4,12 @@
 #include <vector>
 #include <set>
 #include <dlib/matrix.h>
+#include "ElasticRodState.h"
 
-#include "config.h"
+
 
 typedef dlib::matrix<double,0,1> ColumnVector;
-typedef dlib::matrix<double> Hessian;
+
 
 struct ElasticRodParams
 {
@@ -91,6 +92,9 @@ public:
 ///    NOTE: the current state of the rod is not altered except when debug(DBUGG) is enabled
 ///    When DBUGG is on computed forces are stored for visualization purpose
     void accumulateInternalElasticForces(std::vector<mg::Vec3D>& o_forces);
+
+    void getState(ElasticRodState& o_state) const;
+    void setState(const ElasticRodState& state);
 
 ///    compute valid state based on current positions and edge data from previous frame
     void updateCurrentState();

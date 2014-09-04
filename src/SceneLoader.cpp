@@ -109,7 +109,7 @@ Scene* SceneLoader::loadTestScene()
     mg::matrix_uniform_scale(transform, (mg::Real)1);
     mg::matrix_set_translation(transform, (mg::Real)0, (mg::Real)0, (mg::Real)0);
 
-    RenderObject* object = new RenderObject(mesh, transform, -1);
+    RenderObject* object = new RenderObject(mesh, transform);
     scene->m_renderObjects.push_back(object);
 
     std::vector<unsigned> fidx(object->getMesh()->getNPrimitives() / 2);
@@ -179,7 +179,6 @@ Scene* SceneLoader::loadScene(const char* filename)
             continue;
         }
         it->second.m_id = scene->m_meshes.size();
-        mesh->setId(it->second.m_id);
         scene->m_meshes.push_back(mesh);
     }
 //    create render objects

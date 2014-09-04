@@ -4,6 +4,7 @@
 #include "ElasticRod.h"
 #include "RenderObject.h"
 #include "VoxelGrid.h"
+#include "HairState.h"
 
 
 struct HairParams
@@ -42,14 +43,22 @@ struct HairParams
 class Hair
 {
 public:
+
     Hair();
     ~Hair();
+
+    inline unsigned getId() const { return m_id; }
+    inline void setId(unsigned id) { m_id = id; }
+
+    void getState(HairState& o_state) const;
+    void setState(const HairState& state);
 
     void initialize();
     void reset();
     void update(mg::Real dt);
 
 public:
+
     HairParams* m_params;
     const RenderObject* m_object;
     std::vector<unsigned> m_findices;
@@ -57,6 +66,7 @@ public:
     std::vector<ElasticRod*> m_strands;
 
 private:
+
     void resetGrid();
     void updateRod(ElasticRod& rod, mg::Real dt) const;
     void accumulateExternalForces(const ElasticRod &rod, std::vector<mg::Vec3D>& o_forces) const;
@@ -64,7 +74,11 @@ private:
     void enforceConstraints(ElasticRod& rod) const;
     void enforceConstraintsWithCollision(ElasticRod& rod) const;
     void applyCollisionConstraintsIteration(ElasticRod& rod) const;
+
 private:
+
+    unsigned m_id;
+
     AABB m_volume;
     VoxelGrid* m_grid;
 };

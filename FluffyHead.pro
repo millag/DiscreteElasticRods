@@ -55,7 +55,10 @@ HEADERS += include/MainWindow.h \
     include/CollisionShape.h \
     include/BasicParser.h \
     include/SceneLoader.h \
-    include/Exporter.h
+    include/Exporter.h \
+    include/AnimationBuffer.h \
+    include/ElasticRodState.h \
+    include/HairState.h
 
 
 FORMS += \
@@ -78,7 +81,8 @@ OTHER_FILES+= shaders/Phong.fs \
     shaders/TubeTES.glsl \
     assets/MayaGetSelectedPrimitives.py \
     assets/scene1.mg \
-    assets/medusa1.obj
+    assets/medusa1.obj \
+    assets/scene2_long_straight.mg
 
 DESTDIR=./
 CONFIG += console

@@ -4,6 +4,8 @@
 #include <dlib/optimization.h>
 #include "Utils.h"
 
+typedef dlib::matrix<double> Hessian;
+
 //====================================== MinimizationPImpl definition - minimize Energy with respect to twist angle theta =======================================
 
 struct ElasticRod::MinimizationPImpl
@@ -109,6 +111,22 @@ void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
 
 }
 
+void ElasticRod::getState(ElasticRodState& o_state) const
+{
+    o_state.m_ppos = m_ppos;
+    o_state.m_pvel = m_pvel;
+    o_state.m_u0 = m_u0;
+}
+
+void ElasticRod::setState(const ElasticRodState& state)
+{
+    m_ppos = state.m_ppos;
+    m_pvel = state.m_pvel;
+    m_u0 = state.m_u0;
+
+    computeEdges(m_ppos, m_edges);
+    updateCurrentState();
+}
 
 void ElasticRod::computeEdges(const std::vector<mg::Vec3D>& vertices,
                               std::vector<mg::Vec3D>& o_edges) const

@@ -17,18 +17,17 @@
 //----------------------------------------------------------------------------------------------------------------------
 GLWindow::GLWindow(const QGLFormat _format, QWidget *_parent ) : QGLWidget( _format, _parent )
 {
+    m_rotate = false;
+    m_zoom = false;
+    m_selection = false;
+
+    m_scene = NULL;
+    m_strandVAO = NULL;
+
     // re-size the widget to that of the parent (in this case the GLFrame passed in on construction)
     this->resize(_parent->size());
     // set this widget to have the initial keyboard focus
     setFocus();
-
-    // Now set the initial GLWindow attributes to default values
-    // Roate is false
-    m_selectedObject = NULL;
-    m_rotate = false;
-    m_zoom = false;
-
-    m_strandVAO = NULL;
 }
 
 GLWindow::~GLWindow()
@@ -49,8 +48,8 @@ GLWindow::~GLWindow()
 void GLWindow::initializeGL()
 {
     m_cameraTransform.m_angle0 = 0;
-    m_cameraTransform.m_angle1 = 0;
-    m_cameraTransform.m_translation.set(0,0,-20);
+    m_cameraTransform.m_angle1 = 10;
+    m_cameraTransform.m_translation.set(0,0,-17);
 
     ngl::NGLInit::instance();
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);			   // Grey Background
@@ -177,11 +176,13 @@ void GLWindow::initializeGL()
     ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
     prim->createLineGrid("grid", 10, 10, 10);
 
-    // build VAO for each mesh in scene and store references in m_VAOList
-    if (m_scene)
+    if (m_scene == NULL)
     {
-        buildVAOs(m_scene->getMeshes(), m_VAOList);
+        return;
     }
+
+//    build VAO for each mesh in scene and store references in m_VAOList
+    buildVAOs(m_scene->getMeshes(), m_VAOList);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -244,33 +245,29 @@ void GLWindow::loadMatricesToHairShader2()
     shader->setShaderParamFromMat3("normalMatrix",normalMatrix);
 }
 
-void GLWindow::setSelectedObject(RenderObject *object)
-{
-    m_selectedObject = object;
-    m_selectedTransform.reset();
-    if (m_selectedObject != NULL)
-    {
-        m_selectedTransform.setTransform(m_selectedObject->getTransform());
-    }
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 //This virtual function is called whenever the widget needs to be painted.
 // this is our main drawing routine
 void GLWindow::paintGL()
 {
-    if ((m_rotate || m_zoom) && m_selectedObject != NULL)
-    {
-        m_selectedObject->setTransform(m_selectedTransform.getTransform());
-    }
-
-    // clear the screen and depth buffer
+//    clear the screen and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // grab an instance of the shader manager
+//    grab an instance of the shader manager
     ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-    // get an instance of the VBO primitives for drawing
+//    get an instance of the VBO primitives for drawing
     ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
+
+//    draw grid
+    shader->use("Phong");
+    m_transform.reset();
+    loadMatricesToShader();
+    prim->draw("grid");
+
+    if (m_scene == NULL)
+    {
+        return;
+    }
 
     ngl::VertexArrayObject* vao;
     const std::vector<RenderObject*>& roList = m_scene->getRenderObjects();
@@ -296,6 +293,10 @@ void GLWindow::paintGL()
         }
     }
 
+    if (m_scene->getHairById(0) == NULL)
+    {
+        return;
+    }
 
 #ifndef DBUGG
     shader->use("Tube");
@@ -317,17 +318,12 @@ void GLWindow::paintGL()
     loadMatricesToHairShader();
 #endif
 
-    const std::vector<ElasticRod*>& strands = m_scene->getStrands();
+    const std::vector<ElasticRod*>& strands = m_scene->getHairById(0)->m_strands;
     typedef std::vector<ElasticRod*>::const_iterator SIter;
     for (SIter it = strands.begin(); it != strands.end(); ++it)
     {
         drawHairStrand(**it);
     }
-
-    shader->use("Phong");
-    m_transform.reset();
-    loadMatricesToShader();
-    prim->draw("grid");
 }
 
 
@@ -337,7 +333,7 @@ void GLWindow::paintGL()
 //----------------------------------------------------------------------------------------------------------------------
 void GLWindow::mouseMoveEvent ( QMouseEvent * _event )
 {
-    TransformTool& ttool = (m_selectedObject == NULL)? m_cameraTransform : m_selectedTransform;
+    TransformTool& ttool = (m_selection)? m_selectionTransform : m_cameraTransform;
 
     // note the method buttons() is the button state when event was called
     // this is different from button() which is used to check which button was
@@ -357,12 +353,12 @@ void GLWindow::mouseMoveEvent ( QMouseEvent * _event )
 
     if(m_zoom && _event->buttons() == Qt::RightButton)
     {
-        mg::Real dx = 2 * mg::Real(_event->x() - m_mouseX) / width();
-        mg::Real dy = 2 * mg::Real(_event->y() - m_mouseY) / height();
+        mg::Real dx = 2 * (mg::Real)(_event->x() - m_mouseX) / width();
+        mg::Real dy = 2 * (mg::Real)(_event->y() - m_mouseY) / height();
         ngl::Vec4 lookDir = (m_cam->getLook() - m_cam->getEye());
         mg::Vec3D dirz(lookDir.m_x, lookDir.m_y, lookDir.m_z);
 
-        if (m_selectedObject != NULL)
+        if (m_selection)
         {
             dirz = mg::transform_vector(m_cameraTransform.getTransform().inverse(), dirz);
             dirz.normalize();

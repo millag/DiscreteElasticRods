@@ -18,10 +18,10 @@ public:
     void update(mg::Real dt);
 
     inline const AABB& getBoundingVolume() const { return m_boundingVolume; }
-    inline const std::vector<ElasticRod*>& getStrands() const { return m_hairs[0]->m_strands; }
-    inline const Hair* getHair() const { return m_hairs[0]; }
     inline const std::vector<RenderObject*>& getRenderObjects() const { return m_renderObjects; }
     inline const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
+
+    inline Hair* getHairById(unsigned id) const { return ((id < m_hairs.size())? m_hairs[id] : NULL); }
 
 private:
     AABB m_boundingVolume;
@@ -32,6 +32,7 @@ private:
     std::vector<Mesh*> m_meshes;
 
 private:
+
     friend class SceneLoader;
 };
 

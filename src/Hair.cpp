@@ -12,7 +12,7 @@ HairParams::~HairParams()
     }
 }
 
-Hair::Hair():m_object(NULL), m_grid(NULL)
+Hair::Hair(): m_object(NULL), m_id(-1), m_grid(NULL)
 {
 //    init default hair params
     m_params = new HairParams();
@@ -47,6 +47,24 @@ Hair::~Hair()
 {
     reset();
     delete m_params;
+}
+
+void Hair::getState(HairState& o_state) const
+{
+    o_state.m_strands.resize(m_strands.size());
+    for (unsigned i = 0; i < m_strands.size(); ++i)
+    {
+        m_strands[i]->getState(o_state.m_strands[i]);
+    }
+}
+
+void Hair::setState(const HairState& state)
+{
+    assert( state.m_strands.size() == m_strands.size() );
+    for (unsigned i = 0; i < m_strands.size(); ++i)
+    {
+        m_strands[i]->setState(state.m_strands[i]);
+    }
 }
 
 void Hair::reset()
