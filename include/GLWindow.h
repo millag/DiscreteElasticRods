@@ -55,7 +55,12 @@ public :
 
     inline bool getSelection() const { return m_selection; }
 
-    inline void setSelectionTransform(const mg::Matrix4D& transform) { m_selectionTransform.setTransform(transform); }
+    inline void setSelectionTransform(const mg::Matrix4D& transform)
+    {
+        m_selectionTransform.reset();
+        m_selectionTransform.setTransform(transform);
+        updateGL();
+    }
     inline mg::Matrix4D getSelectionTransform() { return m_selectionTransform.getTransform(); }
 
 private :

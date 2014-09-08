@@ -229,7 +229,7 @@ void Hair::accumulateExternalForcesWithSelfInterations(ElasticRod& rod, std::vec
 //        gravity
         o_forces[i] += m_params->m_gravity * rod.m_pmass[i];
 //        drag
-        o_forces[i] -= m_params->m_drag * rod.m_pvel[i];
+        o_forces[i] -= m_params->m_drag * rod.m_pvel[i].length() * rod.m_pvel[i];
 
 
 //        self interactions:
@@ -274,7 +274,7 @@ void Hair::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D
 //        gravity
         o_forces[i] += m_params->m_gravity * rod.m_pmass[i];
 //        drag
-        o_forces[i] -= m_params->m_drag * rod.m_pvel[i];
+        o_forces[i] -= m_params->m_drag * rod.m_pvel[i].length() * rod.m_pvel[i];
     }
 }
 

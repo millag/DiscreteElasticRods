@@ -14,7 +14,7 @@ typedef dlib::matrix<double,0,1> ColumnVector;
 struct ElasticRodParams
 {
 public:
-    enum MINIMIZATION_STRATEGY {NONE, NEWTON, BFGS, BFGS_NUMERIC};
+    enum MINIMIZATION_STRATEGY {NONE = 0, NEWTON = 1, BFGS = 2, BFGS_NUMERIC = 3};
 
 public:
 

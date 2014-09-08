@@ -34,14 +34,14 @@
        <string>Animation</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_5">
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_8">
+       <item row="5" column="0">
+        <widget class="QPushButton" name="m_selectDirBtn">
          <property name="text">
-          <string>file prefix</string>
+          <string>export dir</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="5" column="1">
         <widget class="QPushButton" name="m_expBtn">
          <property name="text">
           <string>export</string>
@@ -51,7 +51,7 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
+       <item row="3" column="1">
         <widget class="QLineEdit" name="m_filePrefix">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -64,20 +64,20 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>file prefix</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
         <widget class="QPushButton" name="m_recordBtn">
          <property name="text">
           <string>record</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QPushButton" name="m_selectDirBtn">
-         <property name="text">
-          <string>export dir</string>
          </property>
         </widget>
        </item>
@@ -93,23 +93,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="label_3">
          <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QDoubleSpinBox" name="m_k">
-         <property name="minimum">
-          <double>-200.000000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>200.000000000000000</double>
-         </property>
-         <property name="singleStep">
-          <double>0.010000000000000</double>
-         </property>
-         <property name="value">
-          <double>0.000000000000000</double>
+          <string>minimization</string>
          </property>
         </widget>
        </item>
@@ -158,6 +142,9 @@
           <double>0.000000000000000</double>
          </property>
         </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="m_minimizationMethod"/>
        </item>
       </layout>
      </widget>

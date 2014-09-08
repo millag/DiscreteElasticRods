@@ -96,6 +96,8 @@ private slots :
 	//----------------------------------------------------------------------------------------------------------------------
     void selectRenderObject(int index);
 
+    void selectMinimizationMethod(int index);
+
     void selectExportDirectory();
 
 private:

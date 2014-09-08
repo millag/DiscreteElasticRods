@@ -31,7 +31,7 @@ public:
     {
         if (m_buffer.size() == m_capacity)
         {
-            m_buffer.pop_front();
+            return;
         }
         m_buffer.push_back(transform);
     }

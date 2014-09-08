@@ -38,19 +38,19 @@ public:
     QSpacerItem *horizontalSpacer;
     QGroupBox *groupBox_3;
     QGridLayout *gridLayout_5;
-    QLabel *label_8;
+    QPushButton *m_selectDirBtn;
     QPushButton *m_expBtn;
     QLineEdit *m_filePrefix;
+    QLabel *label_8;
     QPushButton *m_recordBtn;
-    QPushButton *m_selectDirBtn;
     QGroupBox *groupBox;
     QGridLayout *gridLayout_3;
     QLabel *label_3;
-    QDoubleSpinBox *m_k;
     QLabel *label_4;
     QDoubleSpinBox *m_b;
     QLabel *label_5;
     QDoubleSpinBox *m_move;
+    QComboBox *m_minimizationMethod;
     QGroupBox *groupBox_2;
     QGridLayout *gridLayout_2;
     QPushButton *m_simBtn;
@@ -85,16 +85,16 @@ public:
         groupBox_3->setObjectName(QStringLiteral("groupBox_3"));
         gridLayout_5 = new QGridLayout(groupBox_3);
         gridLayout_5->setObjectName(QStringLiteral("gridLayout_5"));
-        label_8 = new QLabel(groupBox_3);
-        label_8->setObjectName(QStringLiteral("label_8"));
+        m_selectDirBtn = new QPushButton(groupBox_3);
+        m_selectDirBtn->setObjectName(QStringLiteral("m_selectDirBtn"));
 
-        gridLayout_5->addWidget(label_8, 2, 0, 1, 1);
+        gridLayout_5->addWidget(m_selectDirBtn, 5, 0, 1, 1);
 
         m_expBtn = new QPushButton(groupBox_3);
         m_expBtn->setObjectName(QStringLiteral("m_expBtn"));
         m_expBtn->setCheckable(false);
 
-        gridLayout_5->addWidget(m_expBtn, 4, 1, 1, 1);
+        gridLayout_5->addWidget(m_expBtn, 5, 1, 1, 1);
 
         m_filePrefix = new QLineEdit(groupBox_3);
         m_filePrefix->setObjectName(QStringLiteral("m_filePrefix"));
@@ -104,18 +104,18 @@ public:
         sizePolicy.setHeightForWidth(m_filePrefix->sizePolicy().hasHeightForWidth());
         m_filePrefix->setSizePolicy(sizePolicy);
 
-        gridLayout_5->addWidget(m_filePrefix, 2, 1, 1, 1);
+        gridLayout_5->addWidget(m_filePrefix, 3, 1, 1, 1);
+
+        label_8 = new QLabel(groupBox_3);
+        label_8->setObjectName(QStringLiteral("label_8"));
+
+        gridLayout_5->addWidget(label_8, 3, 0, 1, 1);
 
         m_recordBtn = new QPushButton(groupBox_3);
         m_recordBtn->setObjectName(QStringLiteral("m_recordBtn"));
         m_recordBtn->setCheckable(true);
 
-        gridLayout_5->addWidget(m_recordBtn, 0, 1, 1, 1);
-
-        m_selectDirBtn = new QPushButton(groupBox_3);
-        m_selectDirBtn->setObjectName(QStringLiteral("m_selectDirBtn"));
-
-        gridLayout_5->addWidget(m_selectDirBtn, 1, 1, 1, 1);
+        gridLayout_5->addWidget(m_recordBtn, 2, 1, 1, 1);
 
 
         s_mainWindowGridLayout->addWidget(groupBox_3, 3, 1, 1, 1);
@@ -128,15 +128,6 @@ public:
         label_3->setObjectName(QStringLiteral("label_3"));
 
         gridLayout_3->addWidget(label_3, 0, 0, 1, 1);
-
-        m_k = new QDoubleSpinBox(groupBox);
-        m_k->setObjectName(QStringLiteral("m_k"));
-        m_k->setMinimum(-200);
-        m_k->setMaximum(200);
-        m_k->setSingleStep(0.01);
-        m_k->setValue(0);
-
-        gridLayout_3->addWidget(m_k, 0, 1, 1, 1);
 
         label_4 = new QLabel(groupBox);
         label_4->setObjectName(QStringLiteral("label_4"));
@@ -165,6 +156,11 @@ public:
         m_move->setValue(0);
 
         gridLayout_3->addWidget(m_move, 2, 1, 1, 1);
+
+        m_minimizationMethod = new QComboBox(groupBox);
+        m_minimizationMethod->setObjectName(QStringLiteral("m_minimizationMethod"));
+
+        gridLayout_3->addWidget(m_minimizationMethod, 0, 1, 1, 1);
 
 
         s_mainWindowGridLayout->addWidget(groupBox, 1, 1, 1, 1);
@@ -262,13 +258,13 @@ public:
     {
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "ElasticRods", 0));
         groupBox_3->setTitle(QApplication::translate("MainWindow", "Animation", 0));
-        label_8->setText(QApplication::translate("MainWindow", "file prefix", 0));
+        m_selectDirBtn->setText(QApplication::translate("MainWindow", "export dir", 0));
         m_expBtn->setText(QApplication::translate("MainWindow", "export", 0));
         m_filePrefix->setText(QApplication::translate("MainWindow", "default_", 0));
+        label_8->setText(QApplication::translate("MainWindow", "file prefix", 0));
         m_recordBtn->setText(QApplication::translate("MainWindow", "record", 0));
-        m_selectDirBtn->setText(QApplication::translate("MainWindow", "export dir", 0));
         groupBox->setTitle(QApplication::translate("MainWindow", "Hair Properties", 0));
-        label_3->setText(QString());
+        label_3->setText(QApplication::translate("MainWindow", "minimization", 0));
         label_4->setText(QString());
         label_5->setText(QApplication::translate("MainWindow", "move", 0));
         groupBox_2->setTitle(QApplication::translate("MainWindow", "Simulation", 0));

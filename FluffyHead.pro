@@ -80,9 +80,18 @@ OTHER_FILES+= shaders/Phong.fs \
     shaders/DebugFrag.glsl \
     shaders/TubeTES.glsl \
     assets/MayaGetSelectedPrimitives.py \
-    assets/scene1.mg \
     assets/medusa1.obj \
-    assets/scene2_long_straight.mg
+    assets/scene2_long_straight.mg \
+    assets/scene1_long_curly.mg \
+    assets/scene1_long_wavy.mg \
+    assets/girl_mres_tri.obj \
+    assets/scene1_long_straight.mg \
+    assets/scene2_long_curly.mg \
+    assets/scene1_short_curly.mg \
+    assets/scene1_short_straight.mg \
+    assets/scene2_short_straight.mg \
+    assets/scene2_short_curly.mg \
+    assets/scene2_long_wavy.mg
 
 DESTDIR=./
 CONFIG += console

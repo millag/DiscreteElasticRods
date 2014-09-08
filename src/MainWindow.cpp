@@ -11,7 +11,7 @@ Exporter exporter;
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainWindow)
 {
     // create our scene
-    m_scene = loader.loadScene("assets/scene2_long_straight.mg");
+    m_scene = loader.loadScene("assets/scene2_long_wavy.mg");
 //    m_scene = loader.loadTestScene();
     m_scene->initialize();
 
@@ -31,11 +31,12 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainW
     m_exportDir = "animation";
     m_selectedObject = NULL;
     m_gl->setSelection(false);
-    m_animationBuffer.setCapacity(3600);
+    m_animationBuffer.setCapacity(500);
 
     populateUI();
     // now we wire up the UI components to the slots
     connect(m_ui->m_selected, SIGNAL(currentIndexChanged(int)), this, SLOT(selectRenderObject(int)));
+    connect(m_ui->m_minimizationMethod, SIGNAL(currentIndexChanged(int)), this, SLOT(selectMinimizationMethod(int)));
     connect(m_ui->m_timerUpdate, SIGNAL(valueChanged(int)), m_gl, SLOT(setTimerUpdateDuration(int)));
     connect(m_ui->m_simBtn, SIGNAL(clicked(bool)), this, SLOT(toggleSim(bool)));
     connect(m_ui->m_recordBtn, SIGNAL(clicked(bool)), this, SLOT(toggleRecord(bool)));
@@ -45,6 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainW
     connect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(updateEvent()));
     connect(&m_recordTimer, SIGNAL(timeout()), this, SLOT(recordEvent()));
 
+    m_ui->m_minimizationMethod->setCurrentIndex(m_scene->getHairById(0)->m_params->m_rodParams->m_strategy);
     m_chronometer.start();
     toggleSim(m_ui->m_simBtn->isChecked());
 }
@@ -93,7 +95,15 @@ void MainWindow::toggleRecord(bool s)
         m_recordTimer.stop();
         return;
     }
-    m_animationBuffer.setCapacity(60 * 1000 / m_ui->m_timerUpdate->value());
+
+    if (m_animationBuffer.size())
+    {
+        RenderObject* object = m_scene->getRenderObjects()[ m_scene->getHairById(0)->m_object->getId() ];
+        object->setTransform(m_animationBuffer.getFrame(0));
+        m_gl->setSelectionTransform(m_animationBuffer.getFrame(0));
+    }
+
+    m_animationBuffer.clear();
     m_animationBuffer.saveHairState(m_scene->getHairById(0));
     m_recordTimer.start(m_ui->m_timerUpdate->value());
 }
@@ -105,6 +115,7 @@ void MainWindow::recordEvent()
         std::cerr << "No hair object found. Skipping..." << std::endl;
         return;
     }
+    std::cout << "Recording frame: " << m_animationBuffer.size() << std::endl;
 
     mg::Matrix4D transform = m_gl->getSelectionTransform();
     RenderObject* object = m_scene->getRenderObjects()[ m_scene->getHairById(0)->m_object->getId() ];
@@ -130,6 +141,33 @@ void MainWindow::selectRenderObject(int index)
     m_selectedObject = m_scene->getRenderObjects()[index];
     m_gl->setSelection(true);
     m_gl->setSelectionTransform(m_selectedObject->getTransform());
+}
+
+void MainWindow::selectMinimizationMethod(int index)
+{
+    if (m_scene->getHairById(0) == NULL)
+    {
+        std::cerr << "No hair object found. Skipping..." << std::endl;
+        return;
+    }
+
+    switch (index)
+    {
+        case 0:
+            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::NONE;
+            break;
+        case 1:
+            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::NEWTON;
+            break;
+        case 2:
+            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::BFGS;
+            break;
+        case 3:
+            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::BFGS_NUMERIC;
+            break;
+        default:
+            break;
+    }
 }
 
 void MainWindow::selectExportDirectory()
@@ -180,6 +218,8 @@ void MainWindow::exportSim()
     RenderObject* object = m_scene->getRenderObjects()[ m_scene->getHairById(0)->m_object->getId() ];
     for (unsigned frame = 0; frame < m_animationBuffer.size(); ++frame)
     {
+        std::cout << "Exporting frame: " << frame << std::endl;
+
         object->setTransform(m_animationBuffer.getFrame(frame));
 
         for (int i = 0; i < m_ui->m_simIter->value(); ++i)
@@ -210,4 +250,9 @@ void MainWindow::populateUI()
         QString label = QString("RenderObject_%1").arg(i);
         m_ui->m_selected->addItem(label);
     }
+
+    m_ui->m_minimizationMethod->addItem(QString("NONE"));
+    m_ui->m_minimizationMethod->addItem(QString("NEWTON"));
+    m_ui->m_minimizationMethod->addItem(QString("BFGS"));
+    m_ui->m_minimizationMethod->addItem(QString("BFGS NUMERIC"));
 }
