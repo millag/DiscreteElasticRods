@@ -11,7 +11,7 @@ Exporter exporter;
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainWindow)
 {
     // create our scene
-    m_scene = loader.loadScene("assets/scene2_long_wavy.mg");
+    m_scene = loader.loadScene("assets/scene2_short_curly.mg");
 //    m_scene = loader.loadTestScene();
     m_scene->initialize();
 

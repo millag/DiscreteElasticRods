@@ -91,7 +91,9 @@ OTHER_FILES+= shaders/Phong.fs \
     assets/scene1_short_straight.mg \
     assets/scene2_short_straight.mg \
     assets/scene2_short_curly.mg \
-    assets/scene2_long_wavy.mg
+    assets/scene2_long_wavy.mg \
+    assets/ffmpeg_video.txt \
+    assets/sphere.obj
 
 DESTDIR=./
 CONFIG += console
