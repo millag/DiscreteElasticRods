@@ -47,9 +47,9 @@ void Spiral::init(const RenderObject* object)
     std::set<unsigned> isClamped;
 
     mg::Vec3D center(m_object->getCenter());
-    mg::Vec3D dirx = mg::Vec3D(1, 0, 0);
-    mg::Vec3D diry = mg::Vec3D(0, -1, 0);
-    mg::Vec3D dirz = mg::Vec3D(0, 0, 1);
+    mg::Vec3D dirx(1, 0, 0);
+    mg::Vec3D diry(0, -1, 0);
+    mg::Vec3D dirz(0, 0, 1);
 
 
     mg::Real angle = m_lenght / ((m_nParticles - 1) * m_radius);

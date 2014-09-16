@@ -46,10 +46,6 @@ public:
     QGroupBox *groupBox;
     QGridLayout *gridLayout_3;
     QLabel *label_3;
-    QLabel *label_4;
-    QDoubleSpinBox *m_b;
-    QLabel *label_5;
-    QDoubleSpinBox *m_move;
     QComboBox *m_minimizationMethod;
     QGroupBox *groupBox_2;
     QGridLayout *gridLayout_2;
@@ -128,34 +124,6 @@ public:
         label_3->setObjectName(QStringLiteral("label_3"));
 
         gridLayout_3->addWidget(label_3, 0, 0, 1, 1);
-
-        label_4 = new QLabel(groupBox);
-        label_4->setObjectName(QStringLiteral("label_4"));
-
-        gridLayout_3->addWidget(label_4, 1, 0, 1, 1);
-
-        m_b = new QDoubleSpinBox(groupBox);
-        m_b->setObjectName(QStringLiteral("m_b"));
-        m_b->setMinimum(-200);
-        m_b->setMaximum(200);
-        m_b->setSingleStep(0.01);
-        m_b->setValue(0);
-
-        gridLayout_3->addWidget(m_b, 1, 1, 1, 1);
-
-        label_5 = new QLabel(groupBox);
-        label_5->setObjectName(QStringLiteral("label_5"));
-
-        gridLayout_3->addWidget(label_5, 2, 0, 1, 1);
-
-        m_move = new QDoubleSpinBox(groupBox);
-        m_move->setObjectName(QStringLiteral("m_move"));
-        m_move->setMinimum(-10);
-        m_move->setMaximum(10);
-        m_move->setSingleStep(0.5);
-        m_move->setValue(0);
-
-        gridLayout_3->addWidget(m_move, 2, 1, 1, 1);
 
         m_minimizationMethod = new QComboBox(groupBox);
         m_minimizationMethod->setObjectName(QStringLiteral("m_minimizationMethod"));
@@ -265,8 +233,6 @@ public:
         m_recordBtn->setText(QApplication::translate("MainWindow", "record", 0));
         groupBox->setTitle(QApplication::translate("MainWindow", "Hair Properties", 0));
         label_3->setText(QApplication::translate("MainWindow", "minimization", 0));
-        label_4->setText(QString());
-        label_5->setText(QApplication::translate("MainWindow", "move", 0));
         groupBox_2->setTitle(QApplication::translate("MainWindow", "Simulation", 0));
         m_simBtn->setText(QApplication::translate("MainWindow", "sim", 0));
         label_7->setText(QApplication::translate("MainWindow", "timer (ms)", 0));

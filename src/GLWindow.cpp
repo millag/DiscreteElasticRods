@@ -259,10 +259,10 @@ void GLWindow::paintGL()
     ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
 
 //    draw grid
-    shader->use("Phong");
-    m_transform.reset();
-    loadMatricesToShader();
-    prim->draw("grid");
+//    shader->use("Phong");
+//    m_transform.reset();
+//    loadMatricesToShader();
+//    prim->draw("grid");
 
     if (m_scene == NULL)
     {
@@ -319,6 +319,7 @@ void GLWindow::paintGL()
 #endif
 
     const std::vector<ElasticRod*>& strands = m_scene->getHairById(0)->m_strands;
+//    const std::vector<ElasticRod*>& strands = m_scene->getStrands();
     typedef std::vector<ElasticRod*>::const_iterator SIter;
     for (SIter it = strands.begin(); it != strands.end(); ++it)
     {

@@ -65,8 +65,8 @@ drag 0.000001
 
 resolveCollisions 1
 resolveSelfInteractions 1
-selfInteractionDist 0.5
-selfStiction 0.4
+selfInteractionDist 0.4
+selfStiction 0.1
 selfRepulsion 0.00005
 
 pbdIter 10

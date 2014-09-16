@@ -22,7 +22,7 @@ public:
     inline const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
 
     inline Hair* getHairById(unsigned id) const { return ((id < m_hairs.size())? m_hairs[id] : NULL); }
-
+    inline const std::vector<ElasticRod*> getStrands() const { return m_spiral->m_strands; }
 private:
     AABB m_boundingVolume;
 
