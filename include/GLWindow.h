@@ -5,12 +5,14 @@
 #include <ngl/Camera.h>
 #include <ngl/Colour.h>
 #include <ngl/VertexArrayObject.h>
+#include <ngl/Text.h>
 
 #include "Scene.h"
 #include "TransformTool.h"
 
 // must be included after our stuff becuase GLEW needs to be first
 #include <QtOpenGL>
+#include <QString>
 
 //----------------------------------------------------------------------------------------------------------------------
 /// @file GLWindow.h
@@ -72,7 +74,7 @@ private :
 /// @brief Our Camera
 //----------------------------------------------------------------------------------------------------------------------
     ngl::Camera *m_cam;
-
+    ngl::Text* m_text;
 
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief array of VAO objects created for each mesh in scene, used for fast rendering

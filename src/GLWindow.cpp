@@ -1,5 +1,7 @@
 #include "GLWindow.h"
 #include <iostream>
+#include <QElapsedTimer>
+
 #include <ngl/Camera.h>
 #include <ngl/Colour.h>
 #include <ngl/Light.h>
@@ -12,7 +14,10 @@
 #include <ngl/Random.h>
 #include <ngl/VAOPrimitives.h>
 #include <ngl/ShaderLib.h>
+
 #include "Utils.h"
+
+QElapsedTimer chronometer;
 
 //----------------------------------------------------------------------------------------------------------------------
 GLWindow::GLWindow(const QGLFormat _format, QWidget *_parent ) : QGLWidget( _format, _parent )
@@ -23,6 +28,8 @@ GLWindow::GLWindow(const QGLFormat _format, QWidget *_parent ) : QGLWidget( _for
 
     m_scene = NULL;
     m_strandVAO = NULL;
+    m_cam = NULL;
+    m_text = NULL;
 
     // re-size the widget to that of the parent (in this case the GLFrame passed in on construction)
     this->resize(_parent->size());
@@ -35,6 +42,7 @@ GLWindow::~GLWindow()
     std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
 
     delete m_cam;
+    delete m_text;
 
     ngl::NGLInit *init = ngl::NGLInit::instance();
     init->NGLQuit();
@@ -47,6 +55,8 @@ GLWindow::~GLWindow()
 //----------------------------------------------------------------------------------------------------------------------
 void GLWindow::initializeGL()
 {
+    chronometer.start();
+
     m_cameraTransform.m_angle0 = 0;
     m_cameraTransform.m_angle1 = 10;
     m_cameraTransform.m_translation.set(0,0,-17);
@@ -67,6 +77,11 @@ void GLWindow::initializeGL()
     // set the shape using FOV 45 Aspect Ratio based on Width and Height
     // The final two are near and far clipping planes of 0.5 and 10
     m_cam->setShape(45,(float)720.0/576.0,0.5,150);
+
+    m_text = new ngl::Text(QFont("Arial",13));
+    m_text->setColour(0.7,0.7,0.7);
+    m_text->setScreenSize(width(), height());
+
     // now to load the shader and set the values
     // grab an instance of shader manager
     ngl::ShaderLib *shader=ngl::ShaderLib::instance();
@@ -252,11 +267,10 @@ void GLWindow::paintGL()
 {
 //    clear the screen and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 //    grab an instance of the shader manager
     ngl::ShaderLib *shader=ngl::ShaderLib::instance();
 //    get an instance of the VBO primitives for drawing
-    ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
+//    ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
 
 //    draw grid
 //    shader->use("Phong");
@@ -325,6 +339,11 @@ void GLWindow::paintGL()
     {
         drawHairStrand(**it);
     }
+
+    m_text->renderText(10, 10, QString("TIME: %1ms").arg(chronometer.elapsed()));
+    m_text->renderText(10, 30, QString("FPS: %1").arg((float)mg::SEC / chronometer.restart()));
+    m_text->renderText(10, 50, QString("strands: %1").arg(m_scene->getHairById(0)->m_strands.size()));
+    m_text->renderText(10, 70, QString("points per strand: %1").arg(m_scene->getHairById(0)->m_params->m_nParticles));
 }
 
 

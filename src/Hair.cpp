@@ -17,28 +17,28 @@ Hair::Hair(): m_object(NULL), m_id(-1), m_grid(NULL)
 //    init default hair params
     m_params = new HairParams();
     m_params->m_length = 6;
-    m_params->m_lengthVariance = 2;
+    m_params->m_lengthVariance = 1;
     m_params->m_helicalRadius = 0.3;
-    m_params->m_helicalPitch = 0.13;
-    m_params->m_density = 0.005;
+    m_params->m_helicalPitch = 0.15;
+    m_params->m_density = 0.001;
     m_params->m_thickness = 0.07;
     m_params->m_nParticles = 15;
 
     m_params->m_gravity.set(0, -9.81, 0);
-    m_params->m_drag = 0.0001;
+    m_params->m_drag = 0.0000003;
 
     m_params->m_resolveCollisions = 1;
     m_params->m_coulombFriction = 0.2;
 
     m_params->m_resolveSelfInterations = 1;
     m_params->m_selfInterationDist = 0.4;
-    m_params->m_selfStiction = 0.001;
-    m_params->m_selfRepulsion = 0.0001;
+    m_params->m_selfStiction = 0.2;
+    m_params->m_selfRepulsion = 0.000005;
 
     m_params->m_pbdIter = 6;
 
-    mg::Real bendStiffness = 0.0003;
-    mg::Real twistStiffness = 0.0001;
+    mg::Real bendStiffness = 0.00006;
+    mg::Real twistStiffness = 0.0005;
     mg::Real maxElasticForce = 1000;
     m_params->m_rodParams = new ElasticRodParams(bendStiffness, twistStiffness, maxElasticForce, ElasticRodParams::NONE);
 }

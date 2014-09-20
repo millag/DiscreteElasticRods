@@ -112,7 +112,7 @@ Scene* SceneLoader::loadTestScene()
     RenderObject* object = new RenderObject(mesh, transform);
     scene->m_renderObjects.push_back(object);
 
-    std::vector<unsigned> fidx(object->getMesh()->getNPrimitives() / 2);
+    std::vector<unsigned> fidx(60);
     for (unsigned i = 0; i < fidx.size(); ++i)
     {
         fidx[i] = 2 * i;

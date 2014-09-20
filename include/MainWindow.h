@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <QTimer>
-#include <QElapsedTimer>
 
 #include "GLWindow.h"
 #include "Scene.h"
@@ -47,10 +46,6 @@ private:
     //----------------------------------------------------------------------------------------------------------------------
     QTimer m_updateTimer;
     //----------------------------------------------------------------------------------------------------------------------
-    /// @brief the timer used for fps measuring
-    //----------------------------------------------------------------------------------------------------------------------
-    QElapsedTimer m_chronometer;
-    //----------------------------------------------------------------------------------------------------------------------
     /// @brief selected object to which transformations calculated on mouse movement are applied
     /// if NULL camera is modified
     //----------------------------------------------------------------------------------------------------------------------
@@ -72,7 +67,7 @@ private slots :
     //----------------------------------------------------------------------------------------------------------------------
     void toggleSim(bool s);
     //----------------------------------------------------------------------------------------------------------------------
-    /// @brief timer event trigered by updateTimer
+    /// @brief timer event trigered by updateTimer and forward btn
     //----------------------------------------------------------------------------------------------------------------------
     void updateEvent();
     //----------------------------------------------------------------------------------------------------------------------
@@ -87,18 +82,32 @@ private slots :
     /// @brief set update timer interval
     //----------------------------------------------------------------------------------------------------------------------
     void setTimerUpdateDuration(int ms);
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief slot to export current state of simulation
-    //----------------------------------------------------------------------------------------------------------------------
-    void exportSim();
 	//----------------------------------------------------------------------------------------------------------------------
     /// @brief slot to pick the selected object
 	//----------------------------------------------------------------------------------------------------------------------
     void selectRenderObject(int index);
+    //----------------------------------------------------------------------------------------------------------------------
+    /// @brief slot to export current state of simulation
+    //----------------------------------------------------------------------------------------------------------------------
+    void exportSim();
+    void selectExportDirectory();
+
+
+    void setBendingStiffness(double val);
+    void setTwistingStiffness(double val);
+    void setMaxElasticForce(double val);
+    void setDrag(double val);
+    void setPBDIter(int val);
 
     void selectMinimizationMethod(int index);
+    void setMinimizationTolerance(double val);
+    void setMinimizationMaxIter(int val);
 
-    void selectExportDirectory();
+    void toggleCollisions(bool val);
+    void toggleSelfInterations(bool val);
+    void setSelfStiction(double val);
+    void setSelfRepusion(double val);
+
 
 private:
     //----------------------------------------------------------------------------------------------------------------------

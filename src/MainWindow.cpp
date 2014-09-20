@@ -11,8 +11,8 @@ Exporter exporter;
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainWindow)
 {
     // create our scene
-    m_scene = loader.loadScene("assets/scene2_short_curly.mg");
-//    m_scene = loader.loadTestScene();
+//    m_scene = loader.loadScene("assets/scene1_long_curly.mg");
+    m_scene = loader.loadTestScene();
     m_scene->initialize();
 
     // create an openGL format and pass to the new GLWidget
@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainW
     m_gl = new GLWindow(format, this);
     m_gl->setScene(m_scene);
     // add glWindow to the UI
-    m_ui->s_mainWindowGridLayout->addWidget(m_gl, 0, 0, 6, 1);
+    m_ui->s_mainWindowGridLayout->addWidget(m_gl, 0, 0, 9, 1);
 
     m_exportDir = "animation";
     m_selectedObject = NULL;
@@ -36,18 +36,33 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), m_ui(new Ui::MainW
     populateUI();
     // now we wire up the UI components to the slots
     connect(m_ui->m_selected, SIGNAL(currentIndexChanged(int)), this, SLOT(selectRenderObject(int)));
+
+    connect(m_ui->m_bendStiffness, SIGNAL(valueChanged(double)), this, SLOT(setBendingStiffness(double)));
+    connect(m_ui->m_twistStiffness, SIGNAL(valueChanged(double)), this, SLOT(setTwistingStiffness(double)));
+    connect(m_ui->m_maxForce, SIGNAL(valueChanged(double)), this, SLOT(setMaxElasticForce(double)));
+    connect(m_ui->m_drag, SIGNAL(valueChanged(double)), this, SLOT(setDrag(double)));
+    connect(m_ui->m_pbdIter, SIGNAL(valueChanged(int)), this, SLOT(setPBDIter(int)));
+
     connect(m_ui->m_minimizationMethod, SIGNAL(currentIndexChanged(int)), this, SLOT(selectMinimizationMethod(int)));
-    connect(m_ui->m_timerUpdate, SIGNAL(valueChanged(int)), m_gl, SLOT(setTimerUpdateDuration(int)));
+    connect(m_ui->m_minTolerance, SIGNAL(valueChanged(double)), this, SLOT(setMinimizationTolerance(double)));
+    connect(m_ui->m_minMaxIter, SIGNAL(valueChanged(int)), this, SLOT(setMinimizationMaxIter(int)));
+
+    connect(m_ui->m_collisions, SIGNAL(clicked(bool)), this, SLOT(toggleCollisions(bool)));
+    connect(m_ui->m_selfInteractions, SIGNAL(clicked(bool)), this, SLOT(toggleSelfInterations(bool)));
+    connect(m_ui->m_stiction, SIGNAL(valueChanged(double)), this, SLOT(setSelfStiction(double)));
+    connect(m_ui->m_repulsion, SIGNAL(valueChanged(double)), this, SLOT(setSelfRepusion(double)));
+
+    connect(m_ui->m_timerUpdate, SIGNAL(valueChanged(int)), this, SLOT(setTimerUpdateDuration(int)));
     connect(m_ui->m_simBtn, SIGNAL(clicked(bool)), this, SLOT(toggleSim(bool)));
+    connect(m_ui->m_stepForward, SIGNAL(clicked()), this, SLOT(updateEvent()));
     connect(m_ui->m_recordBtn, SIGNAL(clicked(bool)), this, SLOT(toggleRecord(bool)));
+
     connect(m_ui->m_selectDirBtn, SIGNAL(clicked()), this, SLOT(selectExportDirectory()));
     connect(m_ui->m_expBtn, SIGNAL(clicked()), this, SLOT(exportSim()));
 
     connect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(updateEvent()));
     connect(&m_recordTimer, SIGNAL(timeout()), this, SLOT(recordEvent()));
 
-    m_ui->m_minimizationMethod->setCurrentIndex(m_scene->getHairById(0)->m_params->m_rodParams->m_strategy);
-    m_chronometer.start();
     toggleSim(m_ui->m_simBtn->isChecked());
 }
 
@@ -62,19 +77,14 @@ void MainWindow::toggleSim(bool s)
     if(!s)
     {
         m_updateTimer.stop();
-        m_chronometer.restart();
         return;
     }
 
     m_updateTimer.start(m_ui->m_timerUpdate->value());
-    m_chronometer.restart();
 }
 
 void MainWindow::updateEvent()
 {
-    std::cout << "TIME: " << m_chronometer.elapsed() << std::endl;
-    std::cout << "FPS: " << (float)mg::SEC / m_chronometer.restart() << std::endl;
-
     if (m_selectedObject != NULL)
     {
         m_selectedObject->setTransform(m_gl->getSelectionTransform());
@@ -141,33 +151,6 @@ void MainWindow::selectRenderObject(int index)
     m_selectedObject = m_scene->getRenderObjects()[index];
     m_gl->setSelection(true);
     m_gl->setSelectionTransform(m_selectedObject->getTransform());
-}
-
-void MainWindow::selectMinimizationMethod(int index)
-{
-    if (m_scene->getHairById(0) == NULL)
-    {
-        std::cerr << "No hair object found. Skipping..." << std::endl;
-        return;
-    }
-
-    switch (index)
-    {
-        case 0:
-            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::NONE;
-            break;
-        case 1:
-            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::NEWTON;
-            break;
-        case 2:
-            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::BFGS;
-            break;
-        case 3:
-            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::BFGS_NUMERIC;
-            break;
-        default:
-            break;
-    }
 }
 
 void MainWindow::selectExportDirectory()
@@ -255,4 +238,101 @@ void MainWindow::populateUI()
     m_ui->m_minimizationMethod->addItem(QString("NEWTON"));
     m_ui->m_minimizationMethod->addItem(QString("BFGS"));
     m_ui->m_minimizationMethod->addItem(QString("BFGS NUMERIC"));
+    m_ui->m_minimizationMethod->setCurrentIndex(m_scene->getHairById(0)->m_params->m_rodParams->m_strategy);
+    m_ui->m_minTolerance->setValue(m_scene->getHairById(0)->m_params->m_rodParams->m_tolerance);
+    m_ui->m_minMaxIter->setValue(m_scene->getHairById(0)->m_params->m_rodParams->m_maxIter);
+
+    m_ui->m_bendStiffness->setValue(m_scene->getHairById(0)->m_params->m_rodParams->m_B(0,0));
+    m_ui->m_twistStiffness->setValue(m_scene->getHairById(0)->m_params->m_rodParams->m_beta);
+    m_ui->m_maxForce->setValue(m_scene->getHairById(0)->m_params->m_rodParams->m_maxElasticForce);
+    m_ui->m_drag->setValue(m_scene->getHairById(0)->m_params->m_drag);
+    m_ui->m_pbdIter->setValue(m_scene->getHairById(0)->m_params->m_pbdIter);
+
+    m_ui->m_collisions->setChecked(m_scene->getHairById(0)->m_params->m_resolveCollisions);
+    m_ui->m_selfInteractions->setChecked(m_scene->getHairById(0)->m_params->m_resolveSelfInterations);
+    m_ui->m_stiction->setValue(m_scene->getHairById(0)->m_params->m_selfStiction);
+    m_ui->m_repulsion->setValue(m_scene->getHairById(0)->m_params->m_selfRepulsion);
+}
+
+void MainWindow::selectMinimizationMethod(int index)
+{
+    if (m_scene->getHairById(0) == NULL)
+    {
+        std::cerr << "No hair object found. Skipping..." << std::endl;
+        return;
+    }
+
+    switch (index)
+    {
+        case 0:
+            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::NONE;
+            break;
+        case 1:
+            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::NEWTON;
+            break;
+        case 2:
+            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::BFGS;
+            break;
+        case 3:
+            m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::BFGS_NUMERIC;
+            break;
+        default:
+            break;
+    }
+}
+
+void MainWindow::setMinimizationTolerance(double val)
+{
+    m_scene->getHairById(0)->m_params->m_rodParams->m_tolerance = val;
+}
+
+void MainWindow::setMinimizationMaxIter(int val)
+{
+    m_scene->getHairById(0)->m_params->m_rodParams->m_maxIter = val;
+}
+
+void MainWindow::setBendingStiffness(double val)
+{
+    m_scene->getHairById(0)->m_params->m_rodParams->setBendStiffness(val);
+}
+
+void MainWindow::setTwistingStiffness(double val)
+{
+    m_scene->getHairById(0)->m_params->m_rodParams->setTwistStiffness(val);
+}
+
+void MainWindow::setMaxElasticForce(double val)
+{
+    m_scene->getHairById(0)->m_params->m_rodParams->m_maxElasticForce = val;
+}
+
+void MainWindow::setDrag(double val)
+{
+    m_scene->getHairById(0)->m_params->m_drag = val;
+
+}
+
+void MainWindow::setPBDIter(int val)
+{
+    m_scene->getHairById(0)->m_params->m_pbdIter = val;
+}
+
+void MainWindow::toggleCollisions(bool val)
+{
+    m_scene->getHairById(0)->m_params->m_resolveCollisions = val;
+}
+
+void MainWindow::toggleSelfInterations(bool val)
+{
+    m_scene->getHairById(0)->m_params->m_resolveSelfInterations = val;
+}
+
+void MainWindow::setSelfStiction(double val)
+{
+    m_scene->getHairById(0)->m_params->m_selfStiction = val;
+}
+
+void MainWindow::setSelfRepusion(double val)
+{
+    m_scene->getHairById(0)->m_params->m_selfRepulsion = val;
 }
