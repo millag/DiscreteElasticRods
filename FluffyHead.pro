@@ -5,7 +5,6 @@ OBJECTS_DIR=obj
 isEqual(QT_MAJOR_VERSION, 5) {
 	cache()
         DEFINES +=QT5BUILD
-
 }
 
 
