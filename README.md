@@ -1,3 +1,4 @@
+### About
 This project is a stand alone hair simulation tool written as part of my [master thesis](https://nccastaff.bournemouth.ac.uk/jmacey/MastersProjects/MSc14/03/index.html)  at BU and incorporates a few components -
 * acurately capturing the dynamics of a single hair strand of an arbitrary shape - straight, wavy or curled
 * coarse approximation of hair to hair interactions
@@ -10,12 +11,10 @@ with each point on the curve. Implementation is based on the paper [_"Discrete E
 with a few modifications made to the way coupling rods to rigid body and enforcing rod inextensibility is handled. Position-based dynamics is used
 instead of the proposed manifold projection method. This achieves better performance and helps improve the stability of the simulation.
 
-# OpenGL preview
-
+### OpenGL preview
 https://vimeo.com/104214025
 
-# Imported in Houdini and rendered with Mantra
-
+### Imported in Houdini and rendered with Mantra
 **Video**
 
 https://vimeo.com/107726073
