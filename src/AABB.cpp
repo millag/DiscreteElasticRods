@@ -25,6 +25,6 @@ void AABB::calcBoundaries()
 {
     m_boxSize = m_vmax - m_vmin;
    // m_boundingRadius = (m_vmax - getCenter()).length();
-    m_enclosedRadius = std::max(m_boxSize[0], std::max(m_boxSize[1], m_boxSize[2])) * 0.5;
+    m_enclosedRadius = std::max(m_boxSize[0], std::max(m_boxSize[1], m_boxSize[2])) * 0.5f;
     assert(fabs((m_vmax - getCenter()).length() - (m_vmin - getCenter()).length()) < mg::ERR);
 }

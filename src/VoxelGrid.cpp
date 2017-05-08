@@ -1,5 +1,7 @@
 #include "VoxelGrid.h"
+#include <cmath>
 #include <cassert>
+
 
 VoxelGrid::VoxelGrid(const AABB &volume, unsigned divisions):
     m_volume(volume), m_divisions(divisions + 1), m_divisionsSqr((divisions + 1) * (divisions + 1))
@@ -121,14 +123,15 @@ void VoxelGrid::getInterpolatedVelocity(const mg::Vec3D& pos, mg::Vec3D& o_veloc
 
 unsigned VoxelGrid::findVoxel(const mg::Vec3D& pos, unsigned& o_i, unsigned& o_j, unsigned &o_k, mg::Vec3D& o_voxelPos) const
 {
+    const mg::Real maxVoxel = std::max(static_cast< mg::Real >(m_divisions) - 2.f, 0.f);
     o_voxelPos = pos - m_volume.getVMin();
-    o_i = mg::clamp(std::floor(o_voxelPos[0] / m_voxelSize), (mg::Real)0.0, (mg::Real)(m_divisions - 2));
-    o_j = mg::clamp(std::floor(o_voxelPos[1] / m_voxelSize), (mg::Real)0.0, (mg::Real)(m_divisions - 2));
-    o_k = mg::clamp(std::floor(o_voxelPos[2] / m_voxelSize), (mg::Real)0.0, (mg::Real)(m_divisions - 2));
+    o_i = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[0] / m_voxelSize), 0.f, maxVoxel));
+    o_j = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[1] / m_voxelSize), 0.f, maxVoxel));
+    o_k = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[2] / m_voxelSize), 0.f, maxVoxel));
 
-    o_voxelPos[0] = mg::clamp((mg::Real)fmod(o_voxelPos[0], m_voxelSize), (mg::Real)0, (mg::Real)1);
-    o_voxelPos[1] = mg::clamp((mg::Real)fmod(o_voxelPos[1], m_voxelSize), (mg::Real)0, (mg::Real)1);
-    o_voxelPos[2] = mg::clamp((mg::Real)fmod(o_voxelPos[2], m_voxelSize), (mg::Real)0, (mg::Real)1);
+    o_voxelPos[0] = mg::clamp(std::fmod(o_voxelPos[0], m_voxelSize), 0.f, 1.f);
+    o_voxelPos[1] = mg::clamp(std::fmod(o_voxelPos[1], m_voxelSize), 0.f, 1.f);
+    o_voxelPos[2] = mg::clamp(std::fmod(o_voxelPos[2], m_voxelSize), 0.f, 1.f);
 
     return getVoxelIdx(o_i, o_j, o_k);
 }
