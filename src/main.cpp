@@ -1,12 +1,38 @@
-#include <QApplication>
 #include "MainWindow.h"
-#include "ObjLoader.h"
+
+#include <QApplication>
+
+
+void InitDefaultGLSurfaceFormat()
+{
+	auto format = QSurfaceFormat::defaultFormat();
+	format.setMajorVersion( 3 );
+	format.setMinorVersion( 3 );
+	format.setProfile( QSurfaceFormat::CoreProfile );
+	format.setSwapBehavior( QSurfaceFormat::DoubleBuffer );
+	format.setDepthBufferSize( 24 );
+	format.setStencilBufferSize( 8 );
+	format.setSamples( 4 );
+	QSurfaceFormat::setDefaultFormat( format );
+}
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    MainWindow w;
-    w.show();
-//     hand control over to Qt framework
-    return a.exec();
+	InitDefaultGLSurfaceFormat();
+
+	QApplication app(argc, argv);
+
+	try
+	{
+		MainWindow w;
+		w.show();
+		return app.exec();
+	}
+	catch( std::exception& e )
+	{
+		qInfo() << "Fatal error: "
+				<< e.what();
+	}
+
+	return 1;
 }
