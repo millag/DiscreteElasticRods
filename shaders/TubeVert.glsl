@@ -1,4 +1,3 @@
-// glsl vertex shader
 #version 410
 
 layout (location = 0) in vec3 inVert;
@@ -9,6 +8,6 @@ out vec3 normal_cs;
 
 void main()
 {
-    vert_cs = inVert;
-    normal_cs = normalize(inNormal);
+	vert_cs = inVert;
+	normal_cs = normalize(inNormal);
 }

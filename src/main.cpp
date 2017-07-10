@@ -6,8 +6,8 @@
 void InitDefaultGLSurfaceFormat()
 {
 	auto format = QSurfaceFormat::defaultFormat();
-	format.setMajorVersion( 3 );
-	format.setMinorVersion( 3 );
+	format.setMajorVersion( 4 );
+	format.setMinorVersion( 1 );
 	format.setProfile( QSurfaceFormat::CoreProfile );
 	format.setSwapBehavior( QSurfaceFormat::DoubleBuffer );
 	format.setDepthBufferSize( 24 );

@@ -1,4 +1,5 @@
-#version 400 core
+#version 410
+
 /// @brief the vertex passed in
 layout (location = 0) in vec3 inVert;
 /// @brief the normal passed in
@@ -52,31 +53,31 @@ uniform mat4 M;
 
 void main()
 {
-    // calculate the fragments surface normal
-    fragmentNormal = (normalMatrix*inNormal);
+	// calculate the fragments surface normal
+	fragmentNormal = (normalMatrix*inNormal);
 
 
-    if (Normalize == true)
-    {
-        fragmentNormal = normalize(fragmentNormal);
-    }
-    // calculate the vertex position
-    gl_Position = MVP*vec4(inVert,1.0);
+	if (Normalize == true)
+	{
+		fragmentNormal = normalize(fragmentNormal);
+	}
+	// calculate the vertex position
+	gl_Position = MVP*vec4(inVert,1.0);
 
-    vec4 worldPosition = M * vec4(inVert, 1.0);
-    eyeDirection = normalize(viewerPos - worldPosition.xyz);
-    // Get vertex position in eye coordinates
-    // Transform the vertex to eye co-ordinates for frag shader
-    /// @brief the vertex in eye co-ordinates  homogeneous
-    vec4 eyeCord=MV*vec4(inVert,1);
+	vec4 worldPosition = M * vec4(inVert, 1.0);
+	eyeDirection = normalize(viewerPos - worldPosition.xyz);
+	// Get vertex position in eye coordinates
+	// Transform the vertex to eye co-ordinates for frag shader
+	/// @brief the vertex in eye co-ordinates  homogeneous
+	vec4 eyeCord=MV*vec4(inVert,1);
 
-    vPosition = eyeCord.xyz / eyeCord.w;;
+	vPosition = eyeCord.xyz / eyeCord.w;;
 
-    float dist;
+	float dist;
 
-    lightDir=vec3(light.position.xyz-eyeCord.xyz);
-    dist = length(lightDir);
-    lightDir/= dist;
-    halfVector = normalize(eyeDirection + lightDir);
+	lightDir=vec3(light.position.xyz-eyeCord.xyz);
+	dist = length(lightDir);
+	lightDir/= dist;
+	halfVector = normalize(eyeDirection + lightDir);
 
 }

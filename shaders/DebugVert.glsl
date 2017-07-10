@@ -1,4 +1,3 @@
-// glsl vertex shader
 #version 410
 
 layout (location = 0) in vec3 inVert;
@@ -15,11 +14,11 @@ out vec3 force_gs;
 
 void main()
 {
-    vert_gs = inVert;
-    kb_gs = inKB;
-    m1_gs = inM1;
-    m2_gs = inM2;
-    force_gs = inForce;
+	vert_gs = inVert;
+	kb_gs = inKB;
+	m1_gs = inM1;
+	m2_gs = inM2;
+	force_gs = inForce;
 
-    gl_Position = vec4(inVert, 1.0);
+	gl_Position = vec4(inVert, 1.0);
 }
