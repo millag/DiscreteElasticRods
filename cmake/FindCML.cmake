@@ -8,8 +8,8 @@
 #  CML_LIBRARIES    - link these to use CML
 #
 
-if ( DEFINED PACKAGE_ROOT_DIR )
-	list( APPEND _cml_search_dirs "${PACKAGE_ROOT_DIR}/cml-1_0_2" )
+if ( DEFINED EXTERNAL_PACKAGES_DIR )
+	list( APPEND _cml_search_dirs "${EXTERNAL_PACKAGES_DIR}/cml-1_0_2" )
 endif ()
 
 find_path( CML_INCLUDE_DIR

@@ -8,8 +8,8 @@
 #  DLIB_LIBRARIES    - link these to use DLIB
 #
 
-if ( DEFINED PACKAGE_ROOT_DIR )
-	list( APPEND _dlib_search_dirs "${PACKAGE_ROOT_DIR}/dlib-18.9" )
+if ( DEFINED EXTERNAL_PACKAGES_DIR )
+	list( APPEND _dlib_search_dirs "${EXTERNAL_PACKAGES_DIR}/dlib-18.9" )
 endif ()
 
 find_path( DLIB_INCLUDE_DIR

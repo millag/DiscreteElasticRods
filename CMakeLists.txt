@@ -5,7 +5,7 @@ list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 project( DiscreteElasticRods )
 
-set( PACKAGE_ROOT_DIR "${CMAKE_SOURCE_DIR}/libs/" )
+set( EXTERNAL_PACKAGES_DIR "${CMAKE_SOURCE_DIR}/libs/" )
 
 # run moc automatically when needed.
 set( CMAKE_AUTOMOC ON )

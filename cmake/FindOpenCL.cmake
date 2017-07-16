@@ -8,11 +8,11 @@
 #  OPENCL_LIBRARIES    - link these to use OpenCL
 #
 
-if ( DEFINED PACKAGE_ROOT_DIR )
+if ( DEFINED EXTERNAL_PACKAGES_DIR )
 	if( WIN32 )
-		list( APPEND _opencl_search_dirs "${PACKAGE_ROOT_DIR}/libs/NVidia/CUDA/v8.0/Windows" )
+		list( APPEND _opencl_search_dirs "${EXTERNAL_PACKAGES_DIR}/NVidia/CUDA/v8.0/Windows" )
 	else( WIN32 )
-		list( APPEND _opencl_search_dirs "${PACKAGE_ROOT_DIR}/libs/NVidia/CUDA/v8.0/Linux" )
+		list( APPEND _opencl_search_dirs "${EXTERNAL_PACKAGES_DIR}/NVidia/CUDA/v8.0/Linux" )
 	endif( WIN32)
 endif ()
 
