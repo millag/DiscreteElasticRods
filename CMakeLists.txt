@@ -83,9 +83,9 @@ target_include_directories( ${PROJECT_NAME}
 target_link_libraries( ${PROJECT_NAME}
 	Qt5::Core Qt5::Widgets Qt5::OpenGL ${CML_LIBRARIES} ${DLIB_LIBRARIES} )
 
-add_custom_target( COPY_PROJECT_ASSETS
+add_custom_target( COPY_RUNTIME_FILES
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${PROJECT_BINARY_DIR}/shaders
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets ${PROJECT_BINARY_DIR}/assets
-	COMMENT "Copying project assets to ${PROJECT_BINARY_DIR}"
+	COMMENT "Copying project runtime files to ${PROJECT_BINARY_DIR}"
 	)
-add_dependencies( ${PROJECT_NAME} COPY_PROJECT_ASSETS )
+add_dependencies( ${PROJECT_NAME} COPY_RUNTIME_FILES )
