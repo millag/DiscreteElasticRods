@@ -18,11 +18,6 @@ class GLShaderManager
 public:
     static GLShaderManager* getInstance();
 
-    GLShaderManager()
-    { }
-    ~GLShaderManager()
-    { }
-
     inline QOpenGLShaderProgram* getShader(const std::string& shaderName) const
     {
         auto it = m_glShaderCache.find(shaderName);
@@ -42,6 +37,11 @@ public:
                                      const std::string& tessEvalShaderPath,
                                      bool reload = false);
 private:
+    GLShaderManager() = default;
+    ~GLShaderManager() = default;
+    GLShaderManager(const GLShaderManager& other);
+    GLShaderManager& operator =(const GLShaderManager& other);
+
     typedef std::unordered_map< std::string, std::unique_ptr< QOpenGLShaderProgram > > GLShaderCache;
     GLShaderCache m_glShaderCache;
 };

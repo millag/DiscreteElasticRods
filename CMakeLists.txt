@@ -5,6 +5,9 @@ list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 project( DiscreteElasticRods )
 
+set( CMAKE_CXX_STANDARD 11 )
+set( CMAKE_CXX_STANDARD_REQUIRED ON )
+
 set( EXTERNAL_PACKAGES_DIR "${CMAKE_SOURCE_DIR}/libs/" )
 
 # run moc automatically when needed.
@@ -21,6 +24,7 @@ find_package( DLIB REQUIRED )
 set( PROJECT_HEADERS
 	include/MainWindow.h
 	include/GLWindow.h
+	include/GLRenderer.h
 	include/GLUtils.h
 	include/Camera.h
 	include/cml_config.h
@@ -50,12 +54,14 @@ set( PROJECT_SOURCES
 	src/main.cpp
 	src/MainWindow.cpp
 	src/GLWindow.cpp
+	src/GLRenderer.cpp
 	src/GLUtils.cpp
 	src/Camera.cpp
 	src/Utils.cpp
 	src/Scene.cpp
 	src/Mesh.cpp
 	src/RenderObject.cpp
+	src/TransformTool.cpp
 	src/AABB.cpp
 	src/ElasticRod.cpp
 	src/Spiral.cpp
