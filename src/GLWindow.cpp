@@ -12,7 +12,7 @@ GLViewport::GLViewport(QWidget* parent , Qt::WindowFlags f):
     QOpenGLWidget(parent, f),
     m_transformHdl(&m_cam)
 {
-    // re-size the widget to that of the parent (in this case the GLFrame passed in on construction)
+    // re-size the widget to that of the parent
     if (parent)
     {
         resize(parent->size());
@@ -24,7 +24,7 @@ GLViewport::GLViewport(QWidget* parent , Qt::WindowFlags f):
 
 GLViewport::~GLViewport()
 {
-    qInfo() << "Shutting down GL viewport";
+    qInfo() << "Shutting down viewport";
     m_drawList.clear();
 }
 
@@ -34,36 +34,14 @@ void GLViewport::initializeGL()
 //	and then once whenever the widget has been assigned a new QOpenGLContext.
 //	This function should set up any required OpenGL context rendering flags, defining display lists, etc.
 
-    auto gl = QOpenGLContext::currentContext()->functions();
-
-    gl->glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    gl->glEnable(GL_DEPTH_TEST);
-    gl->glEnable(GL_LINE_SMOOTH);
+    if (!m_renderer.initialize())
+    {
+        qWarning() << "Faled to initialize renderer.";
+        return;
+    }
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->loadShader("Color",
-                                        "shaders/ColorVert.glsl",
-                                        "shaders/ColorFrag.glsl");
-
-    shaderMan->loadShader("Phong",
-                          "shaders/PhongVertex.glsl",
-                          "shaders/PhongFragment.glsl");
-
-    shaderMan->loadShader("Tube",
-                          "shaders/TubeVert.glsl",
-                          "shaders/TubeFrag.glsl",
-                          "",
-                          "shaders/TubeTCS.glsl",
-                          "shaders/TubeTES.glsl"
-                          );
-
-    shaderMan->loadShader("DebugRod",
-                          "shaders/DebugVert.glsl",
-                          "shaders/DebugFrag.glsl",
-                          "shaders/DebugGeom.glsl",
-                          "",
-                          ""
-                          );
+    auto shader = shaderMan->getShader("Color");
 
     m_cam.lookAt( mg::Vec3D(1.f, 2.f, 3.f), mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
     GLDrawable::createGrid(m_refGrid, 10, 10, *shader);
@@ -190,17 +168,19 @@ void GLViewport::paintGL()
 //	this is our main drawing routine
 
     auto gl = QOpenGLContext::currentContext()->functions();
-//	clear the screen and depth buffer
+//    clear the screen and depth buffer
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    auto vp = m_cam.getVPMatrix();
+    m_renderer.setTransform(m_cam.getVPMatrix());
+
 //	draw reference grid
     if (m_refGrid.isValid())
     {
         auto shader = m_refGrid.getShader();
         shader->bind();
 
-        shader->setUniformValue("mvp", QMatrix4x4((vp * m_refGrid.getTransform()).data()));
+        const mg::Matrix4D tm = m_renderer.getTransform() * m_refGrid.getTransform();
+        shader->setUniformValue("mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
         m_refGrid.draw();
     }
 
@@ -224,10 +204,24 @@ void GLViewport::paintGL()
             auto shader = drawable->getShader();
             shader->bind();
 
-            shader->setUniformValue( "mvp", QMatrix4x4((vp * drawable->getTransform()).data()));
+            const mg::Matrix4D tm = m_renderer.getTransform() * drawable->getTransform();
+            shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
             drawable->draw();
         }
     }
+
+
+    m_renderer.beginDrawable();
+    m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(1.f, 0.f, 0.f));
+    m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
+    m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 0.f, 1.f));
+    m_renderer.endDrawable();
+
+    m_renderer.beginDrawable();
+//    m_renderer.box(mg::Vec3D(1.f, 0.f, 0.f), mg::Vec3D(0.f, -1.f, 1.f),  mg::Vec3D(1.f, 1.f, 1.f));
+    m_renderer.sphere(mg::Vec3D(1.f, 0.f, 0.f), 1.f);
+//    m_renderer.cone(mg::Vec3D(1.f, 0.f, 0.f), mg::Vec3D(-1.f, 0.f, 0.f), 0.2f, 0.1f);
+    m_renderer.endDrawable();
 
 //	if (m_scene->getHairById(0) == NULL)
 //	{

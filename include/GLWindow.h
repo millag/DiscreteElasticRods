@@ -2,6 +2,7 @@
 #define __GL_WINDOW_H__
 
 #include "Scene.h"
+#include "GLRenderer.h"
 #include "GLUtils.h"
 #include "TransformTool.h"
 
@@ -80,6 +81,8 @@ private :
     void drawHairStrand(const ElasticRod& strand);
 
 private:
+    GLRenderer m_renderer;
+
 /// @brief viewport camera
     Camera m_cam;
 /// @brief reference grid
