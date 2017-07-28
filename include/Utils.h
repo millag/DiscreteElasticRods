@@ -28,6 +28,12 @@ namespace mg
     void truncate(mg::Vec3D& io_v, mg::Real maxLength);
     mg::Vec3D faceforward(const mg::Vec3D& n, const mg::Vec3D& v);
     mg::Vec3D reflect(const mg::Vec3D& v, const mg::Vec3D& n);
+
+    template <typename T, int N>
+    constexpr int CountOf(T const (&)[N]) noexcept
+    {
+        return N;
+    }
 }
 
 #endif // UTILS_H

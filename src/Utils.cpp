@@ -39,7 +39,7 @@ mg::Vec3D mg::genRandPointOnDisk(mg::Real radius, const mg::Vec3D& center)
 
 mg::Real mg::getSign(mg::Real value)
 {
-    return (value < 0)? -1 : 1;
+    return (value < 0)? -1.f : 1.f;
 }
 
 void mg::truncate(mg::Vec3D& io_v, mg::Real maxLength)
