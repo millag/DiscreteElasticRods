@@ -41,7 +41,7 @@ void GLViewport::initializeGL()
     }
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("Color");
+    auto shader = shaderMan->getShader("ConstantColor");
 
     m_cam.lookAt( mg::Vec3D(1.f, 2.f, 3.f), mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
     GLDrawable::createGrid(m_refGrid, 10, 10, *shader);
@@ -317,7 +317,7 @@ void GLViewport::mouseReleaseEvent(QMouseEvent* event)
 void GLViewport::buildVAOs(const std::vector< Mesh* >& meshList, DrawList& o_drawList) const
 {
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("Color");
+    auto shader = shaderMan->getShader("ConstantColor");
     if (!shader)
     {
         return;

@@ -199,9 +199,9 @@ bool GLRenderer::initialize()
         gl->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         auto shaderMan = GLShaderManager::getInstance();
-        shaderMan->loadShader("Color",
-                              "shaders/ColorVert.glsl",
-                              "shaders/ColorFrag.glsl");
+        shaderMan->loadShader("ConstantColor",
+                              "shaders/ConstantColorVert.glsl",
+                              "shaders/ConstantColorFrag.glsl");
 
         shaderMan->loadShader("Phong",
                               "shaders/PhongVertex.glsl",
@@ -254,7 +254,7 @@ void GLRenderer::polyline(const mg::Vec3D pos[], int cnt, bool closed)
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("Color");
+    auto shader = shaderMan->getShader("ConstantColor");
     if(!shader)
     {
         return;
@@ -289,7 +289,7 @@ void GLRenderer::circle(const mg::Vec3D& base, const mg::Vec3D& dir, mg::Real ra
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("Color");
+    auto shader = shaderMan->getShader("ConstantColor");
     if(!shader)
     {
         return;
@@ -332,7 +332,7 @@ void GLRenderer::box(const mg::Vec3D& base, const mg::Vec3D& dir, const mg::Vec3
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("Color");
+    auto shader = shaderMan->getShader("ConstantColor");
     if(!shader)
     {
         return;
@@ -376,7 +376,7 @@ void GLRenderer::sphere(const mg::Vec3D& base, mg::Real radius)
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("Color");
+    auto shader = shaderMan->getShader("ConstantColor");
     if(!shader)
     {
         return;
@@ -417,7 +417,7 @@ void GLRenderer::cone(const mg::Vec3D& base, const mg::Vec3D& dir, mg::Real heig
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("Color");
+    auto shader = shaderMan->getShader("ConstantColor");
     if(!shader)
     {
         return;
