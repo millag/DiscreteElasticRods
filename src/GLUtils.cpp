@@ -174,7 +174,7 @@ void GLDrawable::draw()
     auto gl = QOpenGLContext::currentContext()->functions();
 
     m_shaderProgram->bind();
-    m_shaderProgram->setUniformValue("color", m_color[0], m_color[1], m_color[2]);
+    m_shaderProgram->setUniformValue("color", m_color[0], m_color[1], m_color[2], 1.f);
 
     m_vao.bind();
     if (m_ibo.isCreated() )

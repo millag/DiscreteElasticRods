@@ -41,7 +41,7 @@ void GLViewport::initializeGL()
     }
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("ConstantColor");
+    auto shader = shaderMan->getShader("Constant");
 
     m_cam.lookAt( mg::Vec3D(1.f, 2.f, 3.f), mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
     GLDrawable::createGrid(m_refGrid, 10, 10, *shader);
@@ -184,31 +184,31 @@ void GLViewport::paintGL()
         m_refGrid.draw();
     }
 
-    if (m_scene)
-    {
-        auto roList = m_scene->getRenderObjects();
-        for (auto it = roList.begin(); it != roList.end(); ++it)
-        {
-            RenderObject* ro = (*it);
-            if (!ro)
-            {
-                continue;
-            }
+//    if (m_scene)
+//    {
+//        auto roList = m_scene->getRenderObjects();
+//        for (auto it = roList.begin(); it != roList.end(); ++it)
+//        {
+//            RenderObject* ro = (*it);
+//            if (!ro)
+//            {
+//                continue;
+//            }
 
-            auto& drawable =  m_drawList.at(ro->getMeshId());
-            if (!drawable || !drawable->isValid())
-            {
-                continue;
-            }
+//            auto& drawable =  m_drawList.at(ro->getMeshId());
+//            if (!drawable || !drawable->isValid())
+//            {
+//                continue;
+//            }
 
-            auto shader = drawable->getShader();
-            shader->bind();
+//            auto shader = drawable->getShader();
+//            shader->bind();
 
-            const mg::Matrix4D tm = m_renderer.getTransform() * drawable->getTransform();
-            shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
-            drawable->draw();
-        }
-    }
+//            const mg::Matrix4D tm = m_renderer.getTransform() * drawable->getTransform();
+//            shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
+//            drawable->draw();
+//        }
+//    }
 
 
     m_renderer.beginDrawable();
@@ -218,9 +218,9 @@ void GLViewport::paintGL()
     m_renderer.endDrawable();
 
     m_renderer.beginDrawable();
-//    m_renderer.box(mg::Vec3D(1.f, 0.f, 0.f), mg::Vec3D(0.f, -1.f, 1.f),  mg::Vec3D(1.f, 1.f, 1.f));
+    m_renderer.box(mg::Vec3D(-1.f, 0.f, 0.f), mg::Vec3D(0.f, -1.f, 1.f),  mg::Vec3D(1.f, 1.f, 1.f));
     m_renderer.sphere(mg::Vec3D(1.f, 0.f, 0.f), 1.f);
-//    m_renderer.cone(mg::Vec3D(1.f, 0.f, 0.f), mg::Vec3D(-1.f, 0.f, 0.f), 0.2f, 0.1f);
+    m_renderer.cone(mg::Vec3D(2.f, 0.f, 0.f), mg::Vec3D(-1.f, 0.f, 0.f), 0.2f, 0.1f);
     m_renderer.endDrawable();
 
 //	if (m_scene->getHairById(0) == NULL)
@@ -317,7 +317,7 @@ void GLViewport::mouseReleaseEvent(QMouseEvent* event)
 void GLViewport::buildVAOs(const std::vector< Mesh* >& meshList, DrawList& o_drawList) const
 {
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("ConstantColor");
+    auto shader = shaderMan->getShader("Constant");
     if (!shader)
     {
         return;

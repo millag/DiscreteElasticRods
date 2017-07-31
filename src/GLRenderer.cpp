@@ -199,13 +199,13 @@ bool GLRenderer::initialize()
         gl->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         auto shaderMan = GLShaderManager::getInstance();
-        shaderMan->loadShader("ConstantColor",
-                              "shaders/ConstantColorVert.glsl",
-                              "shaders/ConstantColorFrag.glsl");
+        shaderMan->loadShader("Constant",
+                              "shaders/ConstantVert.glsl",
+                              "shaders/ConstantFrag.glsl");
 
         shaderMan->loadShader("Phong",
-                              "shaders/PhongVertex.glsl",
-                              "shaders/PhongFragment.glsl");
+                              "shaders/PhongVert.glsl",
+                              "shaders/PhongFrag.glsl");
 
         shaderMan->loadShader("Tube",
                               "shaders/TubeVert.glsl",
@@ -254,7 +254,7 @@ void GLRenderer::polyline(const mg::Vec3D pos[], int cnt, bool closed)
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("ConstantColor");
+    auto shader = shaderMan->getShader("Constant");
     if(!shader)
     {
         return;
@@ -272,7 +272,7 @@ void GLRenderer::polyline(const mg::Vec3D pos[], int cnt, bool closed)
     vbo.allocate(pos, cnt * sizeof(pos[0]));
 
     shader->bind();
-    shader->setUniformValue("color", 0.f, 1.f, 0.f);
+    shader->setUniformValue("color", 0.f, 1.f, 0.f, 1.f);
     shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>(getTransform().data()) );
 
     shader->enableAttributeArray("position");
@@ -289,7 +289,7 @@ void GLRenderer::circle(const mg::Vec3D& base, const mg::Vec3D& dir, mg::Real ra
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("ConstantColor");
+    auto shader = shaderMan->getShader("Constant");
     if(!shader)
     {
         return;
@@ -317,7 +317,7 @@ void GLRenderer::circle(const mg::Vec3D& base, const mg::Vec3D& dir, mg::Real ra
     vbo.allocate(pos.data(), static_cast<GLsizei>(pos.size() * sizeof(pos[0])));
 
     shader->bind();
-    shader->setUniformValue("color", 0.f, 1.f, 0.f);
+    shader->setUniformValue("color", 0.f, 1.f, 0.f, 1.f);
     shader->setUniformValue("mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
 
     shader->enableAttributeArray("position");
@@ -332,7 +332,7 @@ void GLRenderer::box(const mg::Vec3D& base, const mg::Vec3D& dir, const mg::Vec3
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("ConstantColor");
+    auto shader = shaderMan->getShader("Constant");
     if(!shader)
     {
         return;
@@ -345,9 +345,9 @@ void GLRenderer::box(const mg::Vec3D& base, const mg::Vec3D& dir, const mg::Vec3
         return;
     }
 
-    std::vector<mg::Vec3D> pos;
+    std::vector<mg::Vec3D> position;
     std::vector<unsigned> idx;
-    auto primType = static_cast<GLenum>(createBox(pos, idx));
+    auto primType = static_cast<GLenum>(createBox(position, idx));
 
     mg::Matrix4D tm;
     mg::matrix_aim_at(tm , base, base + dir, mg::axis_order_zxy);
@@ -358,10 +358,10 @@ void GLRenderer::box(const mg::Vec3D& base, const mg::Vec3D& dir, const mg::Vec3
 
     QOpenGLVertexArrayObject::Binder raiiVAO(&m_defaultVAO);
     vbo.bind();
-    vbo.allocate(pos.data(), static_cast<GLsizei>(pos.size() * sizeof(pos[0])));
+    vbo.allocate(position.data(), static_cast<GLsizei>(position.size() * sizeof(position[0])));
 
     shader->bind();
-    shader->setUniformValue("color", 0.f, 0.f, 1.f);
+    shader->setUniformValue("color", 0.f, 0.f, 1.f, 1.f);
     shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
 
     shader->enableAttributeArray("position");
@@ -376,7 +376,7 @@ void GLRenderer::sphere(const mg::Vec3D& base, mg::Real radius)
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("ConstantColor");
+    auto shader = shaderMan->getShader("Constant");
     if(!shader)
     {
         return;
@@ -402,7 +402,7 @@ void GLRenderer::sphere(const mg::Vec3D& base, mg::Real radius)
     vbo.allocate(pos.data(), static_cast<GLsizei>(pos.size() * sizeof(pos[0])));
 
     shader->bind();
-    shader->setUniformValue("color", 0.f, 0.f, 1.f);
+    shader->setUniformValue("color", 0.f, 0.f, 1.f, 1.f);
     shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
 
     shader->enableAttributeArray("position");
@@ -417,7 +417,7 @@ void GLRenderer::cone(const mg::Vec3D& base, const mg::Vec3D& dir, mg::Real heig
     assert( isValid() );
 
     auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("ConstantColor");
+    auto shader = shaderMan->getShader("Constant");
     if(!shader)
     {
         return;
@@ -446,7 +446,7 @@ void GLRenderer::cone(const mg::Vec3D& base, const mg::Vec3D& dir, mg::Real heig
     vbo.allocate(pos.data(), static_cast<GLsizei>(pos.size() * sizeof(pos[0])));
 
     shader->bind();
-    shader->setUniformValue("color", 0.f, 0.f, 1.f);
+    shader->setUniformValue("color", 0.f, 0.f, 1.f, 1.f);
     shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
 
     shader->enableAttributeArray("position");
