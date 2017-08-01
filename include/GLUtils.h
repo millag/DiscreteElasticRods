@@ -85,4 +85,30 @@ private:
     mg::Matrix4D m_transform;
 };
 
+class GLLight
+{
+public:
+    GLLight();
+
+    void loadToShader(QOpenGLShaderProgram& shader) const;
+
+    mg::Vec3D m_ambient;
+    mg::Vec3D m_diffuse;
+    mg::Vec3D m_specular;
+    mg::Vec3D m_position;
+};
+
+class GLMaterial
+{
+public:
+    GLMaterial();
+
+    void loadToShader(QOpenGLShaderProgram& shader) const;
+
+    mg::Vec3D m_ambient;
+    mg::Vec3D m_diffuse;
+    mg::Vec3D m_specular;
+    mg::Real m_shininess;
+};
+
 #endif // GLUTILS_H

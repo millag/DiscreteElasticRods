@@ -30,9 +30,9 @@ GLViewport::~GLViewport()
 
 void GLViewport::initializeGL()
 {
-//	This virtual function is called once before the first call to paintGL() or resizeGL(),
-//	and then once whenever the widget has been assigned a new QOpenGLContext.
-//	This function should set up any required OpenGL context rendering flags, defining display lists, etc.
+    // this virtual function is called once before the first call to paintGL() or resizeGL(),
+    // and then once whenever the widget has been assigned a new QOpenGLContext.
+    // this function should set up any required OpenGL context rendering flags, defining display lists, etc.
 
     if (!m_renderer.initialize())
     {
@@ -40,12 +40,15 @@ void GLViewport::initializeGL()
         return;
     }
 
+    m_cam.lookAt( mg::Vec3D(1.f, 2.f, 3.f), mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
+
     auto shaderMan = GLShaderManager::getInstance();
     auto shader = shaderMan->getShader("Constant");
 
-    m_cam.lookAt( mg::Vec3D(1.f, 2.f, 3.f), mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
+    // reference grid
     GLDrawable::createGrid(m_refGrid, 10, 10, *shader);
 
+    // scene
     if (m_scene)
     {
         buildVAOs(m_scene->getMeshes(), m_drawList);
@@ -105,8 +108,8 @@ void GLViewport::initializeGL()
 
 void GLViewport::resizeGL(int w, int h)
 {
-//	This virtual function is called whenever the widget has been resized.
-//	The new size is passed in width and height.
+    // this virtual function is called whenever the widget has been resized.
+    // the new size is passed in width and height.
     const auto aspect = (mg::Real)(w) / h;
     m_cam.perspective( mg::Constants::pi() / 3, aspect, 0.001f, 1000.f );
 }
@@ -168,18 +171,18 @@ void GLViewport::paintGL()
 //	this is our main drawing routine
 
     auto gl = QOpenGLContext::currentContext()->functions();
-//    clear the screen and depth buffer
+    // clear the screen and depth buffer
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    m_renderer.setTransform(m_cam.getVPMatrix());
+    m_renderer.setCamera(m_cam);
 
-//	draw reference grid
+    // draw reference grid
     if (m_refGrid.isValid())
     {
         auto shader = m_refGrid.getShader();
         shader->bind();
 
-        const mg::Matrix4D tm = m_renderer.getTransform() * m_refGrid.getTransform();
+        const mg::Matrix4D tm = m_renderer.getViewProjectionMatrix() * m_refGrid.getTransform();
         shader->setUniformValue("mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
         m_refGrid.draw();
     }
@@ -212,15 +215,21 @@ void GLViewport::paintGL()
 
 
     m_renderer.beginDrawable();
+    m_renderer.setColor(mg::Vec3D(1.f, 0.f, 0.f));
     m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(1.f, 0.f, 0.f));
+    m_renderer.setColor(mg::Vec3D(0.f, 1.f, 0.f));
     m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
+    m_renderer.setColor(mg::Vec3D(0.f, 0.f, 1.f));
     m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 0.f, 1.f));
     m_renderer.endDrawable();
 
     m_renderer.beginDrawable();
-    m_renderer.box(mg::Vec3D(-1.f, 0.f, 0.f), mg::Vec3D(0.f, -1.f, 1.f),  mg::Vec3D(1.f, 1.f, 1.f));
-    m_renderer.sphere(mg::Vec3D(1.f, 0.f, 0.f), 1.f);
-    m_renderer.cone(mg::Vec3D(2.f, 0.f, 0.f), mg::Vec3D(-1.f, 0.f, 0.f), 0.2f, 0.1f);
+    m_renderer.setColor(mg::Vec3D(0.3f, 0.5f, 0.1f));
+    m_renderer.box(mg::Vec3D(-2.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 1.f),  mg::Vec3D(1.f, 1.f, 1.f));
+    m_renderer.setColor(mg::Vec3D(0.1f, 0.5f, 0.5f));
+    m_renderer.sphere(mg::Vec3D(2.f, 0.f, 0.f), 0.5f);
+    m_renderer.setColor(mg::Vec3D(0.3f, 0.1f, 0.7f));
+    m_renderer.cone(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(1.f, 0.f, 0.f), 0.9f, 0.2f);
     m_renderer.endDrawable();
 
 //	if (m_scene->getHairById(0) == NULL)
