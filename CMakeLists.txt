@@ -10,12 +10,12 @@ set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 set( EXTERNAL_PACKAGES_DIR "${CMAKE_SOURCE_DIR}/libs/" )
 
-# run moc automatically when needed.
-set( CMAKE_AUTOMOC ON )
 # find the QtWidgets library
 find_package( Qt5Core )
 find_package( Qt5Widgets )
 find_package( Qt5OpenGL )
+# run moc automatically when needed.
+set( CMAKE_AUTOMOC ON )
 
 # TODO: CML and DLIB should be submodules
 find_package( CML REQUIRED )

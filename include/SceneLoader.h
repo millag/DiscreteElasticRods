@@ -3,20 +3,22 @@
 
 #include "Scene.h"
 
+#include <memory>
+
+
 class SceneLoader
 {
 public:
+	SceneLoader();
+	~SceneLoader();
 
-    SceneLoader();
-    ~SceneLoader();
+	bool loadTestScene( Scene& scene );
+	bool loadScene( const char *filename, Scene& scene );
+	bool loadMesh( const char *fileName, Mesh& mesh );
 
-    Scene* loadScene(const char *filename);
-    Scene* loadTestScene();
-    Mesh* loadMesh(const char *fileName);
 private:
-
-    struct PImpl;
-    PImpl* m_impl;
+	struct PImpl;
+	std::unique_ptr<PImpl> m_impl;
 };
 
 #endif // SCENELOADER_H

@@ -1,37 +1,46 @@
+#include "SceneLoader.h"
+#include "Scene.h"
 #include "MainWindow.h"
 
 #include <QApplication>
 
 
-void InitDefaultGLSurfaceFormat()
+void InitializeGLDefaultSurfaceFormat()
 {
-    auto format = QSurfaceFormat::defaultFormat();
-    format.setVersion(4, 1);
-    format.setProfile( QSurfaceFormat::CoreProfile );
-    format.setSwapBehavior( QSurfaceFormat::DoubleBuffer );
-    format.setDepthBufferSize( 24 );
-    format.setStencilBufferSize( 8 );
-    format.setSamples( 4 );
-    QSurfaceFormat::setDefaultFormat( format );
+	auto format = QSurfaceFormat::defaultFormat();
+	format.setProfile( QSurfaceFormat::CoreProfile );
+	format.setSwapBehavior( QSurfaceFormat::DoubleBuffer );
+	format.setDepthBufferSize( 24 );
+	format.setStencilBufferSize( 8 );
+	format.setSamples( 4 );
+	QSurfaceFormat::setDefaultFormat( format );
 }
 
 int main(int argc, char *argv[])
 {
-    InitDefaultGLSurfaceFormat();
+	InitializeGLDefaultSurfaceFormat();
 
-    QApplication app(argc, argv);
+	QApplication app(argc, argv);
 
-    try
-    {
-        MainWindow w;
-        w.show();
-        return app.exec();
-    }
-    catch( std::exception& e )
-    {
-        qInfo() << "Fatal error: "
-                << e.what();
-    }
+	try
+	{
+//		create our scene
+		Scene scene;
+		SceneLoader loader;
+		loader.loadTestScene( scene );
+//		loader.loadScene( "assets/scene1_long_curly.mg", scene );
+		scene.initialize();
 
-    return 1;
+		MainWindow window;
+		window.setScene( scene );
+		window.show();
+		return app.exec();
+	}
+	catch( std::exception& e )
+	{
+		qInfo() << "Fatal error: "
+		        << e.what();
+	}
+
+	return 0;
 }

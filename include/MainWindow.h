@@ -5,119 +5,85 @@
 #include <QTimer>
 
 #include "GLWindow.h"
-#include "Scene.h"
 #include "AnimationBuffer.h"
 
-namespace Ui {
+namespace Ui
+{
     class MainWindow;
 }
 
 class MainWindow : public QMainWindow
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief ctor
-    /// @param[in] parent the parent window
-    //----------------------------------------------------------------------------------------------------------------------
-    explicit MainWindow(QWidget *parent = 0);
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief dtor
-    //----------------------------------------------------------------------------------------------------------------------
-    ~MainWindow();
+	explicit MainWindow( QWidget *parent = nullptr );
+	~MainWindow();
 
-private:
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief our user interface
-    //----------------------------------------------------------------------------------------------------------------------
-    Ui::MainWindow* m_ui;
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief our open gl renderer
-    //----------------------------------------------------------------------------------------------------------------------
-    GLViewport* m_gl;
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief our scene
-    //----------------------------------------------------------------------------------------------------------------------
-    Scene* m_scene;
-
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief the update timer
-    //----------------------------------------------------------------------------------------------------------------------
-    QTimer m_updateTimer;
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief selected object to which transformations calculated on mouse movement are applied
-    /// if NULL camera is modified
-    //----------------------------------------------------------------------------------------------------------------------
-    RenderObject* m_selectedObject;
-
-    bool m_exporting;
-    unsigned m_frame;
-
-    QString m_exportDir;
-    QString m_exportGeoDir;
-    QString m_exportCurvDir;
-
-    QTimer m_recordTimer;
-    AnimationBuffer m_animationBuffer;
+	void setScene( Scene& scene );
 
 private slots :
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief slot to toggle the sim on and off
-    //----------------------------------------------------------------------------------------------------------------------
-    void toggleSim(bool s);
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief timer event trigered by updateTimer and forward btn
-    //----------------------------------------------------------------------------------------------------------------------
-    void updateEvent();
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief timer event trigered by recordTimer
-    //----------------------------------------------------------------------------------------------------------------------
-    void recordEvent();
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief slot to toggle the recording on and off
-    //----------------------------------------------------------------------------------------------------------------------
-    void toggleRecord(bool s);
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief set update timer interval
-    //----------------------------------------------------------------------------------------------------------------------
-    void setTimerUpdateDuration(int ms);
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief slot to pick the selected object
-    //----------------------------------------------------------------------------------------------------------------------
-    void selectRenderObject(int index);
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief slot to export current state of simulation
-    //----------------------------------------------------------------------------------------------------------------------
-    void exportSim();
-    void selectExportDirectory();
+	/// @brief slot to toggle the sim on and off
+	void toggleSim(bool s);
 
+	/// @brief timer event trigered by updateTimer and forward btn
+	void updateEvent();
 
-    void setBendingStiffness(double val);
-    void setTwistingStiffness(double val);
-    void setMaxElasticForce(double val);
-    void setDrag(double val);
-    void setPBDIter(int val);
+	/// @brief timer event trigered by recordTimer
+	void recordEvent();
 
-    void selectMinimizationMethod(int index);
-    void setMinimizationTolerance(double val);
-    void setMinimizationMaxIter(int val);
+	/// @brief slot to toggle the recording on and off
+	void toggleRecord(bool s);
 
-    void toggleCollisions(bool val);
-    void toggleSelfInterations(bool val);
-    void setSelfStiction(double val);
-    void setSelfRepusion(double val);
+	/// @brief set update timer interval
+	void setTimerUpdateDuration(int ms);
 
+	/// @brief slot to pick the selected object
+	void selectRenderObject(int index);
+
+	/// @brief slot to export current state of simulation
+	void exportSim();
+
+	void selectExportDirectory();
+
+	void setBendingStiffness(double val);
+	void setTwistingStiffness(double val);
+	void setMaxElasticForce(double val);
+	void setDrag(double val);
+	void setPBDIter(int val);
+
+	void selectMinimizationMethod(int index);
+	void setMinimizationTolerance(double val);
+	void setMinimizationMaxIter(int val);
+
+	void toggleCollisions(bool val);
+	void toggleSelfInterations(bool val);
+	void setSelfStiction(double val);
+	void setSelfRepusion(double val);
 
 private:
-    //----------------------------------------------------------------------------------------------------------------------
-    /// @brief populate combo with selectable objects
-    //----------------------------------------------------------------------------------------------------------------------
-    void populateUI();
+	void updateUI();
 
-    void exportFrame(unsigned frame);
+	void exportFrame(unsigned frame);
 
+private:
+	std::unique_ptr<Ui::MainWindow> m_ui; ///< UI layout
+	GLViewport* m_gl; ///< OpenGL widget
+	Scene* m_scene; ///< source scene
+	QTimer m_updateTimer; ///< update timer
+	/// @brief selected object to which transformations calculated on
+	/// mouse movement are applied if NULL camera is modified
+	RenderObject* m_selectedObject;
 
+	bool m_exporting;
+	unsigned m_frame;
+
+	QString m_exportDir;
+	QString m_exportGeoDir;
+	QString m_exportCurvDir;
+
+	QTimer m_recordTimer;
+	AnimationBuffer m_animationBuffer;
 };
 
 #endif // MAINWINDOW_H

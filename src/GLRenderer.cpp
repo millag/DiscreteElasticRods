@@ -5,7 +5,6 @@
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_4_1_Core>
 #include <QOpenGLBuffer>
 
 #include <cassert>
@@ -29,34 +28,34 @@ static PrimitiveType createCircle(unsigned udiv, std::vector<mg::Vec3D>& o_vertD
 static PrimitiveType createBox(std::vector<mg::Vec3D>& o_vertData, std::vector<unsigned>& o_indices)
 {
 	const mg::Vec3D pos[] = {
-		// front side
-		{-0.5f, 0.5f, 0.5f},
-		{-0.5f, -0.5f, 0.5f},
-		{0.5f, -0.5f, 0.5f},
-		{0.5f, 0.5f, 0.5f},
-		// back side
-		{-0.5f, 0.5f, -0.5f},
-		{-0.5f, -0.5f, -0.5f},
-		{0.5f, -0.5f, -0.5f},
-		{0.5f, 0.5f, -0.5f},
+	    // front side
+	    {-0.5f, 0.5f, 0.5f},
+	    {-0.5f, -0.5f, 0.5f},
+	    {0.5f, -0.5f, 0.5f},
+	    {0.5f, 0.5f, 0.5f},
+	    // back side
+	    {-0.5f, 0.5f, -0.5f},
+	    {-0.5f, -0.5f, -0.5f},
+	    {0.5f, -0.5f, -0.5f},
+	    {0.5f, 0.5f, -0.5f},
 	};
 
 	const unsigned pindices[] = {
-		0,1,2, 0,2,3,
-		3,2,6, 6,7,3,
-		7,6,5, 7,5,4,
-		4,5,1, 4,1,0,
-		0,3,4, 3,7,4,
-		1,5,2, 2,5,6,
+	    0,1,2, 0,2,3,
+	    3,2,6, 6,7,3,
+	    7,6,5, 7,5,4,
+	    4,5,1, 4,1,0,
+	    0,3,4, 3,7,4,
+	    1,5,2, 2,5,6,
 	};
 
 	const mg::Vec3D normals[] = {
-		{0.f, 0.f, 1.f},
-		{1.f, 0.f, 0.f},
-		{0.f, 0.f, -1.f},
-		{-1.f, 0.f, 0.f},
-		{0.f, 1.f, 0.f},
-		{0.f, -1.f, 0.f},
+	    {0.f, 0.f, 1.f},
+	    {1.f, 0.f, 0.f},
+	    {0.f, 0.f, -1.f},
+	    {-1.f, 0.f, 0.f},
+	    {0.f, 1.f, 0.f},
+	    {0.f, -1.f, 0.f},
 	};
 
 	o_vertData.reserve( o_vertData.size() + 2 * 6 * 4 );
@@ -84,37 +83,37 @@ static PrimitiveType createSphere(unsigned udiv, std::vector<mg::Vec3D>& o_vertD
 	o_indices.reserve(o_indices.size() + (udiv + 1) * (1 + udiv * 2) / 2); // aritmetic series: 1+3+5+ ...
 
 	const mg::Vec3D octahedron[] = {
-		{1.f, 0.f, 0.f},
-		{0.f, 1.f, 0.f},
-		{0.f, 0.f, 1.f},
+	    {1.f, 0.f, 0.f},
+	    {0.f, 1.f, 0.f},
+	    {0.f, 0.f, 1.f},
 
-		{1.f, 0.f, 0.f},
-		{0.f, 0.f, 1.f},
-		{0.f, -1.f, 0.f},
+	    {1.f, 0.f, 0.f},
+	    {0.f, 0.f, 1.f},
+	    {0.f, -1.f, 0.f},
 
-		{1.f, 0.f, 0.f},
-		{0.f, -1.f, 0.f},
-		{0.f, 0.f, -1.f},
+	    {1.f, 0.f, 0.f},
+	    {0.f, -1.f, 0.f},
+	    {0.f, 0.f, -1.f},
 
-		{1.f, 0.f, 0.f},
-		{0.f, 0.f, -1.f},
-		{0.f, 1.f, 0.f},
+	    {1.f, 0.f, 0.f},
+	    {0.f, 0.f, -1.f},
+	    {0.f, 1.f, 0.f},
 
-		{-1.f, 0.f, 0.f},
-		{0.f, 0.f, 1.f},
-		{0.f, 1.f, 0.f},
+	    {-1.f, 0.f, 0.f},
+	    {0.f, 0.f, 1.f},
+	    {0.f, 1.f, 0.f},
 
-		{-1.f, 0.f, 0.f},
-		{0.f, -1.f, 0.f},
-		{0.f, 0.f, 1.f},
+	    {-1.f, 0.f, 0.f},
+	    {0.f, -1.f, 0.f},
+	    {0.f, 0.f, 1.f},
 
-		{-1.f, 0.f, 0.f},
-		{0.f, 0.f, -1.f},
-		{0.f, -1.f, 0.f},
+	    {-1.f, 0.f, 0.f},
+	    {0.f, 0.f, -1.f},
+	    {0.f, -1.f, 0.f},
 
-		{-1.f, 0.f, 0.f},
-		{0.f, 1.f, 0.f},
-		{0.f, 0.f, -1.f},
+	    {-1.f, 0.f, 0.f},
+	    {0.f, 1.f, 0.f},
+	    {0.f, 0.f, -1.f},
 	};
 
 	for (int k = 0; k < mg::CountOf(octahedron); k += 3)
@@ -226,8 +225,7 @@ bool GLRenderer::initialize()
 	m_context = QOpenGLContext::currentContext();
 	if (m_context)
 	{
-//        auto gl = m_context->functions();
-		auto gl = static_cast<QOpenGLFunctions_4_1_Core*>(m_context->versionFunctions());
+		auto gl = m_context->functions();
 		qDebug() << "Initializing OpenGL render";
 		qDebug() << "Vendor:" << reinterpret_cast<const char*>( gl->glGetString( GL_VENDOR ) );
 		qDebug() << "Renderer:" << reinterpret_cast<const char*>( gl->glGetString( GL_RENDERER ) );
@@ -237,34 +235,34 @@ bool GLRenderer::initialize()
 		gl->glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		gl->glEnable(GL_DEPTH_TEST);
 		gl->glEnable(GL_CULL_FACE);
-//        gl->glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+		gl->glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
 		gl->glFrontFace(GL_CCW);
 //        gl->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		auto shaderMan = GLShaderManager::getInstance();
 		shaderMan->loadShader("Constant",
-							  "shaders/ConstantVert.glsl",
-							  "shaders/ConstantFrag.glsl");
+		                      "shaders/ConstantVert.glsl",
+		                      "shaders/ConstantFrag.glsl");
 
 		shaderMan->loadShader("Phong",
-							  "shaders/PhongVert.glsl",
-							  "shaders/PhongFrag.glsl");
+		                      "shaders/PhongVert.glsl",
+		                      "shaders/PhongFrag.glsl");
 
 		shaderMan->loadShader("Tube",
-							  "shaders/TubeVert.glsl",
-							  "shaders/TubeFrag.glsl",
-							  "",
-							  "shaders/TubeTCS.glsl",
-							  "shaders/TubeTES.glsl"
-							  );
+		                      "shaders/TubeVert.glsl",
+		                      "shaders/TubeFrag.glsl",
+		                      "",
+		                      "shaders/TubeTCS.glsl",
+		                      "shaders/TubeTES.glsl"
+		                      );
 
 		shaderMan->loadShader("DebugRod",
-							  "shaders/DebugVert.glsl",
-							  "shaders/DebugFrag.glsl",
-							  "shaders/DebugGeom.glsl",
-							  "",
-							  ""
-							  );
+		                      "shaders/DebugVert.glsl",
+		                      "shaders/DebugFrag.glsl",
+		                      "shaders/DebugGeom.glsl",
+		                      "",
+		                      ""
+		                      );
 
 		m_vMatrix.zero();
 		m_pMatrix.zero();
