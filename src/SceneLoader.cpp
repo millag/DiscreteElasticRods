@@ -272,7 +272,7 @@ bool SceneLoader::loadMesh( const char* fileName, Mesh& mesh )
 	if (    loader.getNormals().size() != loader.getVertices().size()
 	     || loader.getVNIndices().size() != loader.getVIndices().size() )
 	{
-		Mesh::computeNormals( mesh, Mesh::ShadingMode::GOURAUD );
+		Mesh::computeNormals( Mesh::GOURAUD, mesh );
 	} else
 	{
 		mesh.m_normals.resize( loader.getNormals().size() );

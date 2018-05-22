@@ -25,17 +25,17 @@ public:
 	}
 
 	QOpenGLShaderProgram* loadShader(const std::string& shaderName,
-									 const std::string& vertShaderPath,
-									 const std::string& fragShaderPath,
-									 bool reload = false);
+	                                 const std::string& vertShaderPath,
+	                                 const std::string& fragShaderPath,
+	                                 bool reload = false);
 
 	QOpenGLShaderProgram* loadShader(const std::string& shaderName,
-									 const std::string& vertShaderPath,
-									 const std::string& fragShaderPath,
-									 const std::string& geomShaderPath,
-									 const std::string& tessCtrlShaderPath,
-									 const std::string& tessEvalShaderPath,
-									 bool reload = false);
+	                                 const std::string& vertShaderPath,
+	                                 const std::string& fragShaderPath,
+	                                 const std::string& geomShaderPath,
+	                                 const std::string& tessCtrlShaderPath,
+	                                 const std::string& tessEvalShaderPath,
+	                                 bool reload = false);
 private:
 	GLShaderManager() = default;
 	~GLShaderManager() = default;
@@ -49,39 +49,35 @@ private:
 class GLDrawable
 {
 public:
-	static bool createGrid(GLDrawable& o_out, unsigned w, unsigned h, QOpenGLShaderProgram& shader);
-	static bool createFrom(GLDrawable& o_out, const Mesh& mesh, QOpenGLShaderProgram& shader);
+	static bool createGrid( unsigned usize, unsigned vsize, QOpenGLShaderProgram& shader, GLDrawable& o_out );
+	static bool createFrom( const Mesh& mesh, QOpenGLShaderProgram& shader, GLDrawable& o_out );
 
-	GLDrawable()
-	{ }
-	~GLDrawable()
-	{
-		invalidate();
-	}
-
-	inline const mg::Matrix4D& getTransform() const { return m_transform; }
-	inline mg::Matrix4D& getTransform() { return m_transform; }
-	inline QOpenGLShaderProgram* getShader() { return m_shaderProgram; }
+	GLDrawable();
+	~GLDrawable();
 
 	inline bool isValid() const
 	{
 		return m_vao.isCreated() && m_nElements > 0 && m_shaderProgram && m_shaderProgram->isLinked();
 	}
 
+	inline const mg::Matrix4D& getTransform() const { return m_transform; }
+	inline mg::Matrix4D& getTransform() { return m_transform; }
+	inline QOpenGLShaderProgram* getShader() { return m_shaderProgram; }
+
 	void invalidate();
 	void draw();
 
 private:
+	QOpenGLVertexArrayObject m_vao;
 	QOpenGLBuffer m_vvbo;
 	QOpenGLBuffer m_nvbo;
 	QOpenGLBuffer m_ibo;
-	QOpenGLVertexArrayObject m_vao;
-	GLenum m_glDrawMode = GL_TRIANGLES;
+
+	GLenum m_primitive = GL_POINTS;
 	int m_nElements = 0;
 
 	QOpenGLShaderProgram* m_shaderProgram = nullptr;
 	mg::Vec3D m_color;
-
 	mg::Matrix4D m_transform;
 };
 
@@ -92,7 +88,9 @@ public:
 	{}
 
 	void loadToShader(QOpenGLShaderProgram& shader) const
-	{}
+	{
+		UNUSED_VALUE( shader );
+	}
 
 	mg::Vec3D m_ambient;
 	mg::Vec3D m_diffuse;
@@ -107,12 +105,16 @@ public:
 	{}
 
 	void loadToShader(QOpenGLShaderProgram& shader) const
-	{}
+	{
+		UNUSED_VALUE( shader );
+	}
 
 	mg::Vec3D m_ambient;
 	mg::Vec3D m_diffuse;
 	mg::Vec3D m_specular;
 	mg::Real m_shininess;
 };
+
+typedef std::vector< std::unique_ptr< GLDrawable > > DrawList;
 
 #endif // GLUTILS_H

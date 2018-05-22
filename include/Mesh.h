@@ -4,40 +4,48 @@
 #include "config.h"
 
 #include <vector>
-#include <cassert>
 
 class Mesh
 {
 public:
-    struct ShadingMode{ enum Enum { FLAT, GOURAUD }; };
-    struct PrimitiveMode{ enum Enum { TRIANGLES = 3, LINES = 2, POINTS = 1 }; };
+	enum ShadingMode
+	{
+		FLAT,
+		GOURAUD,
+	};
 
-    Mesh(unsigned id = -1, PrimitiveMode::Enum mode = PrimitiveMode::TRIANGLES):m_id(id), m_mode(mode) { }
-    ~Mesh() { }
+	enum Primitive
+	{
+		POINTS = 1,
+		LINES = 2,
+		TRIANGLES = 3,
+	};
 
-    inline unsigned getId() const { return m_id; }
-    inline void setId(unsigned id) { m_id = id; }
+	static Mesh* createSphere( int id, unsigned udiv = 20u, unsigned vdiv = 10u );
+	static void computeNormals( ShadingMode mode, Mesh& o_mesh );
 
-    inline PrimitiveMode::Enum getPrimitiveType() const { return m_mode; }
-    inline unsigned getNVertices() const { return (unsigned)(m_vertices.size()); }
-    inline unsigned getNVerticesPerPrimitive() const { return (unsigned)(m_mode); }
-    unsigned getPrimitiveOffset(unsigned primitiveIdx) const;
-    unsigned getNPrimitives() const;
+	Mesh( unsigned id = -1, Primitive primitive = TRIANGLES );
+	~Mesh();
 
-    inline bool hasNormals() const { return m_normals.size() > 0; }
+	unsigned getId() const { return m_id; }
+	void setId( unsigned id ) { m_id = id; }
+
+	Primitive getPrimitiveType() const { return m_primitive; }
+	unsigned getNPrimitives() const;
+	unsigned getPrimitiveOffset( unsigned primitiveIdx ) const;
+	unsigned getNVertices() const { return static_cast<unsigned>( m_vertices.size() ); }
+	unsigned getNVerticesPerPrimitive() const { return static_cast<unsigned>( m_primitive ); }
+
+	bool hasNormals() const { return m_normals.size() > 0; }
 
 public:
-    static Mesh* createSphere(int id, unsigned divu = 20, unsigned divv = 10);
-    static void computeNormals(Mesh& o_mesh, ShadingMode::Enum mode);
-
-public:
-    std::vector<mg::Vec3D> m_vertices;
-    std::vector<mg::Vec3D> m_normals;
-    std::vector<unsigned> m_vindices;
+	std::vector<mg::Vec3D> m_vertices;
+	std::vector<mg::Vec3D> m_normals;
+	std::vector<unsigned> m_vindices;
 
 private:
-    unsigned m_id;
-    PrimitiveMode::Enum m_mode;
+	unsigned m_id = -1;
+	Primitive m_primitive = TRIANGLES;
 };
 
 #endif // MESH_H

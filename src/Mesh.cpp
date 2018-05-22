@@ -1,117 +1,121 @@
 #include "Mesh.h"
-#include <limits>
 
+Mesh::Mesh( unsigned id, Primitive primitive ):
+    m_id( id ),
+    m_primitive( primitive )
+{ }
+
+Mesh::~Mesh() = default;
 
 unsigned Mesh::getNPrimitives() const
 {
-    switch (m_mode)
-    {
-    case PrimitiveMode::TRIANGLES:
-        return (m_vindices.size() / 3);
+	switch ( m_primitive )
+	{
+	case Primitive::TRIANGLES:
+	case Primitive::LINES:
+		return static_cast<unsigned>( m_vindices.size() / getNVerticesPerPrimitive() );
+	case Primitive::POINTS:
+		return static_cast<unsigned>( m_vertices.size() );
+	default:
+		break;
+	}
 
-    case PrimitiveMode::LINES:
-        return (m_vindices.size() / 2);
-
-    case PrimitiveMode::POINTS:
-        return (m_vertices.size());
-
-    default:
-        break;
-    }
-    return 0;
+	return 0;
 }
 
 unsigned Mesh::getPrimitiveOffset(unsigned primitiveIdx) const
 {
-    assert( ((primitiveIdx + 1) * getNVerticesPerPrimitive()) <= m_vindices.size() );
-    return primitiveIdx * getNVerticesPerPrimitive();
+	assert( ( ( primitiveIdx + 1 ) * getNVerticesPerPrimitive() ) <= m_vindices.size() );
+	return primitiveIdx * getNVerticesPerPrimitive();
+}
+
+Mesh* Mesh::createSphere( int id, unsigned udiv, unsigned vdiv )
+{
+	Mesh* mesh = new Mesh( id );
+
+//	north pole vertex
+	mesh->m_vertices.emplace_back( 0.f, 1.f, 0.f );
+
+	mg::Real y, r, x, z;
+	for ( auto i = 1u; i < vdiv; ++i )
+	{
+		const auto vangle = ( static_cast<mg::Real>( i ) / vdiv ) * mg::Constants::pi();
+		y = std::cos( vangle );
+		r = std::sin( vangle );
+
+		for ( auto j = 0u; j < udiv; ++j )
+		{
+			const auto uangle = ( static_cast<mg::Real>( j ) / udiv ) * mg::Constants::two_pi();
+			x = std::cos( uangle ) * r;
+			z = std::sin( uangle ) * r;
+			mesh->m_vertices.emplace_back( x, y, z );
+		}
+	}
+
+//	south pole vertex
+	mesh->m_vertices.emplace_back( 0.f, -1.f, 0.f );
+
+//	north pole indices
+	for ( auto i = 0u; i < udiv; ++i )
+	{
+		mesh->m_vindices.push_back( 0 );
+		mesh->m_vindices.push_back( 1 + ( i + 1 ) % udiv );
+		mesh->m_vindices.push_back( 1 + i % udiv );
+	}
+
+	for ( auto i = 0u; i < vdiv - 2; ++i )
+	{
+		const auto topIdx = 1 + i * udiv;
+		const auto bottomIdx = 1 + ( i + 1 ) * udiv;
+		for ( auto j = 0u; j < udiv; ++j )
+		{
+			const auto currOffset = j % udiv;
+			const auto nextOffset = ( j + 1 ) % udiv;
+
+			mesh->m_vindices.push_back( topIdx + currOffset );
+			mesh->m_vindices.push_back( topIdx + nextOffset );
+			mesh->m_vindices.push_back( bottomIdx + currOffset );
+
+			mesh->m_vindices.push_back( bottomIdx  + currOffset );
+			mesh->m_vindices.push_back( topIdx + nextOffset );
+			mesh->m_vindices.push_back( bottomIdx + nextOffset );
+		}
+	}
+
+//	south pole indices
+	const auto lastIdx = static_cast<unsigned>( mesh->m_vertices.size() - 1 );
+	for ( auto i = 0u; i < udiv; ++i )
+	{
+		mesh->m_vindices.push_back( lastIdx );
+		mesh->m_vindices.push_back( lastIdx - 1 - ( i + 1 ) % udiv );
+		mesh->m_vindices.push_back( lastIdx - 1 - i % udiv );
+	}
+
+	Mesh::computeNormals( GOURAUD, *mesh );
+
+	return mesh;
 }
 
 //TODO: mode is always ignored - GOURAUD assumed
-void Mesh::computeNormals(Mesh& o_mesh, ShadingMode::Enum mode)
+void Mesh::computeNormals( ShadingMode mode, Mesh& o_mesh )
 {
-    o_mesh.m_normals.resize(o_mesh.m_vertices.size(), mg::Vec3D(0,0,0));
+	UNUSED_VALUE( mode );
 
-    mg::Vec3D dirx, dirz;
-    for (unsigned j = 0; j < o_mesh.m_vindices.size(); j += 3)
-    {
-        for (unsigned i = 0; i < 3; ++i)
-        {
-            dirz = o_mesh.m_vertices[ o_mesh.m_vindices[j + (i + 1)%3] ] -  o_mesh.m_vertices[ o_mesh.m_vindices[j + i] ];
-            dirx = o_mesh.m_vertices[ o_mesh.m_vindices[j + (i + 2)%3] ] -  o_mesh.m_vertices[ o_mesh.m_vindices[j + i] ];
-            o_mesh.m_normals[ o_mesh.m_vindices[j + i] ] += mg::cross(dirz, dirx);
-        }
-    }
+	o_mesh.m_normals.resize( o_mesh.m_vertices.size(), mg::Vec3D( 0.f, 0.f, 0.f ) );
 
-    typedef std::vector<mg::Vec3D>::iterator Iter;
-    for (Iter it = o_mesh.m_normals.begin(); it != o_mesh.m_normals.end(); ++it)
-    {
-        it->normalize();
-    }
-}
+	mg::Vec3D dirx, dirz;
+	for ( auto j = 0u; j < o_mesh.m_vindices.size(); j += 3 )
+	{
+		for ( auto i = 0; i < 3; ++i )
+		{
+			dirz = o_mesh.m_vertices[ o_mesh.m_vindices[j + ( i + 1 ) % 3] ] -  o_mesh.m_vertices[o_mesh.m_vindices[j + i]];
+			dirx = o_mesh.m_vertices[ o_mesh.m_vindices[j + ( i + 2 ) % 3] ] -  o_mesh.m_vertices[o_mesh.m_vindices[j + i]];
+			o_mesh.m_normals[o_mesh.m_vindices[j + i]] += mg::cross( dirz, dirx );
+		}
+	}
 
-
-Mesh* Mesh::createSphere(int id, unsigned divu, unsigned divv)
-{
-    Mesh* mesh = new Mesh(id);
-
-    const mg::Real radius = 1.0;
-
-    mesh->m_vertices.push_back(mg::Vec3D(0,radius,0));
-    mg::Real y, r, x, z;
-    for (unsigned i = 1; i < divv; i++)
-    {
-        y = std::cos( ((mg::Real)i / divv) * mg::Constants::pi() );
-        r = std::sin( ((mg::Real)i / divv) * mg::Constants::pi() );
-
-        for (unsigned j = 0; j < divu; j++)
-        {
-            x = std::cos( ((mg::Real)j / divu) * mg::Constants::two_pi()) * r;
-            z = std::sin( ((mg::Real)j / divu) * mg::Constants::two_pi()) * r;
-            mesh->m_vertices.push_back(mg::Vec3D(x,y,z));
-        }
-    }
-    mesh->m_vertices.push_back(mg::Vec3D(0,-radius,0));
-
-    for (unsigned j = 0; j < divu; j++)
-    {
-        unsigned idxp1 = 0;
-        unsigned idxc1 = j % divu + 1;
-        unsigned idxc2 = (j + 1) % divu + 1;
-
-        mesh->m_vindices.push_back(idxp1);
-        mesh->m_vindices.push_back(idxc2);
-        mesh->m_vindices.push_back(idxc1);
-
-        idxc1 = (divv - 2) * divu + j % divu + 1;
-        idxc2 = (divv - 2) * divu + (j + 1) % divu + 1;
-        idxp1 = (divv - 1) * divu + 1;
-
-        mesh->m_vindices.push_back(idxp1);
-        mesh->m_vindices.push_back(idxc1);
-        mesh->m_vindices.push_back(idxc2);
-
-    }
-
-    for (unsigned i = 1; i < divv - 1; i++)
-    {
-        for (unsigned j = 0; j < divu; j++)
-        {
-            unsigned idxp1 = (i - 1) * divu + j % divu + 1;
-            unsigned idxp2 = (i - 1) * divu + (j + 1) % divu + 1;
-            unsigned idxc1 = i * divu + j % divu + 1;
-            unsigned idxc2 = i * divu + (j + 1) % divu + 1;
-
-            mesh->m_vindices.push_back(idxp1);
-            mesh->m_vindices.push_back(idxp2);
-            mesh->m_vindices.push_back(idxc1);
-
-            mesh->m_vindices.push_back(idxc2);
-            mesh->m_vindices.push_back(idxc1);
-            mesh->m_vindices.push_back(idxp2);
-        }
-    }
-
-    Mesh::computeNormals( *mesh,  Mesh::ShadingMode::GOURAUD );
-    return mesh;
+	for ( auto& n : o_mesh.m_normals )
+	{
+		n.normalize();
+	}
 }

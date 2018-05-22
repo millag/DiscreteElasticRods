@@ -4,8 +4,12 @@
 #include "cml_config.h"
 #include <cml/cml.h>
 
+#include <cassert>
+
 #define MULTI_THREAD
 //#define DBUGG
+
+#define UNUSED_VALUE( name ) ( void )( name )
 
 namespace mg
 {

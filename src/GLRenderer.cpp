@@ -214,7 +214,6 @@ static PrimitiveType createCone(unsigned udiv, std::vector<mg::Vec3D>& o_vertDat
 
 }
 
-
 bool GLRenderer::initialize()
 {
 	if (isValid())

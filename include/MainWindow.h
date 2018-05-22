@@ -68,12 +68,12 @@ private:
 
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui; ///< UI layout
-	GLViewport* m_gl; ///< OpenGL widget
-	Scene* m_scene; ///< source scene
+	GLViewport* m_gl = nullptr; ///< GL widget
+	Scene* m_scene = nullptr; ///< scene to render
 	QTimer m_updateTimer; ///< update timer
 	/// @brief selected object to which transformations calculated on
 	/// mouse movement are applied if NULL camera is modified
-	RenderObject* m_selectedObject;
+	RenderObject* m_selectedObject = nullptr;
 
 	bool m_exporting;
 	unsigned m_frame;

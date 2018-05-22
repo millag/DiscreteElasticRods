@@ -4,19 +4,22 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 
-static inline GLenum getGLDrawMode(Mesh::PrimitiveMode::Enum type)
+namespace
 {
-	switch (type)
+static inline GLenum ToGLPrimitive( Mesh::Primitive type )
+{
+	switch ( type )
 	{
-		case Mesh::PrimitiveMode::TRIANGLES:
-			return GL_TRIANGLES;
-		case Mesh::PrimitiveMode::LINES:
-			return GL_LINE;
-		case Mesh::PrimitiveMode::POINTS:
-			return GL_POINTS;
+	case Mesh::TRIANGLES:
+		return GL_TRIANGLES;
+	case Mesh::LINES:
+		return GL_LINE;
+	case Mesh::POINTS:
+		return GL_POINTS;
 	}
 
 	return GL_POINTS;
+}
 }
 
 GLShaderManager* GLShaderManager::getInstance()
@@ -26,9 +29,9 @@ GLShaderManager* GLShaderManager::getInstance()
 }
 
 QOpenGLShaderProgram* GLShaderManager::loadShader(const std::string& shaderName,
-												  const std::string& vertShaderPath,
-												  const std::string& fragShaderPath,
-												  bool reload)
+                                                  const std::string& vertShaderPath,
+                                                  const std::string& fragShaderPath,
+                                                  bool reload)
 {
 	if (!reload)
 	{
@@ -70,12 +73,12 @@ QOpenGLShaderProgram* GLShaderManager::loadShader(const std::string& shaderName,
 }
 
 QOpenGLShaderProgram* GLShaderManager::loadShader(const std::string& shaderName,
-												  const std::string& vertShaderPath,
-												  const std::string& fragShaderPath,
-												  const std::string& geomShaderPath,
-												  const std::string& tessCtrlShaderPath,
-												  const std::string& tessEvalShaderPath,
-												  bool reload)
+                                                  const std::string& vertShaderPath,
+                                                  const std::string& fragShaderPath,
+                                                  const std::string& geomShaderPath,
+                                                  const std::string& tessCtrlShaderPath,
+                                                  const std::string& tessEvalShaderPath,
+                                                  bool reload)
 {
 	if (!reload)
 	{
@@ -107,21 +110,21 @@ QOpenGLShaderProgram* GLShaderManager::loadShader(const std::string& shaderName,
 	}
 
 	if (   !geomShaderPath.empty()
-		&& !result->addShaderFromSourceFile(QOpenGLShader::Geometry, geomShaderPath.c_str()))
+	    && !result->addShaderFromSourceFile(QOpenGLShader::Geometry, geomShaderPath.c_str()))
 	{
 		qWarning() << "Geometry shader compilation failed";
 		return nullptr;
 	}
 
 	if (   !tessCtrlShaderPath.empty()
-		&& !result->addShaderFromSourceFile(QOpenGLShader::TessellationControl, tessCtrlShaderPath.c_str()))
+	    && !result->addShaderFromSourceFile(QOpenGLShader::TessellationControl, tessCtrlShaderPath.c_str()))
 	{
 		qWarning() << "Tesselation control shader compilation failed";
 		return nullptr;
 	}
 
 	if (   !tessEvalShaderPath.empty()
-		&& !result->addShaderFromSourceFile(QOpenGLShader::TessellationEvaluation, tessEvalShaderPath.c_str()))
+	    && !result->addShaderFromSourceFile(QOpenGLShader::TessellationEvaluation, tessEvalShaderPath.c_str()))
 	{
 		qWarning() << "Tesselation eval shader compilation failed";
 		return nullptr;
@@ -138,24 +141,35 @@ QOpenGLShaderProgram* GLShaderManager::loadShader(const std::string& shaderName,
 }
 
 
+GLDrawable::GLDrawable():
+    m_vvbo( QOpenGLBuffer::VertexBuffer ),
+    m_nvbo( QOpenGLBuffer::VertexBuffer ),
+    m_ibo( QOpenGLBuffer::IndexBuffer )
+{ }
+
+GLDrawable::~GLDrawable()
+{
+	invalidate();
+}
+
 void GLDrawable::invalidate()
 {
-	if (m_vao.isCreated())
+	if ( m_vao.isCreated() )
 	{
 		m_vao.destroy();
 	}
 
-	if (m_vvbo.isCreated())
+	if ( m_vvbo.isCreated() )
 	{
 		m_vvbo.destroy();
 	}
 
-	if (m_nvbo.isCreated())
+	if ( m_nvbo.isCreated() )
 	{
 		m_nvbo.destroy();
 	}
 
-	if (m_ibo.isCreated())
+	if ( m_ibo.isCreated() )
 	{
 		m_ibo.destroy();
 	}
@@ -166,7 +180,7 @@ void GLDrawable::invalidate()
 
 void GLDrawable::draw()
 {
-	if (!isValid())
+	if ( !isValid() )
 	{
 		return;
 	}
@@ -174,35 +188,33 @@ void GLDrawable::draw()
 	auto gl = QOpenGLContext::currentContext()->functions();
 
 	m_shaderProgram->bind();
-	m_shaderProgram->setUniformValue("color", m_color[0], m_color[1], m_color[2], 1.f);
+	m_shaderProgram->setUniformValue( "color", m_color[0], m_color[1], m_color[2], 1.f );
 
 	m_vao.bind();
-	if (m_ibo.isCreated() )
+	if ( m_ibo.isCreated() )
 	{
-		gl->glDrawElements(m_glDrawMode, m_nElements, GL_UNSIGNED_INT, nullptr);
+		gl->glDrawElements( m_primitive, m_nElements, GL_UNSIGNED_INT, nullptr );
 	}
 	else
 	{
-		gl->glDrawArrays(m_glDrawMode, 0, m_nElements);
+		gl->glDrawArrays( m_primitive, 0, m_nElements );
 	}
 
 	m_vao.release();
 }
 
 
-bool GLDrawable::createGrid(GLDrawable &o_out, unsigned w, unsigned h, QOpenGLShaderProgram& shader)
+bool GLDrawable::createGrid( unsigned usize, unsigned vsize, QOpenGLShaderProgram& shader, GLDrawable &o_out )
 {
 	o_out.invalidate();
 
-	if (!o_out.m_vao.create())
+	if ( !o_out.m_vao.create() )
 	{
 		qWarning() << "Unable to create grid VAO";
 		return false;
 	}
 
-	o_out.m_vao.bind();
-
-	if (!o_out.m_vvbo.create())
+	if ( !o_out.m_vvbo.create() )
 	{
 		qWarning() << "Unable to create grid VBO";
 		o_out.invalidate();
@@ -210,54 +222,58 @@ bool GLDrawable::createGrid(GLDrawable &o_out, unsigned w, unsigned h, QOpenGLSh
 	}
 
 	// create grid geometry
-	const unsigned usize = 10;
-	const unsigned vsize = 10;
 	mg::Vec3D bleft(-1, 0, -1);
 	mg::Vec3D bright(1, 0, -1);
 	mg::Vec3D tleft(-1, 0, 1);
 	mg::Vec3D tright(1, 0, 1);
 
-	std::vector<mg::Vec3D> v(2 * ( usize + vsize ));
-	for (auto i = 0u; i < usize; ++i)
+	std::vector<mg::Vec3D> v( 2 * ( usize + vsize ) );
+	for ( auto i = 0u; i < usize; ++i )
 	{
-		auto t = (float)(i) / (usize - 1);
-		v[2 * i] = mg::lerp(bleft, bright, t);
-		v[2 * i + 1] = mg::lerp(tleft, tright, t);
+		auto t = static_cast<float>( i ) / ( usize - 1 );
+		v[2 * i] = mg::lerp( bleft, bright, t );
+		v[2 * i + 1] = mg::lerp( tleft, tright, t );
 	}
 
 	const auto offset = 2 * usize;
 	for( auto i = 0u; i < vsize; ++i )
 	{
-		auto t = (float)(i) / (vsize - 1);
-		v[offset + 2 * i] = mg::lerp(bleft, tleft, t);
-		v[offset + 2 * i + 1] = mg::lerp(bright, tright, t);
+		auto t = static_cast<float>( i ) / ( vsize - 1 );
+		v[offset + 2 * i] = mg::lerp( bleft, tleft, t );
+		v[offset + 2 * i + 1] = mg::lerp( bright, tright, t );
 	}
+
+	o_out.m_vao.bind();
 
 	o_out.m_shaderProgram = &shader;
 	o_out.m_shaderProgram->bind();
 
 	o_out.m_vvbo.bind();
-	o_out.m_vvbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
-	o_out.m_vvbo.allocate(v.data(), sizeof(v[0]) * (int)(v.size()));
+	o_out.m_vvbo.setUsagePattern( QOpenGLBuffer::StaticDraw );
+	o_out.m_vvbo.allocate( v.data(),
+	                        static_cast<int>( v.size() ) * sizeof( v[0] ) );
 
-	o_out.m_shaderProgram->enableAttributeArray("position");
-	o_out.m_shaderProgram->setAttributeBuffer("position", GL_FLOAT, 0, 3);
+	o_out.m_shaderProgram->enableAttributeArray( "position" );
+	o_out.m_shaderProgram->setAttributeBuffer( "position",
+	                                           GL_FLOAT,
+	                                           0,
+	                                           sizeof( v[0] ) / sizeof( v[0][0] ) );
 
 	o_out.m_vao.release();
 
-	o_out.m_nElements = (int)(v.size());
-	o_out.m_glDrawMode = GL_LINES;
+	o_out.m_nElements = static_cast<int>( v.size() );
+	o_out.m_primitive = GL_LINES;
 	o_out.m_color[0] = o_out.m_color[1] = o_out.m_color[2] = 0.8f;
 	o_out.m_transform.identity();
 
 	return true;
 }
 
-bool GLDrawable::createFrom(GLDrawable& o_out, const Mesh& mesh, QOpenGLShaderProgram& shader)
+bool GLDrawable::createFrom( const Mesh& mesh, QOpenGLShaderProgram& shader, GLDrawable& o_out )
 {
 	o_out.invalidate();
 
-	if (!o_out.m_vao.create())
+	if ( !o_out.m_vao.create() )
 	{
 		qWarning() << "Unable to create VAO";
 		return false;
@@ -265,41 +281,57 @@ bool GLDrawable::createFrom(GLDrawable& o_out, const Mesh& mesh, QOpenGLShaderPr
 
 	o_out.m_vao.bind();
 
-	if (!o_out.m_vvbo.create())
+	if ( !o_out.m_vvbo.create() )
 	{
 		qWarning() << "Unable to create vertices VBO";
 		o_out.invalidate();
 		return false;
 	}
 
+	o_out.m_primitive = ToGLPrimitive( mesh.getPrimitiveType() );
+	o_out.m_nElements = static_cast<int>( mesh.getNPrimitives() * mesh.getNVerticesPerPrimitive() );
+	o_out.m_color[0] = 0.9f, o_out.m_color[1] = 0.f, o_out.m_color[2] = 0.f;
+	o_out.m_transform.identity();
+
 	o_out.m_shaderProgram = &shader;
 	o_out.m_shaderProgram->bind();
 
 	o_out.m_vvbo.bind();
-	o_out.m_vvbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-	o_out.m_vvbo.allocate(mesh.m_vertices.data(), sizeof(mesh.m_vertices[0]) * (int)(mesh.m_vertices.size()));
+	o_out.m_vvbo.setUsagePattern( QOpenGLBuffer::DynamicDraw );
+	o_out.m_vvbo.allocate( mesh.m_vertices.data(),
+	                       static_cast<int>( mesh.m_vertices.size() ) * sizeof( mesh.m_vertices[0] ) );
 
-	o_out.m_shaderProgram->enableAttributeArray("position");
-	o_out.m_shaderProgram->setAttributeBuffer("position", GL_FLOAT, 0, sizeof(mesh.m_vertices[0]) / sizeof(mesh.m_vertices[0][0]));
+	o_out.m_shaderProgram->enableAttributeArray( "position" );
+	o_out.m_shaderProgram->setAttributeBuffer( "position",
+	                                           GL_FLOAT,
+	                                           0,
+	                                           sizeof( mesh.m_vertices[0] ) / sizeof( mesh.m_vertices[0][0] ) );
 
-	if (mesh.hasNormals() && o_out.m_nvbo.create())
+	if ( mesh.hasNormals() && o_out.m_nvbo.create() )
 	{
 		o_out.m_nvbo.bind();
-		o_out.m_nvbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-		o_out.m_nvbo.allocate(mesh.m_normals.data(), sizeof(mesh.m_normals[0]) * (int)(mesh.m_normals.size()));
+		o_out.m_nvbo.setUsagePattern( QOpenGLBuffer::DynamicDraw );
+		o_out.m_nvbo.allocate( mesh.m_normals.data(),
+		                       static_cast<int>( mesh.m_normals.size() ) * sizeof( mesh.m_normals[0] ) );
 
-		o_out.m_shaderProgram->enableAttributeArray("normal");
-		o_out.m_shaderProgram->setAttributeBuffer("normaml", GL_FLOAT, 0, sizeof(mesh.m_normals[0]) / sizeof(mesh.m_normals[0][0]));
+		o_out.m_shaderProgram->enableAttributeArray( "normal" );
+		o_out.m_shaderProgram->setAttributeBuffer( "normaml",
+		                                           GL_FLOAT,
+		                                           0,
+		                                           sizeof( mesh.m_normals[0] ) / sizeof( mesh.m_normals[0][0] ) );
+	}
+
+	if ( mesh.m_vindices.size() && o_out.m_ibo.create() )
+	{
+		o_out.m_ibo.bind();
+		o_out.m_ibo.setUsagePattern( QOpenGLBuffer::DynamicDraw );
+		o_out.m_ibo.allocate( mesh.m_vindices.data(),
+		                       static_cast<int>( mesh.m_vindices.size() ) * sizeof( mesh.m_vindices[0] ) );
 	}
 
 	o_out.m_vao.release();
 
-	o_out.m_glDrawMode = getGLDrawMode(mesh.getPrimitiveType());
-	o_out.m_nElements = (int)(mesh.getNPrimitives());
-	o_out.m_color[0] = 0.9f, o_out.m_color[1] = o_out.m_color[2] = 0.f;
-	o_out.m_transform.identity();
+
 
 	return true;
 }
-
-
