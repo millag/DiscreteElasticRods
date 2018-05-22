@@ -9,50 +9,50 @@
 
 
 GLViewport::GLViewport(QWidget* parent , Qt::WindowFlags f):
-    QOpenGLWidget(parent, f),
-    m_transformHdl(&m_cam)
+	QOpenGLWidget(parent, f),
+	m_transformHdl(&m_cam)
 {
-    // re-size the widget to that of the parent
-    if (parent)
-    {
-        resize(parent->size());
-    }
+	// re-size the widget to that of the parent
+	if (parent)
+	{
+		resize(parent->size());
+	}
 
-    // set this widget to have the initial keyboard focus
-    setFocus();
+	// set this widget to have the initial keyboard focus
+	setFocus();
 }
 
 GLViewport::~GLViewport()
 {
-    qInfo() << "Shutting down viewport";
-    m_drawList.clear();
+	qInfo() << "Shutting down viewport";
+	m_drawList.clear();
 }
 
 void GLViewport::initializeGL()
 {
-    // this virtual function is called once before the first call to paintGL() or resizeGL(),
-    // and then once whenever the widget has been assigned a new QOpenGLContext.
-    // this function should set up any required OpenGL context rendering flags, defining display lists, etc.
+	// this virtual function is called once before the first call to paintGL() or resizeGL(),
+	// and then once whenever the widget has been assigned a new QOpenGLContext.
+	// this function should set up any required OpenGL context rendering flags, defining display lists, etc.
 
-    if (!m_renderer.initialize())
-    {
-        qWarning() << "Faled to initialize renderer.";
-        return;
-    }
+	if (!m_renderer.initialize())
+	{
+		qWarning() << "Faled to initialize renderer.";
+		return;
+	}
 
-    m_cam.lookAt( mg::Vec3D(1.f, 2.f, 3.f), mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
+	m_cam.lookAt( mg::Vec3D(1.f, 2.f, 3.f), mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
 
-    auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("Constant");
+	auto shaderMan = GLShaderManager::getInstance();
+	auto shader = shaderMan->getShader("Constant");
 
-    // reference grid
-    GLDrawable::createGrid(m_refGrid, 10, 10, *shader);
+	// reference grid
+	GLDrawable::createGrid(m_refGrid, 10, 10, *shader);
 
-    // scene
-    if (m_scene)
-    {
-        buildVAOs(m_scene->getMeshes(), m_drawList);
-    }
+	// scene
+	if (m_scene)
+	{
+		buildVAOs(m_scene->getMeshes(), m_drawList);
+	}
 
 //	m_text = new ngl::Text(QFont("Arial",13));
 //	m_text->setColour(0.7,0.7,0.7);
@@ -108,10 +108,10 @@ void GLViewport::initializeGL()
 
 void GLViewport::resizeGL(int w, int h)
 {
-    // this virtual function is called whenever the widget has been resized.
-    // the new size is passed in width and height.
-    const auto aspect = (mg::Real)(w) / h;
-    m_cam.perspective( mg::Constants::pi() / 3, aspect, 0.001f, 1000.f );
+	// this virtual function is called whenever the widget has been resized.
+	// the new size is passed in width and height.
+	const auto aspect = (mg::Real)(w) / h;
+	m_cam.perspective( mg::Constants::pi() / 3, aspect, 0.001f, 1000.f );
 }
 
 //void GLViewport::loadMatricesToShader()
@@ -170,22 +170,22 @@ void GLViewport::paintGL()
 //	This virtual function is called whenever the widget needs to be painted.
 //	this is our main drawing routine
 
-    auto gl = QOpenGLContext::currentContext()->functions();
-    // clear the screen and depth buffer
-    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	auto gl = QOpenGLContext::currentContext()->functions();
+	// clear the screen and depth buffer
+	gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    m_renderer.setCamera(m_cam);
+	m_renderer.setCamera(m_cam);
 
-    // draw reference grid
-    if (m_refGrid.isValid())
-    {
-        auto shader = m_refGrid.getShader();
-        shader->bind();
+	// draw reference grid
+	if (m_refGrid.isValid())
+	{
+		auto shader = m_refGrid.getShader();
+		shader->bind();
 
-        const mg::Matrix4D tm = m_renderer.getViewProjectionMatrix() * m_refGrid.getTransform();
-        shader->setUniformValue("mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
-        m_refGrid.draw();
-    }
+		const mg::Matrix4D tm = m_renderer.getViewProjectionMatrix() * m_refGrid.getTransform();
+		shader->setUniformValue("mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
+		m_refGrid.draw();
+	}
 
 //    if (m_scene)
 //    {
@@ -214,23 +214,23 @@ void GLViewport::paintGL()
 //    }
 
 
-    m_renderer.beginDrawable();
-    m_renderer.setColor(mg::Vec3D(1.f, 0.f, 0.f));
-    m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(1.f, 0.f, 0.f));
-    m_renderer.setColor(mg::Vec3D(0.f, 1.f, 0.f));
-    m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
-    m_renderer.setColor(mg::Vec3D(0.f, 0.f, 1.f));
-    m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 0.f, 1.f));
-    m_renderer.endDrawable();
+	m_renderer.beginDrawable();
+	m_renderer.setColor(mg::Vec3D(1.f, 0.f, 0.f));
+	m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(1.f, 0.f, 0.f));
+	m_renderer.setColor(mg::Vec3D(0.f, 1.f, 0.f));
+	m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 0.f));
+	m_renderer.setColor(mg::Vec3D(0.f, 0.f, 1.f));
+	m_renderer.line(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(0.f, 0.f, 1.f));
+	m_renderer.endDrawable();
 
-    m_renderer.beginDrawable();
-    m_renderer.setColor(mg::Vec3D(0.3f, 0.5f, 0.1f));
-    m_renderer.box(mg::Vec3D(-2.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 1.f),  mg::Vec3D(1.f, 1.f, 1.f));
-    m_renderer.setColor(mg::Vec3D(0.1f, 0.5f, 0.5f));
-    m_renderer.sphere(mg::Vec3D(2.f, 0.f, 0.f), 0.5f);
-    m_renderer.setColor(mg::Vec3D(0.3f, 0.1f, 0.7f));
-    m_renderer.cone(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(1.f, 0.f, 0.f), 0.9f, 0.2f);
-    m_renderer.endDrawable();
+	m_renderer.beginDrawable();
+	m_renderer.setColor(mg::Vec3D(0.3f, 0.5f, 0.1f));
+	m_renderer.box(mg::Vec3D(-2.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 1.f),  mg::Vec3D(1.f, 1.f, 1.f));
+	m_renderer.setColor(mg::Vec3D(0.1f, 0.5f, 0.5f));
+	m_renderer.sphere(mg::Vec3D(2.f, 0.f, 0.f), 0.5f);
+	m_renderer.setColor(mg::Vec3D(0.3f, 0.1f, 0.7f));
+	m_renderer.cone(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(1.f, 0.f, 0.f), 0.9f, 0.2f);
+	m_renderer.endDrawable();
 
 //	if (m_scene->getHairById(0) == NULL)
 //	{
@@ -275,166 +275,166 @@ void GLViewport::paintGL()
 // mouse controls ----------------------------------
 void GLViewport::mousePressEvent(QMouseEvent* event)
 {
-    m_mouseX = event->x();
-    m_mouseY = event->y();
+	m_mouseX = event->x();
+	m_mouseY = event->y();
 
-    TransformHandle::TransformMode mode = TransformHandle::TM_None;
-    switch (event->button())
-    {
-        case Qt::LeftButton:
-        {
-            mode = TransformHandle::TM_Rotation;
-            break;
-        }
-        case Qt::MidButton:
-        {
-            mode = TransformHandle::TM_Translation;
-            break;
-        }
-        case Qt::RightButton:
-        {
-            mode = TransformHandle::TM_Scale;
-            break;
-        }
-    }
+	TransformHandle::TransformMode mode = TransformHandle::TM_None;
+	switch (event->button())
+	{
+		case Qt::LeftButton:
+		{
+			mode = TransformHandle::TM_Rotation;
+			break;
+		}
+		case Qt::MidButton:
+		{
+			mode = TransformHandle::TM_Translation;
+			break;
+		}
+		case Qt::RightButton:
+		{
+			mode = TransformHandle::TM_Scale;
+			break;
+		}
+	}
 
-    m_transformHdl.setMode(mode);
+	m_transformHdl.setMode(mode);
 }
 
 void GLViewport::mouseMoveEvent(QMouseEvent* event)
 {
-    if (m_transformHdl.isActive())
-    {
-        const mg::Real dx = (mg::Real) (event->x() - m_mouseX) / width();
-        const mg::Real dy = (mg::Real) (event->y() - m_mouseY) / height();
+	if (m_transformHdl.isActive())
+	{
+		const mg::Real dx = (mg::Real) (event->x() - m_mouseX) / width();
+		const mg::Real dy = (mg::Real) (event->y() - m_mouseY) / height();
 
-        m_transformHdl.update(dx, dy);
+		m_transformHdl.update(dx, dy);
 
-        m_mouseX = event->x();
-        m_mouseY = event->y();
-        update();
-    }
+		m_mouseX = event->x();
+		m_mouseY = event->y();
+		update();
+	}
 }
 
 void GLViewport::mouseReleaseEvent(QMouseEvent* event)
 {
-    m_transformHdl.setMode(TransformHandle::TM_None);
+	m_transformHdl.setMode(TransformHandle::TM_None);
 }
 
 
 // utility functions -------------------------------
 void GLViewport::buildVAOs(const std::vector< Mesh* >& meshList, DrawList& o_drawList) const
 {
-    auto shaderMan = GLShaderManager::getInstance();
-    auto shader = shaderMan->getShader("Constant");
-    if (!shader)
-    {
-        return;
-    }
+	auto shaderMan = GLShaderManager::getInstance();
+	auto shader = shaderMan->getShader("Constant");
+	if (!shader)
+	{
+		return;
+	}
 
-    o_drawList.resize(o_drawList.size() + meshList.size());
+	o_drawList.resize(o_drawList.size() + meshList.size());
 
-    std::size_t i = 0;
-    for (auto it = meshList.begin(); it != meshList.end(); ++it, ++i)
-    {
-        if ((*it) && (*it)->getNPrimitives() <= 0)
-        {
-            continue;
-        }
+	std::size_t i = 0;
+	for (auto it = meshList.begin(); it != meshList.end(); ++it, ++i)
+	{
+		if ((*it) && (*it)->getNPrimitives() <= 0)
+		{
+			continue;
+		}
 
-        auto drawablePtr = new GLDrawable();
-        std::unique_ptr< GLDrawable > drawable(drawablePtr);
-        if (GLDrawable::createFrom(*drawable, **it, *shader))
-        {
-            o_drawList[i] = std::move(drawable);
-        }
-    }
+		auto drawablePtr = new GLDrawable();
+		std::unique_ptr< GLDrawable > drawable(drawablePtr);
+		if (GLDrawable::createFrom(*drawable, **it, *shader))
+		{
+			o_drawList[i] = std::move(drawable);
+		}
+	}
 }
 
 
 #ifdef DBUGG
 void GLWindow::drawHairStrand(const ElasticRod& strand)
 {
-    if (m_strandVAO != NULL)
-    {
-        m_strandVAO->bind();
+	if (m_strandVAO != NULL)
+	{
+		m_strandVAO->bind();
 
-        m_strandVAO->updateIndexedData(0, strand.m_ppos.size() * sizeof(mg::Vec3D),
-                                       strand.m_ppos[0][0]);
-        m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
+		m_strandVAO->updateIndexedData(0, strand.m_ppos.size() * sizeof(mg::Vec3D),
+									   strand.m_ppos[0][0]);
+		m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->updateIndexedData(1, strand.m_kb.size() * sizeof(mg::Vec3D),
-                                       strand.m_kb[0][0]);
-        m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
+		m_strandVAO->updateIndexedData(1, strand.m_kb.size() * sizeof(mg::Vec3D),
+									   strand.m_kb[0][0]);
+		m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->updateIndexedData(2, strand.m_m1.size() * sizeof(mg::Vec3D),
-                                       strand.m_m1[0][0]);
-        m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
+		m_strandVAO->updateIndexedData(2, strand.m_m1.size() * sizeof(mg::Vec3D),
+									   strand.m_m1[0][0]);
+		m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->updateIndexedData(3, strand.m_m2.size() * sizeof(mg::Vec3D),
-                                       strand.m_m2[0][0]);
-        m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
+		m_strandVAO->updateIndexedData(3, strand.m_m2.size() * sizeof(mg::Vec3D),
+									   strand.m_m2[0][0]);
+		m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->updateIndexedData(4, strand.m_elasticForce.size() * sizeof(mg::Vec3D),
-                                       strand.m_elasticForce[0][0]);
-        m_strandVAO->setVertexAttributePointer(4, 3, GL_FLOAT, 0, 0);
+		m_strandVAO->updateIndexedData(4, strand.m_elasticForce.size() * sizeof(mg::Vec3D),
+									   strand.m_elasticForce[0][0]);
+		m_strandVAO->setVertexAttributePointer(4, 3, GL_FLOAT, 0, 0);
 
-        m_strandVAO->draw();
-        m_strandVAO->unbind();
-        return;
-    }
+		m_strandVAO->draw();
+		m_strandVAO->unbind();
+		return;
+	}
 
-    std::vector<unsigned> indices(strand.m_ppos.size() + 2);
-    unsigned i = 0;
-    indices[i] = 0;
-    for (i = 0; i < strand.m_ppos.size(); ++i)
-    {
-        indices[i + 1] = i;
-    }
-    indices[i + 1] = i - 1;
+	std::vector<unsigned> indices(strand.m_ppos.size() + 2);
+	unsigned i = 0;
+	indices[i] = 0;
+	for (i = 0; i < strand.m_ppos.size(); ++i)
+	{
+		indices[i + 1] = i;
+	}
+	indices[i + 1] = i - 1;
 
-    m_strandVAO = ngl::VertexArrayObject::createVOA(GL_LINE_STRIP_ADJACENCY);
-    m_strandVAO->bind();
+	m_strandVAO = ngl::VertexArrayObject::createVOA(GL_LINE_STRIP_ADJACENCY);
+	m_strandVAO->bind();
 
-    m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
-                                strand.m_ppos[0][0],
-                                indices.size(),
-                                &indices[0],
-                                GL_UNSIGNED_INT);
-    m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
+	m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
+								strand.m_ppos[0][0],
+								indices.size(),
+								&indices[0],
+								GL_UNSIGNED_INT);
+	m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setIndexedData(strand.m_kb.size() * sizeof(mg::Vec3D),
-                                strand.m_kb[0][0],
-                                indices.size(),
-                                &indices[0],
-                                GL_UNSIGNED_INT);
-    m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
+	m_strandVAO->setIndexedData(strand.m_kb.size() * sizeof(mg::Vec3D),
+								strand.m_kb[0][0],
+								indices.size(),
+								&indices[0],
+								GL_UNSIGNED_INT);
+	m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setIndexedData(strand.m_m1.size() * sizeof(mg::Vec3D),
-                                strand.m_m1[0][0],
-                                indices.size(),
-                                &indices[0],
-                                GL_UNSIGNED_INT);
-    m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
+	m_strandVAO->setIndexedData(strand.m_m1.size() * sizeof(mg::Vec3D),
+								strand.m_m1[0][0],
+								indices.size(),
+								&indices[0],
+								GL_UNSIGNED_INT);
+	m_strandVAO->setVertexAttributePointer(2, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setIndexedData(strand.m_m2.size() * sizeof(mg::Vec3D),
-                                strand.m_m2[0][0],
-                                indices.size(),
-                                &indices[0],
-                                GL_UNSIGNED_INT);
-    m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
+	m_strandVAO->setIndexedData(strand.m_m2.size() * sizeof(mg::Vec3D),
+								strand.m_m2[0][0],
+								indices.size(),
+								&indices[0],
+								GL_UNSIGNED_INT);
+	m_strandVAO->setVertexAttributePointer(3, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setIndexedData(strand.m_elasticForce.size() * sizeof(mg::Vec3D),
-                                strand.m_elasticForce[0][0],
-                                indices.size(),
-                                &indices[0],
-                                GL_UNSIGNED_INT);
-    m_strandVAO->setVertexAttributePointer(4, 3, GL_FLOAT, 0, 0);
+	m_strandVAO->setIndexedData(strand.m_elasticForce.size() * sizeof(mg::Vec3D),
+								strand.m_elasticForce[0][0],
+								indices.size(),
+								&indices[0],
+								GL_UNSIGNED_INT);
+	m_strandVAO->setVertexAttributePointer(4, 3, GL_FLOAT, 0, 0);
 
-    m_strandVAO->setNumIndices(indices.size());
+	m_strandVAO->setNumIndices(indices.size());
 
-    m_strandVAO->draw();
-    m_strandVAO->unbind();
+	m_strandVAO->draw();
+	m_strandVAO->unbind();
 }
 #endif
 
