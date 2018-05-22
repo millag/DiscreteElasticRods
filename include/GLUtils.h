@@ -84,13 +84,9 @@ private:
 class GLLight
 {
 public:
-	GLLight()
-	{}
+	GLLight();
 
-	void loadToShader(QOpenGLShaderProgram& shader) const
-	{
-		UNUSED_VALUE( shader );
-	}
+	void loadToShader( QOpenGLShaderProgram& shader ) const;
 
 	mg::Vec3D m_ambient;
 	mg::Vec3D m_diffuse;
@@ -101,13 +97,9 @@ public:
 class GLMaterial
 {
 public:
-	GLMaterial()
-	{}
+	GLMaterial();
 
-	void loadToShader(QOpenGLShaderProgram& shader) const
-	{
-		UNUSED_VALUE( shader );
-	}
+	void loadToShader( QOpenGLShaderProgram& shader ) const;
 
 	mg::Vec3D m_ambient;
 	mg::Vec3D m_diffuse;

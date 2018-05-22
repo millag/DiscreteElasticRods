@@ -229,44 +229,53 @@ bool GLRenderer::initialize()
 		qDebug() << "Vendor:" << reinterpret_cast<const char*>( gl->glGetString( GL_VENDOR ) );
 		qDebug() << "Renderer:" << reinterpret_cast<const char*>( gl->glGetString( GL_RENDERER ) );
 		qDebug() << "Version:" << reinterpret_cast<const char*>( gl->glGetString( GL_VERSION ) );
-		qDebug() << "Profile:" << m_context->format().profile();
+		qDebug() << "Profile:" << ( ( m_context->format().profile() == QSurfaceFormat::CoreProfile )? "Core" : "Compatibility" );
 
-		gl->glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-		gl->glEnable(GL_DEPTH_TEST);
-		gl->glEnable(GL_CULL_FACE);
-		gl->glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
-		gl->glFrontFace(GL_CCW);
+		gl->glClearColor( 0.2f, 0.2f, 0.2f, 1.f );
+		gl->glEnable( GL_DEPTH_TEST );
+		gl->glEnable( GL_CULL_FACE );
+		gl->glEnable( GL_PRIMITIVE_RESTART_FIXED_INDEX );
+		gl->glFrontFace( GL_CCW );
 //        gl->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		auto shaderMan = GLShaderManager::getInstance();
-		shaderMan->loadShader("Constant",
-		                      "shaders/ConstantVert.glsl",
-		                      "shaders/ConstantFrag.glsl");
+		auto shader = shaderMan->loadShader( "Constant",
+		                                     "shaders/ConstantVert.glsl",
+		                                     "shaders/ConstantFrag.glsl" );
+		shader->bind();
+		m_headLight.loadToShader( *shader );
+		m_defaultMtl.loadToShader( *shader );
 
-		shaderMan->loadShader("Phong",
-		                      "shaders/PhongVert.glsl",
-		                      "shaders/PhongFrag.glsl");
+		shader = shaderMan->loadShader( "Phong",
+		                                "shaders/PhongVert.glsl",
+		                                "shaders/PhongFrag.glsl" );
+		shader->bind();
+		m_headLight.loadToShader( *shader );
+		m_defaultMtl.loadToShader( *shader );
 
-		shaderMan->loadShader("Tube",
-		                      "shaders/TubeVert.glsl",
-		                      "shaders/TubeFrag.glsl",
-		                      "",
-		                      "shaders/TubeTCS.glsl",
-		                      "shaders/TubeTES.glsl"
-		                      );
+		shader = shaderMan->loadShader( "Tube",
+		                                "shaders/TubeVert.glsl",
+		                                "shaders/TubeFrag.glsl",
+		                                "",
+		                                "shaders/TubeTCS.glsl",
+		                                "shaders/TubeTES.glsl" );
+		shader->bind();
+		m_headLight.loadToShader( *shader );
+		m_defaultMtl.loadToShader( *shader );
 
-		shaderMan->loadShader("DebugRod",
-		                      "shaders/DebugVert.glsl",
-		                      "shaders/DebugFrag.glsl",
-		                      "shaders/DebugGeom.glsl",
-		                      "",
-		                      ""
-		                      );
+		shader = shaderMan->loadShader( "DebugRod",
+		                                "shaders/DebugVert.glsl",
+		                                "shaders/DebugFrag.glsl",
+		                                "shaders/DebugGeom.glsl",
+		                                "", "" );
+		shader->bind();
+		m_headLight.loadToShader( *shader );
+		m_defaultMtl.loadToShader( *shader );
 
 		m_vMatrix.zero();
 		m_pMatrix.zero();
 		m_vpMatrix.zero();
-		m_transformStack.push(mg::Matrix4D().identity());
+		m_transformStack.push( mg::Matrix4D().identity() );
 	}
 
 	return isValid();

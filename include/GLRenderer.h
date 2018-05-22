@@ -90,15 +90,16 @@ protected:
 	/// view-projection matrix
 	mg::Matrix4D m_vpMatrix;
 
+	/// transform stack
+	std::stack<mg::Matrix4D> m_transformStack;
+	/// dummy VAO used for immediate mode rendering
+	QOpenGLVertexArrayObject m_defaultVAO;
+
 	/// default light
 	GLLight m_headLight;
 	/// default material
 	GLMaterial m_defaultMtl;
 
-	/// transform stack
-	std::stack<mg::Matrix4D> m_transformStack;
-	/// dummy VAO used for immediate mode rendering
-	QOpenGLVertexArrayObject m_defaultVAO;
 };
 
 #endif // GLRENDERER_H

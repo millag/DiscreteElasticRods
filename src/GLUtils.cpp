@@ -279,8 +279,6 @@ bool GLDrawable::createFrom( const Mesh& mesh, QOpenGLShaderProgram& shader, GLD
 		return false;
 	}
 
-	o_out.m_vao.bind();
-
 	if ( !o_out.m_vvbo.create() )
 	{
 		qWarning() << "Unable to create vertices VBO";
@@ -290,10 +288,11 @@ bool GLDrawable::createFrom( const Mesh& mesh, QOpenGLShaderProgram& shader, GLD
 
 	o_out.m_primitive = ToGLPrimitive( mesh.getPrimitiveType() );
 	o_out.m_nElements = static_cast<int>( mesh.getNPrimitives() * mesh.getNVerticesPerPrimitive() );
+	o_out.m_shaderProgram = &shader;
 	o_out.m_color[0] = 0.9f, o_out.m_color[1] = 0.f, o_out.m_color[2] = 0.f;
 	o_out.m_transform.identity();
 
-	o_out.m_shaderProgram = &shader;
+	o_out.m_vao.bind();
 	o_out.m_shaderProgram->bind();
 
 	o_out.m_vvbo.bind();
@@ -315,7 +314,7 @@ bool GLDrawable::createFrom( const Mesh& mesh, QOpenGLShaderProgram& shader, GLD
 		                       static_cast<int>( mesh.m_normals.size() ) * sizeof( mesh.m_normals[0] ) );
 
 		o_out.m_shaderProgram->enableAttributeArray( "normal" );
-		o_out.m_shaderProgram->setAttributeBuffer( "normaml",
+		o_out.m_shaderProgram->setAttributeBuffer( "normal",
 		                                           GL_FLOAT,
 		                                           0,
 		                                           sizeof( mesh.m_normals[0] ) / sizeof( mesh.m_normals[0][0] ) );
@@ -330,8 +329,35 @@ bool GLDrawable::createFrom( const Mesh& mesh, QOpenGLShaderProgram& shader, GLD
 	}
 
 	o_out.m_vao.release();
-
-
-
 	return true;
+}
+
+GLLight::GLLight():
+    m_ambient( 0.f, 0.f, 0.f ),
+    m_diffuse( 1.f, 1.f, 1.f ),
+    m_specular( 1.f, 1.f, 1.f ),
+    m_position( 0.f, 0.f, 0.f )
+{}
+
+void GLLight::loadToShader( QOpenGLShaderProgram& shader ) const
+{
+	shader.setUniformValue( "light.ambient", m_ambient[0], m_ambient[1], m_ambient[2] );
+	shader.setUniformValue( "light.diffuse", m_diffuse[0], m_diffuse[1], m_diffuse[2] );
+	shader.setUniformValue( "light.specular", m_specular[0], m_specular[1], m_specular[2] );
+	shader.setUniformValue( "light.position", m_position[0], m_position[1], m_position[2] );
+}
+
+GLMaterial::GLMaterial():
+    m_ambient( 0.f, 0.f, 0.f ),
+    m_diffuse( 0.7f, 0.f, 0.f ),
+    m_specular( 1.f, 1.f, 1.f ),
+    m_shininess( 16.f )
+{}
+
+void GLMaterial::loadToShader( QOpenGLShaderProgram& shader ) const
+{
+	shader.setUniformValue( "mtl.ambient", m_ambient[0], m_ambient[1], m_ambient[2] );
+	shader.setUniformValue( "mtl.diffuse", m_diffuse[0], m_diffuse[1], m_diffuse[2] );
+	shader.setUniformValue( "mtl.specular", m_specular[0], m_specular[1], m_specular[2] );
+	shader.setUniformValue( "mtl.shininess", m_shininess );
 }

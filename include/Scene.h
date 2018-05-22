@@ -1,10 +1,10 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <vector>
-
 #include "Hair.h"
 #include "Spiral.h"
+
+#include <vector>
 
 class Scene
 {

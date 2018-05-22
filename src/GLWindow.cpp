@@ -10,15 +10,8 @@
 namespace
 {
 
-static void buildVAOs( const std::vector<Mesh*>& meshList, DrawList& o_drawList )
+static void buildVAOs( const std::vector<Mesh*>& meshList, QOpenGLShaderProgram& shader, DrawList& o_drawList )
 {
-	auto shaderMan = GLShaderManager::getInstance();
-	auto shader = shaderMan->getShader( "Constant" );
-	if ( !shader )
-	{
-		return;
-	}
-
 	auto cnt = o_drawList.size();
 	o_drawList.resize( cnt + meshList.size() );
 
@@ -30,7 +23,7 @@ static void buildVAOs( const std::vector<Mesh*>& meshList, DrawList& o_drawList 
 		}
 
 		auto drawable = std::make_unique<GLDrawable>();
-		if ( GLDrawable::createFrom( **it, *shader, *drawable ) )
+		if ( GLDrawable::createFrom( **it, shader, *drawable ) )
 		{
 			o_drawList[cnt] = std::move( drawable );
 		}
@@ -72,19 +65,20 @@ void GLViewport::initializeGL()
 	}
 
 	auto shaderMan = GLShaderManager::getInstance();
-	auto shader = shaderMan->getShader( "Constant" );
+	auto constShader = shaderMan->getShader( "Constant" );
+	auto phongShader = shaderMan->getShader( "Phong" );
 
-	// reference grid
-	GLDrawable::createGrid( 10, 10, *shader, m_refGrid );
+//	reference grid
+	GLDrawable::createGrid( 10, 10, *constShader, m_refGrid );
 
 	m_cam.lookAt( mg::Vec3D( 1.f, 2.f, 3.f ),
 	              mg::Vec3D( 0.f, 0.f, 0.f ),
 	              mg::Vec3D( 0.f, 1.f, 0.f ) );
 
-	// scene
+//	scene
 	if ( m_scene )
 	{
-		buildVAOs( m_scene->getMeshes(), m_drawList );
+		buildVAOs( m_scene->getMeshes(), *phongShader, m_drawList );
 	}
 
 //	m_text = new ngl::Text(QFont("Arial",13));
@@ -141,8 +135,6 @@ void GLViewport::initializeGL()
 
 void GLViewport::resizeGL( int w, int h )
 {
-//	this virtual function is called whenever the widget has been resized.
-//	the new size is passed in width and height.
 	const auto aspect = static_cast<mg::Real>(w) / h;
 	m_cam.perspective( mg::Constants::pi() / 3, aspect, 0.001f, 1000.f );
 }
@@ -200,11 +192,8 @@ void GLViewport::resizeGL( int w, int h )
 
 void GLViewport::paintGL()
 {
-//	This virtual function is called whenever the widget needs to be painted.
-//	this is our main drawing routine
-
 	auto gl = QOpenGLContext::currentContext()->functions();
-	// clear the screen and depth buffer
+//	clear viewport
 	gl->glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	m_renderer.setCamera( m_cam );
@@ -230,35 +219,6 @@ void GLViewport::paintGL()
 		m_refGrid.draw();
 	}
 
-	if( m_scene )
-	{
-		auto roList = m_scene->getRenderObjects();
-		for ( auto it = roList.begin(); it != roList.end(); ++it )
-		{
-			auto ro = ( *it );
-			if ( !ro )
-			{
-				continue;
-			}
-
-			auto& drawable =  m_drawList.at( ro->getMeshId() );
-			if ( !drawable || !drawable->isValid() )
-			{
-				continue;
-			}
-
-			auto shader = drawable->getShader();
-			shader->bind();
-
-			const mg::Matrix4D tm = m_renderer.getViewProjectionMatrix() * ro->getTransform();
-			shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( tm.data() ) );
-			drawable->draw();
-		}
-	}
-
-
-
-
 //	m_renderer.beginDrawable();
 //	m_renderer.setColor(mg::Vec3D(0.3f, 0.5f, 0.1f));
 //	m_renderer.box(mg::Vec3D(-2.f, 0.f, 0.f), mg::Vec3D(0.f, 1.f, 1.f),  mg::Vec3D(1.f, 1.f, 1.f));
@@ -268,10 +228,40 @@ void GLViewport::paintGL()
 //	m_renderer.cone(mg::Vec3D(0.f, 0.f, 0.f), mg::Vec3D(1.f, 0.f, 0.f), 0.9f, 0.2f);
 //	m_renderer.endDrawable();
 
-//	if (m_scene->getHairById(0) == NULL)
-//	{
-//		return;
-//	}
+	if( !m_scene )
+	{
+		return;
+	}
+
+	auto roList = m_scene->getRenderObjects();
+	for ( auto it = roList.begin(); it != roList.end(); ++it )
+	{
+		auto ro = ( *it );
+		if ( !ro )
+		{
+			continue;
+		}
+
+		auto& drawable =  m_drawList.at( ro->getMeshId() );
+		if ( !drawable || !drawable->isValid() )
+		{
+			continue;
+		}
+
+		auto shader = drawable->getShader();
+		shader->bind();
+
+		const mg::Matrix4D mv = m_renderer.getViewMatrix() * ro->getTransform();
+		const mg::Matrix4D mvp = m_renderer.getViewProjectionMatrix() * ro->getTransform();
+		shader->setUniformValue( "mv", *reinterpret_cast<const GLMatrix4x4*>( mv.data() ) );
+		shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( mvp.data() ) );
+		drawable->draw();
+	}
+
+	if ( !m_scene->getHairById( 0 ) )
+	{
+		return;
+	}
 
 //#ifndef DBUGG
 //	shader->use("Tube");
@@ -307,54 +297,54 @@ void GLViewport::paintGL()
 //	m_text->renderText(10, 70, QString("points per strand: %1").arg(m_scene->getHairById(0)->m_params->m_nParticles));
 }
 
-
-// mouse controls ----------------------------------
-void GLViewport::mousePressEvent(QMouseEvent* event)
+void GLViewport::mousePressEvent( QMouseEvent* event )
 {
-	m_mouseX = event->x();
-	m_mouseY = event->y();
-
 	TransformHandle::TransformMode mode = TransformHandle::TM_None;
-	switch (event->button())
+	switch ( event->button() )
 	{
-	    case Qt::LeftButton:
-	    {
-		    mode = TransformHandle::TM_Rotation;
-			break;
-	    }
-	    case Qt::MidButton:
-	    {
-		    mode = TransformHandle::TM_Translation;
-			break;
-	    }
-	    case Qt::RightButton:
-	    {
-		    mode = TransformHandle::TM_Scale;
-			break;
-	    }
+	case Qt::LeftButton:
+	{
+		mode = TransformHandle::TM_Rotation;
+		break;
+	}
+	case Qt::MidButton:
+	{
+		mode = TransformHandle::TM_Translation;
+		break;
+	}
+	case Qt::RightButton:
+	{
+		mode = TransformHandle::TM_Scale;
+		break;
+	}
+	default:
+		break;
 	}
 
-	m_transformHdl.setMode(mode);
+	m_mouseX = event->x();
+	m_mouseY = event->y();
+	m_transformHdl.setMode( mode );
 }
 
-void GLViewport::mouseMoveEvent(QMouseEvent* event)
+void GLViewport::mouseMoveEvent( QMouseEvent* event )
 {
-	if (m_transformHdl.isActive())
+	if ( m_transformHdl.isActive() )
 	{
-		const mg::Real dx = (mg::Real) (event->x() - m_mouseX) / width();
-		const mg::Real dy = (mg::Real) (event->y() - m_mouseY) / height();
-
-		m_transformHdl.update(dx, dy);
-
+		const auto dx = static_cast<mg::Real>( event->x() - m_mouseX ) / width();
+		const auto dy = static_cast<mg::Real>( event->y() - m_mouseY ) / height();
 		m_mouseX = event->x();
 		m_mouseY = event->y();
+
+		m_transformHdl.update( dx, dy );
 		update();
 	}
 }
 
-void GLViewport::mouseReleaseEvent(QMouseEvent* event)
+void GLViewport::mouseReleaseEvent( QMouseEvent* event )
 {
-	m_transformHdl.setMode(TransformHandle::TM_None);
+	UNUSED_VALUE( event );
+
+	m_transformHdl.setMode( TransformHandle::TM_None );
 }
 
 #ifdef DBUGG
