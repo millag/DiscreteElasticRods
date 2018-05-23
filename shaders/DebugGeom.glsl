@@ -1,132 +1,127 @@
 #version 410
 
-struct Lights
+struct Light
 {
-	vec4 position;
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
-	float constantAttenuation;
-	float spotCosCutoff;
-	float quadraticAttenuation;
-	float linearAttenuation;
+/// light ambient emission color
+	vec3 ambient;
+/// light diffuse emission color
+	vec3 diffuse;
+/// light specular emission color
+	vec3 specular;
+/// light position in view space
+	vec3 position;
 };
 
-uniform mat4 MVP;
-// array of lights
-uniform Lights light;
-uniform vec3 eyePos;
-uniform vec4 Colour;
+/// point light
+uniform Light light;
+/// model view matrix
+uniform mat4 mv;
+/// model view projection matrix
+uniform mat4 mvp;
 
-layout (lines_adjacency) in;
-layout (line_strip, max_vertices = 10) out;
 
-in vec3 vert_gs[];
-in vec3 kb_gs[];
-in vec3 m1_gs[];
-in vec3 m2_gs[];
-in vec3 force_gs[];
+layout ( lines_adjacency ) in;
+layout ( line_strip, max_vertices = 10 ) out;
 
-out vec3 eDir;
-out vec3 lDir;
-out vec3 tDir;
+in vec3 gs_pos[];
+in vec3 gs_kb[];
+in vec3 gs_m1[];
+in vec3 gs_m2[];
+in vec3 gs_force[];
+
+out vec3 edir;
+out vec3 ldir;
+out vec3 tdir;
 out vec4 color;
 
 void main ()
 {
-//  draw line
-	gl_Position = vec4(vert_gs[1], 1.0);
-	eDir = normalize(eyePos - gl_Position.xyz);
-	lDir = normalize(light.position - gl_Position).xyz;
-	tDir = normalize(vert_gs[2] - vert_gs[1]);
-	color = Colour;
-	gl_Position = MVP * gl_Position;
+	mat4 imv = inverse( mv );
+	vec3 eyePos = ( imv * vec4( 0.f, 0.f, 0.f, 1.f ) ).xyz;
+	vec3 lightPos = ( imv * vec4( light.position, 1.f ) ).xyz;
+
+//	draw line
+	edir = normalize( eyePos - gs_pos[1] );
+	ldir = normalize( lightPos - gs_pos[1] );
+	tdir = normalize( gs_pos[2] - gs_pos[1] );
+	color = vec4( 1.f, 1.f, 0.f, 1.f );
+	gl_Position = mvp * vec4( gs_pos[1], 1.f );
 	EmitVertex();
 
-	gl_Position = vec4(vert_gs[2], 1.0);
-	eDir = normalize(eyePos - gl_Position.xyz);
-	lDir = normalize(light.position - gl_Position).xyz;
-	tDir = normalize(vert_gs[2] - vert_gs[1]);
-	color = Colour;
-	gl_Position = MVP * gl_Position;
-	EmitVertex();
-
-	EndPrimitive();
-
-	vec3 pos = (vert_gs[1] + vert_gs[2]) * 0.5;
-	const float len = 0.1;
-//  draw kb
-	tDir = normalize(kb_gs[1]);
-	gl_Position = vec4(vert_gs[1], 1.0);
-	eDir = normalize(eyePos - gl_Position.xyz);
-	lDir = normalize(light.position - gl_Position).xyz;
-	color = vec4(0.0, 1.0, 0.0, 1.0);
-	gl_Position = MVP * gl_Position;
-	EmitVertex();
-
-	tDir = normalize(kb_gs[1]);
-	gl_Position = vec4(vert_gs[1] + kb_gs[1], 1.0);
-	eDir = normalize(eyePos - gl_Position.xyz);
-	lDir = normalize(light.position - gl_Position).xyz;
-	color = vec4(0.0, 1.0, 0.0, 1.0);
-	gl_Position = MVP * gl_Position;
+	edir = normalize( eyePos - gs_pos[2] );
+	ldir = normalize( lightPos - gs_pos[2] );
+	color = vec4( 1.f, 1.f, 0.f, 1.f );
+	gl_Position = mvp * vec4( gs_pos[2], 1.f );
 	EmitVertex();
 
 	EndPrimitive();
 
-//  draw force
-	tDir = normalize(force_gs[1]);
-	gl_Position = vec4(vert_gs[1], 1.0);
-	eDir = normalize(eyePos - gl_Position.xyz);
-	lDir = normalize(light.position - gl_Position).xyz;
-	color = vec4(0.0, 1.0, 1.0, 1.0);
-	gl_Position = MVP * gl_Position;
+//	draw kb
+	edir = normalize( eyePos - gs_pos[1] );
+	ldir = normalize( lightPos - gs_pos[1] );
+	tdir = normalize( gs_kb[1] );
+	color = vec4( 0.f, 1.f, 0.f, 1.f );
+	gl_Position = mvp * vec4( gs_pos[1], 1.f );
 	EmitVertex();
 
-	tDir = normalize(force_gs[1]);
-	gl_Position = vec4(vert_gs[1] + force_gs[1], 1.0);
-	eDir = normalize(eyePos - gl_Position.xyz);
-	lDir = normalize(light.position - gl_Position).xyz;
-	color = vec4(0.0, 1.0, 1.0, 1.0);
-	gl_Position = MVP * gl_Position;
-	EmitVertex();
-
-	EndPrimitive();
-
-//  draw m1
-	tDir = normalize(m1_gs[1]);
-	gl_Position = vec4(pos, 1.0);
-	eDir = normalize(eyePos - gl_Position.xyz);
-	lDir = normalize(light.position - gl_Position).xyz;
-	color = vec4(1.0, 0.0, 0.0, 1.0);
-	gl_Position = MVP * gl_Position;
-	EmitVertex();
-
-	tDir = normalize(m1_gs[1]);
-	gl_Position = vec4(pos + len * tDir, 1.0);
-	eDir = normalize(eyePos - vert_gs[1]);
-	lDir = normalize(light.position - gl_Position).xyz;
-	color = vec4(1.0, 0.0, 0.0, 1.0);
-	gl_Position = MVP * gl_Position;
+	vec3 pos1 = gs_pos[1] + tdir;
+	edir = normalize( eyePos - pos1 );
+	ldir = normalize( lightPos - pos1 );
+	color = vec4( 0.f, 1.f, 0.f, 1.f );
+	gl_Position = mvp * vec4( pos1, 1.f );
 	EmitVertex();
 
 	EndPrimitive();
 
-//  draw m2
-	tDir = normalize(m2_gs[1]);
-	gl_Position = vec4(pos, 1.0);
-	eDir = normalize(eyePos - gl_Position.xyz);
-	lDir = normalize(light.position - gl_Position).xyz;
-	color = vec4(0.0, 0.0, 1.0, 1.0);
-	gl_Position = MVP * gl_Position;
+//	draw force
+	edir = normalize( eyePos - gs_pos[1] );
+	ldir = normalize( lightPos - gs_pos[1] );
+	tdir = normalize( gs_force[1] );
+	color = vec4( 0.f, 1.f, 1.f, 1.f );
+	gl_Position = mvp * vec4( gs_pos[1], 1.f );
 	EmitVertex();
 
-	tDir = normalize(m2_gs[1]);
-	gl_Position = vec4(pos + len * tDir, 1.0);
-	eDir = normalize(eyePos - vert_gs[1]);
-	lDir = normalize(light.position - gl_Position).xyz;
-	color = vec4(0.0, 0.0, 1.0, 1.0);
-	gl_Position = MVP * gl_Position;
+	pos1 = gs_pos[1] + tdir;
+	edir = normalize( eyePos - pos1 );
+	ldir = normalize( lightPos - pos1 );
+	color = vec4( 0.f, 1.f, 1.f, 1.f );
+	gl_Position = mvp * vec4( pos1, 1.f );
+	EmitVertex();
+
+	EndPrimitive();
+
+//  draw material frame m1, m2
+	pos1 = ( gs_pos[1] + gs_pos[2] ) * 0.5f;
+	const float len = 0.1f;
+
+	edir = normalize( eyePos - pos1 );
+	ldir = normalize( lightPos - pos1 );
+	tdir = normalize( gs_m1[1] );
+	color = vec4( 1.f, 0.f, 0.f, 1.f);
+	gl_Position = mvp * vec4( pos1, 1.f );
+	EmitVertex();
+
+	vec3 pos2 = pos1 + len * tdir;
+	edir = normalize( eyePos - pos2 );
+	ldir = normalize( lightPos - pos2 );
+	color = vec4( 1.f, 0.f, 0.f, 1.f );
+	gl_Position = mvp * vec4( pos2, 1.f );
+	EmitVertex();
+
+	EndPrimitive();
+
+	edir = normalize( eyePos - pos1 );
+	ldir = normalize( lightPos - pos1 );
+	tdir = normalize( gs_m2[1] );
+	color = vec4( 0.f, 0.f, 1.f, 1.f );
+	gl_Position = mvp * vec4( pos1, 1.f );
+	EmitVertex();
+
+	pos2 = pos1 + len * tdir;
+	edir = normalize( eyePos - pos2 );
+	ldir = normalize( lightPos - pos2 );
+	color = vec4( 0.f, 0.f, 1.f, 1.f );
+	gl_Position = mvp * vec4( pos2, 1.f );
 	EmitVertex();
 
 	EndPrimitive();

@@ -11,7 +11,7 @@
 
 
 class Mesh;
-
+class Hair;
 
 class GLShaderManager
 {
@@ -46,11 +46,38 @@ private:
 	GLShaderCache m_glShaderCache;
 };
 
+class GLLight
+{
+public:
+	GLLight();
+
+	void loadToShader( QOpenGLShaderProgram& shader ) const;
+
+	mg::Vec3D m_ambient;
+	mg::Vec3D m_diffuse;
+	mg::Vec3D m_specular;
+	mg::Vec3D m_position;
+};
+
+class GLMaterial
+{
+public:
+	GLMaterial();
+
+	void loadToShader( QOpenGLShaderProgram& shader ) const;
+
+	mg::Vec3D m_ambient;
+	mg::Vec3D m_diffuse;
+	mg::Vec3D m_specular;
+	mg::Real m_shininess;
+};
+
 class GLDrawable
 {
 public:
 	static bool createGrid( unsigned usize, unsigned vsize, QOpenGLShaderProgram& shader, GLDrawable& o_out );
 	static bool createFrom( const Mesh& mesh, QOpenGLShaderProgram& shader, GLDrawable& o_out );
+	static bool createFrom( const Hair& hair, QOpenGLShaderProgram& shader, GLDrawable& o_out );
 
 	GLDrawable();
 	~GLDrawable();
@@ -79,32 +106,6 @@ private:
 	QOpenGLShaderProgram* m_shaderProgram = nullptr;
 	mg::Vec3D m_color;
 	mg::Matrix4D m_transform;
-};
-
-class GLLight
-{
-public:
-	GLLight();
-
-	void loadToShader( QOpenGLShaderProgram& shader ) const;
-
-	mg::Vec3D m_ambient;
-	mg::Vec3D m_diffuse;
-	mg::Vec3D m_specular;
-	mg::Vec3D m_position;
-};
-
-class GLMaterial
-{
-public:
-	GLMaterial();
-
-	void loadToShader( QOpenGLShaderProgram& shader ) const;
-
-	mg::Vec3D m_ambient;
-	mg::Vec3D m_diffuse;
-	mg::Vec3D m_specular;
-	mg::Real m_shininess;
 };
 
 typedef std::vector< std::unique_ptr< GLDrawable > > DrawList;

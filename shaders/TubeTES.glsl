@@ -4,84 +4,91 @@
 #define ERR 1e-6f
 #define DT 0.001
 
-layout(quads, equal_spacing, ccw) in;
+layout( quads, equal_spacing, cw ) in;
 
-uniform float Radius;
-uniform mat4 M;
-uniform mat4 MV;
-uniform mat4 MVP;
-uniform mat3 normalMatrix;
+/// model view matrix
+uniform mat4 mv;
+/// model view projection matrix
+uniform mat4 mvp;
 
-in vec3 vert_es[];
-in vec3 normal_es[];
+/// tube radius
+uniform float radius;
 
-out vec3 vert_fr;
-out vec3 tangent_fr;
-out vec3 normal_fr;
-out vec2 uv_fr;
+/// surface position in model space
+in vec3 tes_pos[];
+/// surface normal in model space
+in vec3 tes_norm[];
 
+/// surface position in view space
+out vec3 fr_pos;
+/// surface normal in view space
+out vec3 fr_norm;
+out vec2 fr_uv;
 
-vec3 catmull_rom_cubic(float t)
+vec3 catmull_rom_cubic( float t )
 {
-	return 0.5f * ((2 * vert_es[1]) +
-				  (vert_es[2] - vert_es[0]) * t +
-				  (2 * vert_es[0] - 5 * vert_es[1] + 4 * vert_es[2] - vert_es[3]) * t * t +
-				  (3 * vert_es[1] - vert_es[0] - 3 * vert_es[2] + vert_es[3]) * t * t * t);
+	return 0.5f * ( ( 2.f * tes_pos[1 ])
+			+ ( tes_pos[2] - tes_pos[0 ]) * t
+			+ ( 2.f * tes_pos[0] - 5.f * tes_pos[1] + 4.f * tes_pos[2] - tes_pos[3] ) * t * t
+			+ ( 3.f * tes_pos[1] - tes_pos[0] - 3.f * tes_pos[2] + tes_pos[3] ) * t * t * t );
 }
 
-vec3 catmull_rom_cubic_normal(float t)
+vec3 catmull_rom_cubic_normal( float t )
 {
-	return 0.5f * ((2 * normal_es[1]) +
-				  (normal_es[2] - normal_es[0]) * t +
-				  (2 * normal_es[0] - 5 * normal_es[1] + 4 * normal_es[2] - normal_es[3]) * t * t +
-				  (3 * normal_es[1] - normal_es[0] - 3 * normal_es[2] + normal_es[3]) * t * t * t);
+	return 0.5f * ( ( 2.f * tes_norm[1] )
+			+ ( tes_norm[2] - tes_norm[0] ) * t
+			+ ( 2.f * tes_norm[0] - 5.f * tes_norm[1] + 4.f * tes_norm[2] - tes_norm[3] ) * t * t
+			+ ( 3.f * tes_norm[1] - tes_norm[0] - 3.f * tes_norm[2] + tes_norm[3] ) * t * t * t );
 }
 
 // NOTE: n0, n1 need to be normalized vectors and 0 <= t <= 1
-vec3 geometric_slerp(vec3 n0, vec3 n1, float t)
+vec3 geometric_slerp( vec3 n0, vec3 n1, float t )
 {
-	float w = dot(n0, n1);
-	if (abs(1 - w) < ERR)
+	float w = dot( n0, n1 );
+	if ( abs( 1.f - w ) < ERR )
+	{
 		return n0;
+	}
 
-	w = acos(w);
-	return normalize((sin((1 - t)*w) / sin(w)) * n0 + (sin(t * w) / sin(w)) * n1);
+	w = acos( w );
+	return normalize( ( sin( ( 1.f - t ) * w ) / sin( w ) ) * n0 + ( sin( t * w ) / sin( w ) ) * n1 );
 }
 
-vec3 slerp_normal(float t)
+vec3 slerp_normal( float t )
 {
-	float ei_1 = length(vert_es[1] - vert_es[0]);
-	float ei = length(vert_es[2] - vert_es[1]);
-	float ti = ei_1 / (ei_1 + ei);
-	vec3 nvi0 = geometric_slerp(normal_es[0], normal_es[1], ti);
+	float ei_1 = length( tes_pos[1] - tes_pos[0] );
+	float ei = length( tes_pos[2] - tes_pos[1] );
+	float ti = ei_1 / ( ei_1 + ei );
+	vec3 nvi0 = geometric_slerp( tes_norm[0], tes_norm[1], ti );
 
 	ei_1 = ei;
-	ei = length(vert_es[3] - vert_es[2]);
-	ti = (ei_1 / (ei_1 + ei));
-	vec3 nvi1 = ((1 - ti) < ERR)? normal_es[1] : geometric_slerp(normal_es[1], normal_es[2], ti);
+	ei = length( tes_pos[3] - tes_pos[2] );
+	ti = ( ei_1 / ( ei_1 + ei ) );
+	vec3 nvi1 = ( ( 1.f - ti ) < ERR )? tes_norm[1] : geometric_slerp( tes_norm[1], tes_norm[2], ti );
 
-	return geometric_slerp(nvi0, nvi1, t);
+	return geometric_slerp( nvi0, nvi1, t );
 }
-
-
 
 void main ()
 {
 	float u = gl_TessCoord.x;
 	float v = gl_TessCoord.y;
-	uv_fr = gl_TessCoord.xy;
-
-	vec3 center = catmull_rom_cubic(v);
-	tangent_fr = (catmull_rom_cubic( max(0.0, v - 0.5 * DT) ) - catmull_rom_cubic( min(v + 0.5 * DT, 1.0) )) / DT;
-
-//    vec3 normal = normal_es[1];
-//    vec3 normal = catmull_rom_cubic_normal(v);
-	vec3 normal = slerp_normal(v);
-	vec3 binormal = normalize( cross(tangent_fr, normal) );
-
 	float theta = u * TWO_PI;
-	normal_fr = cos(theta) * normal + sin(theta) * binormal;
-	vert_fr = normal_fr * Radius + center;
 
-	gl_Position = MVP * vec4(vert_fr, 1.0);
+	vec3 center = catmull_rom_cubic( v );
+	vec3 tangent = ( catmull_rom_cubic( max( 0.f, v - 0.5f * DT ) )
+					 - catmull_rom_cubic( min( v + 0.5f * DT, 1.f ) ) ) / DT;
+
+//	vec3 normal = tes_norm[1];
+//	vec3 normal = catmull_rom_cubic_normal( v );
+	vec3 normal = slerp_normal( v );
+	vec3 binormal = normalize( cross( tangent, normal ) );
+	normal = cos( theta ) * normal + sin( theta ) * binormal;
+	vec3 pos = center + normal * radius;
+
+	fr_pos = ( mv * vec4( pos, 1.f ) ).xyz;
+	fr_norm = ( transpose( inverse( mv ) ) * vec4( normal, 0.f ) ).xyz;
+	fr_uv = gl_TessCoord.xy;
+
+	gl_Position = mvp * vec4( pos, 1.f );
 }

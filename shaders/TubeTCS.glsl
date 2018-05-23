@@ -1,31 +1,31 @@
 #version 410
 
-// define the number of CPs in the output patch
-layout (vertices = 4) out;
+/// define the number of CPs in the output patch
+layout ( vertices = 4 ) out;
 
-// attributes of the input CPs
-in vec3 vert_cs[];
-in vec3 normal_cs[];
+/// attributes of the input CPs
+in vec3 tcs_pos[];
+in vec3 tcs_norm[];
 
-// attributes of the output CPs
-out vec3 vert_es[];
-out vec3 normal_es[];
+/// attributes of the output CPs
+out vec3 tes_pos[];
+out vec3 tes_norm[];
 
 void main ()
 {
-//     set tesselation levels only when first invocation of the shader
+//	set tesselation levels only when first invocation of the shader
 	if (gl_InvocationID == 0)
 	{
-		gl_TessLevelInner[0] = 6.0;
-		gl_TessLevelOuter[1] = 6.0;
-		gl_TessLevelOuter[3] = 6.0;
+		gl_TessLevelInner[0] = 6.f;
+		gl_TessLevelOuter[1] = 6.f;
+		gl_TessLevelOuter[3] = 6.f;
 
-		gl_TessLevelInner[1] = 6.0;
-		gl_TessLevelOuter[0] = 6.0;
-		gl_TessLevelOuter[2] = 6.0;
+		gl_TessLevelInner[1] = 6.f;
+		gl_TessLevelOuter[0] = 6.f;
+		gl_TessLevelOuter[2] = 6.f;
 	}
 
-//     Just pass the control points of the output patch
-	vert_es[gl_InvocationID] = vert_cs[gl_InvocationID];
-	normal_es[gl_InvocationID] = normal_cs[gl_InvocationID];
+//	just copy input CPs to output
+	tes_pos[gl_InvocationID] = tcs_pos[gl_InvocationID];
+	tes_norm[gl_InvocationID] = tcs_norm[gl_InvocationID];
 }

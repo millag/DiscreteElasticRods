@@ -1,61 +1,61 @@
 #version 410
 
-layout (location = 0) out vec4 frag_colour;
-
-struct Materials
+struct Light
 {
-  vec4 ambient;
-  vec4 diffuse;
-  vec4 specular;
-  float shininess;
+/// light ambient emission color
+	vec3 ambient;
+/// light diffuse emission color
+	vec3 diffuse;
+/// light specular emission color
+	vec3 specular;
+/// light position in view space
+	vec3 position;
 };
 
-struct Lights
+struct Material
 {
-  vec4 position;
-  vec4 ambient;
-  vec4 diffuse;
-  vec4 specular;
-  float constantAttenuation;
-  float spotCosCutoff;
-  float quadraticAttenuation;
-  float linearAttenuation;
+/// ambient reflection color
+	vec3 ambient;
+/// diffuse reflection color
+	vec3 diffuse;
+/// specular reflection color
+	vec3 specular;
+/// shininess - larger for surfaces that are smoother and more mirror-like
+	float shininess;
 };
 
+/// point light
+uniform Light light;
+/// material
+uniform Material mtl;
 
-uniform vec4 Col1;
-uniform vec4 Col2;
+uniform vec3 color;
 
-uniform mat4 M;
-uniform mat4 MV;
-uniform mat4 MVP;
-uniform mat3 normalMatrix;
+/// surface position in view space
+in vec3 fr_pos;
+/// surface normal in view space
+in vec3 fr_norm;
+/// uv at surface point
+in vec2 fr_uv;
 
-uniform Lights light;
-uniform Materials material;
-
-in vec3 vert_fr;
-in vec3 tangent_fr;
-in vec3 normal_fr;
-in vec2 uv_fr;
-
+/// output fragment color
+layout ( location = 0 ) out vec4 fragColor;
 
 void main()
 {
-	vec3 L = light.position.xyz;
-	vec3 N = -normalize( normalMatrix * normal_fr );
-	vec3 V = (MV * vec4(vert_fr, 1.0)).xyz;
-	vec3 H = normalize( L + V );
+// calculations are in view space
+	vec3 ldir = normalize( light.position - fr_pos );
+	vec3 ndir = normalize( fr_norm );
+	vec3 vdir = normalize( -fr_pos );
+	vec3 hdir = normalize( ldir + vdir );
 
+	const float repeatCount = 6;
+	float whichStripe = floor(fr_uv.x * repeatCount);
+	vec3 texCol = mix( color, vec3( 0.f, 0.f, 0.f ), mod( whichStripe, 2.f ) );
 
-	float repeatCount = 6;
-	float whichStripe = floor(uv_fr.x * repeatCount);
-	vec4 col = mix(Col1, Col2, mod( whichStripe, 2));
+	vec3 finalCol = light.ambient * mtl.ambient
+			+ light.diffuse * mtl.diffuse * texCol * max( dot( ldir, ndir ), 0.f )
+			+ light.specular * mtl.specular * pow( max( dot( hdir, ndir ), 0.f ), mtl.shininess );
 
-	vec4 ambient = material.ambient * light.ambient;
-	vec4 diffuse = material.diffuse * light.diffuse * dot(N, L) * col;
-	vec4 specular = material.specular * light.specular * pow( max(dot(N, H), 0.0),  material.shininess);
-
-	frag_colour = ambient + diffuse + specular;
+	fragColor = vec4( finalCol, 1.f );
 }
-

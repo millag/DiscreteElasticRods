@@ -55,38 +55,34 @@ public :
 protected:
 //  following methods must be implimented in the sub class
 /// @brief called when the window is created
-	virtual void initializeGL();
+	void initializeGL() override;
 
 /// @brief called whenever the window is re-sized
 /// @param[in] w the width of the resized window
 /// @param[in] h the height of the resized window
-	virtual void resizeGL(int w, int h);
+	void resizeGL( int w, int h ) override;
 
 /// @brief main gl drawing routine which is called whenever the window needs to be re-drawn
-	virtual void paintGL();
+	void paintGL() override;
 
-	virtual void mousePressEvent(QMouseEvent* event);
-	virtual void mouseMoveEvent(QMouseEvent* event);
-	virtual void mouseReleaseEvent(QMouseEvent* event);
-
-private :
-// various draw related utility functions
-	void drawHairStrand(const ElasticRod& strand);
+	void mousePressEvent( QMouseEvent* event ) override;
+	void mouseMoveEvent( QMouseEvent* event ) override;
+	void mouseReleaseEvent( QMouseEvent* event ) override;
 
 private:
-	GLRenderer m_renderer;
+	const Scene* m_scene = nullptr; ///< scene to render
 
+	GLRenderer m_renderer;
 	Camera m_cam; ///< viewport camera
 	GLDrawable m_refGrid; ///< reference grid
+	GLDrawable m_hair; ///< hair
 	DrawList m_drawList; ///< list of drawable objects created for each mesh in scene
-	const Scene* m_scene = nullptr; ///< scene to render
 
 //	TODO fix: ngl::Text* m_text; ///< debug info overlay
 
-
-
 // mouse controls
-/// @brief flag that marks that transformations calculated on mouse movement apply to an object and not the camera
+/// @brief flag that marks that transformations calculated on mouse movement
+/// apply to an object and not the camera
 	bool m_selection = false;
 /// @brief transform handle
 	TransformHandle m_transformHdl;

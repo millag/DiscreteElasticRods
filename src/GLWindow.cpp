@@ -64,16 +64,16 @@ void GLViewport::initializeGL()
 		return;
 	}
 
+	m_cam.lookAt( mg::Vec3D( 1.f, 2.f, 3.f ),
+	              mg::Vec3D( 0.f, 0.f, 0.f ),
+	              mg::Vec3D( 0.f, 1.f, 0.f ) );
+
 	auto shaderMan = GLShaderManager::getInstance();
 	auto constShader = shaderMan->getShader( "Constant" );
 	auto phongShader = shaderMan->getShader( "Phong" );
 
 //	reference grid
 	GLDrawable::createGrid( 10, 10, *constShader, m_refGrid );
-
-	m_cam.lookAt( mg::Vec3D( 1.f, 2.f, 3.f ),
-	              mg::Vec3D( 0.f, 0.f, 0.f ),
-	              mg::Vec3D( 0.f, 1.f, 0.f ) );
 
 //	scene
 	if ( m_scene )
@@ -85,40 +85,19 @@ void GLViewport::initializeGL()
 //	m_text->setColour(0.7,0.7,0.7);
 //	m_text->setScreenSize(width(), height());
 
-//	// now bind the shader attributes for most NGL primitives we use the following
-//	// layout attribute 0 is the vertex data (x,y,z)
-//	shader->bindAttribute("Phong",0,"inVert");
-//	shader->bindAttribute("Phong",1,"inUV");
-//	shader->bindAttribute("Phong",2,"inNormal");
-//	// now we have associated this data we can link the shader
-//	shader->linkProgramObject("Phong");
-//	// and make it active ready to load values
-//	(*shader)["Phong"]->use();
-//	shader->setShaderParam1i("Normalize",1);
-
-//	// now pass the modelView and projection values to the shader
-//	// the shader will use the currently active material and light0 so set them
-//	ngl::Material m(ngl::SILVER);
-//	m.loadToShader("material");
-//	ngl::Light light(ngl::Vec3(0,0,0),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::POINTLIGHT);
-
 //	// now create our light this is done after the camera so we can pass the
 //	// transpose of the projection matrix to the light to do correct eye space
 //	// transformations
+//	ngl::Light light(ngl::Vec3(0,0,0),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::POINTLIGHT);
 //	ngl::Mat4 iv=m_cam->getViewMatrix();
 //	iv.transpose();
 //	light.setTransform(iv);
 //	light.setAttenuation(1,0,0);
 //	light.enable();
-//	// load these values to the shader as well
 //	light.loadToShader("light");
 
-//	shader->bindAttribute("Tube",0,"inVert");
-//	shader->bindAttribute("Tube",1,"inNormal");
-
-//	shader->linkProgramObject("Tube");
-//	(*shader)["Tube"]->use();
-//	light.loadToShader("light");
+//	// the shader will use the currently active material and light0 so set them
+//	ngl::Material m(ngl::SILVER);
 //	m.loadToShader("material");
 
 //	shader->bindAttribute("DebugRod",0,"inVert");
@@ -138,57 +117,6 @@ void GLViewport::resizeGL( int w, int h )
 	const auto aspect = static_cast<mg::Real>(w) / h;
 	m_cam.perspective( mg::Constants::pi() / 3, aspect, 0.001f, 1000.f );
 }
-
-//void GLViewport::loadMatricesToShader()
-//{
-//	ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-
-//	ngl::Mat4 MV;
-//	ngl::Mat4 MVP;
-//	ngl::Mat3 normalMatrix;
-//	ngl::Mat4 M;
-//	M = m_transform.getMatrix();
-//	MV = M * m_cameraTransform.getMatrix() * m_cam->getViewMatrix();
-//	MVP = MV * m_cam->getProjectionMatrix();
-//	normalMatrix = MV;
-//	normalMatrix.inverse();
-//	shader->setShaderParamFromMat4("MV",MV);
-//	shader->setShaderParamFromMat4("MVP",MVP);
-//	shader->setShaderParamFromMat3("normalMatrix",normalMatrix);
-//	shader->setShaderParamFromMat4("M",M);
-//}
-
-//void GLViewport::loadMatricesToHairShader()
-//{
-//	ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-
-//	ngl::Mat4 M;
-//	ngl::Mat4 MV;
-//	ngl::Mat4 MVP;
-//	M = m_transform.getMatrix();
-//	MV = M  * m_cameraTransform.getMatrix() * m_cam->getViewMatrix();
-//	MVP = MV * m_cam->getProjectionMatrix();
-//	shader->setShaderParamFromMat4("MVP",MVP);
-//	shader->setShaderParamFromMat4("M",M);
-//}
-
-//void GLViewport::loadMatricesToHairShader2()
-//{
-//	ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-
-//	ngl::Mat4 MV;
-//	ngl::Mat4 MVP;
-//	ngl::Mat3 normalMatrix;
-//	ngl::Mat4 M;
-//	M = m_transform.getMatrix();
-//	MV = M * m_cameraTransform.getMatrix() * m_cam->getViewMatrix();
-//	MVP = MV * m_cam->getProjectionMatrix();
-//	normalMatrix = MV;
-//	normalMatrix.inverse();
-//	shader->setShaderParamFromMat4("MV",MV);
-//	shader->setShaderParamFromMat4("MVP",MVP);
-//	shader->setShaderParamFromMat3("normalMatrix",normalMatrix);
-//}
 
 void GLViewport::paintGL()
 {
@@ -214,8 +142,8 @@ void GLViewport::paintGL()
 		auto shader = m_refGrid.getShader();
 		shader->bind();
 
-		const mg::Matrix4D tm = m_renderer.getViewProjectionMatrix() * m_refGrid.getTransform();
-		shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( tm.data() ) );
+		const mg::Matrix4D mvp = m_renderer.getViewProjectionMatrix() * m_refGrid.getTransform();
+		shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( mvp.data() ) );
 		m_refGrid.draw();
 	}
 
@@ -258,38 +186,34 @@ void GLViewport::paintGL()
 		drawable->draw();
 	}
 
-	if ( !m_scene->getHairById( 0 ) )
+	auto hair = m_scene->getHairById( 0 );
+	if ( !hair )
 	{
 		return;
 	}
 
-//#ifndef DBUGG
-//	shader->use("Tube");
-//	shader->setShaderParam4f("Col1", 0.47, 0.4, 0.0, 1.0);
-//	shader->setShaderParam4f("Col2", 0.0, 0.0, 0.0, 1.0);
-//	shader->setShaderParam1f("Radius", 0.1);
-//	glPatchParameteri(GL_PATCH_VERTICES, 4);
-//	// load transform stack
-//	m_transform.reset();
-//	loadMatricesToHairShader2();
-//#endif
+	auto shaderMan = GLShaderManager::getInstance();
 
-//#ifdef DBUGG
-//	glLineWidth(0.05);
-//	shader->use("DebugRod");
-//	shader->setShaderParam4f("Colour", 0.8, 0.8, 0.0, 1.0);
-//	// load transform stack
-//	m_transform.reset();
-//	loadMatricesToHairShader();
-//#endif
+#ifdef DBUGG
+	auto shader = shaderMan->getShader( "DebugRod" );
+	gl->glLineWidth( 0.05f );
+	shader->bind();
+	shader->setUniformValue( "mv", *reinterpret_cast<const GLMatrix4x4*>( m_renderer.getViewMatrix().data() ) );
+	shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( m_renderer.getViewProjectionMatrix().data() ) );
+#else
+	auto shader = shaderMan->getShader( "Tube" );
+	GLDrawable::createFrom( *hair, *shader, m_hair );
 
-//	const std::vector<ElasticRod*>& strands = m_scene->getHairById(0)->m_strands;
-////    const std::vector<ElasticRod*>& strands = m_scene->getStrands();
-//	typedef std::vector<ElasticRod*>::const_iterator SIter;
-//	for (SIter it = strands.begin(); it != strands.end(); ++it)
-//	{
-//		drawHairStrand(**it);
-//	}
+	shader->bind();
+
+	const mg::Matrix4D mv = m_renderer.getViewMatrix() * m_hair.getTransform();
+	const mg::Matrix4D mvp = m_renderer.getViewProjectionMatrix() * m_hair.getTransform();
+	shader->setUniformValue( "mv", *reinterpret_cast<const GLMatrix4x4*>( mv.data() ) );
+	shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( mvp.data() ) );
+	shader->setUniformValue( "radius", 0.1f );
+
+	m_hair.draw();
+#endif
 
 //	m_text->renderText(10, 10, QString("TIME: %1ms").arg(chronometer.elapsed()));
 //	m_text->renderText(10, 30, QString("FPS: %1").arg((float)mg::SEC / chronometer.restart()));
@@ -430,60 +354,5 @@ void GLWindow::drawHairStrand(const ElasticRod& strand)
 
 	m_strandVAO->draw();
 	m_strandVAO->unbind();
-}
-#endif
-
-#ifndef DBUGG
-void GLViewport::drawHairStrand(const ElasticRod& strand)
-{
-//	if (m_strandVAO != NULL)
-//	{
-//		m_strandVAO->bind();
-
-//		m_strandVAO->updateIndexedData(0, strand.m_ppos.size() * sizeof(mg::Vec3D),
-//									   strand.m_ppos[0][0]);
-//		m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
-
-//		m_strandVAO->updateIndexedData(1, strand.m_m1.size() * sizeof(mg::Vec3D),
-//									   strand.m_m1[0][0]);
-//		m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
-
-//		m_strandVAO->draw();
-//		m_strandVAO->unbind();
-//		return;
-//	}
-
-//	std::vector<unsigned> indices( (strand.m_ppos.size() - 1) * 4 );
-//	int nPoints = (int)strand.m_ppos.size();
-//	for (int i = -1; i < nPoints - 2; ++i)
-//	{
-//		for (int j = 0; j < 4; ++j)
-//		{
-//			assert( (i + 1) >= 0 && (4*(i + 1) + j) < (int)indices.size());
-//			indices[4*(i + 1) + j] = std::min(std::max(0, i + j), nPoints - 1);
-//		}
-//	}
-
-//	m_strandVAO = ngl::VertexArrayObject::createVOA(GL_PATCHES);
-//	m_strandVAO->bind();
-
-//	m_strandVAO->setIndexedData(strand.m_ppos.size() * sizeof(mg::Vec3D),
-//								strand.m_ppos[0][0],
-//								indices.size(),
-//								&indices[0],
-//								GL_UNSIGNED_INT);
-//	m_strandVAO->setVertexAttributePointer(0, 3, GL_FLOAT, 0, 0);
-
-//	m_strandVAO->setIndexedData(strand.m_m1.size() * sizeof(mg::Vec3D),
-//								strand.m_m1[0][0],
-//								indices.size(),
-//								&indices[0],
-//								GL_UNSIGNED_INT);
-//	m_strandVAO->setVertexAttributePointer(1, 3, GL_FLOAT, 0, 0);
-
-//	m_strandVAO->setNumIndices(indices.size());
-
-//	m_strandVAO->draw();
-//	m_strandVAO->unbind();
 }
 #endif

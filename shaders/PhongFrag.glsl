@@ -34,7 +34,7 @@ in vec3 fr_pos;
 /// surface normal in view space
 in vec3 fr_normal;
 
-/// output fragment colour
+/// output fragment color
 layout ( location = 0 ) out vec4 fragColor;
 
 void main ()
@@ -44,12 +44,12 @@ void main ()
 	vec3 ndir = normalize( fr_normal );
 	vec3 vdir = normalize( -fr_pos );
 	vec3 hdir = normalize( ldir + vdir );
-	// vec3 rdir = reflect( -ldir, ndir );
+//	vec3 rdir = reflect( -ldir, ndir );
 
-	vec3 color = light.ambient * mtl.ambient
+	vec3 finalCol = light.ambient * mtl.ambient
 			+ light.diffuse * mtl.diffuse * max( dot( ldir, ndir ), 0.f )
 			+ light.specular * mtl.specular * pow( max( dot( hdir, ndir ), 0.f ), mtl.shininess );
-			//+ light.specular * mtl.specular * pow( max( dot( rdir, vdir ), 0.f ), mtl.shininess / 4 );
+//			+ light.specular * mtl.specular * pow( max( dot( rdir, vdir ), 0.f ), mtl.shininess / 4 );
 
-	fragColor = vec4( color, 1.f );
+	fragColor = vec4( finalCol, 1.f );
 }

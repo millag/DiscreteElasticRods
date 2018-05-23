@@ -5,6 +5,7 @@
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
+#include <QOpenGLExtraFunctions>
 #include <QOpenGLBuffer>
 
 #include <cassert>
@@ -216,15 +217,15 @@ static PrimitiveType createCone(unsigned udiv, std::vector<mg::Vec3D>& o_vertDat
 
 bool GLRenderer::initialize()
 {
-	if (isValid())
+	if ( isValid() )
 	{
 		return false;
 	}
 
 	m_context = QOpenGLContext::currentContext();
-	if (m_context)
+	if ( m_context )
 	{
-		auto gl = m_context->functions();
+		auto gl = m_context->extraFunctions();
 		qDebug() << "Initializing OpenGL render";
 		qDebug() << "Vendor:" << reinterpret_cast<const char*>( gl->glGetString( GL_VENDOR ) );
 		qDebug() << "Renderer:" << reinterpret_cast<const char*>( gl->glGetString( GL_RENDERER ) );
@@ -236,15 +237,12 @@ bool GLRenderer::initialize()
 		gl->glEnable( GL_CULL_FACE );
 		gl->glEnable( GL_PRIMITIVE_RESTART_FIXED_INDEX );
 		gl->glFrontFace( GL_CCW );
-//        gl->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+//		gl->glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
 		auto shaderMan = GLShaderManager::getInstance();
 		auto shader = shaderMan->loadShader( "Constant",
 		                                     "shaders/ConstantVert.glsl",
 		                                     "shaders/ConstantFrag.glsl" );
-		shader->bind();
-		m_headLight.loadToShader( *shader );
-		m_defaultMtl.loadToShader( *shader );
 
 		shader = shaderMan->loadShader( "Phong",
 		                                "shaders/PhongVert.glsl",
@@ -260,6 +258,7 @@ bool GLRenderer::initialize()
 		                                "shaders/TubeTCS.glsl",
 		                                "shaders/TubeTES.glsl" );
 		shader->bind();
+		shader->setPatchVertexCount( 4 );
 		m_headLight.loadToShader( *shader );
 		m_defaultMtl.loadToShader( *shader );
 
@@ -281,24 +280,26 @@ bool GLRenderer::initialize()
 	return isValid();
 }
 
-void GLRenderer::setCamera(Camera &cam)
+void GLRenderer::setCamera( Camera& cam )
 {
 	m_vMatrix = cam.getVMatrix();
 	m_pMatrix = cam.getPMatrix();
 	m_vpMatrix = cam.getVPMatrix();
 }
 
-void GLRenderer::beginDrawable(PickMode mode , PickName pickName)
+void GLRenderer::beginDrawable( PickMode mode , PickName pickName )
 {
-	if (!m_defaultVAO.isCreated())
+	UNUSED_VALUE( mode );
+	UNUSED_VALUE( pickName );
+
+	if ( !m_defaultVAO.isCreated() )
 	{
 		m_defaultVAO.create();
 	}
 }
 
 void GLRenderer::endDrawable()
-{
-}
+{ }
 
 void GLRenderer::line(const mg::Vec3D &start, const mg::Vec3D &end)
 {

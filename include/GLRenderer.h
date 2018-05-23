@@ -43,16 +43,16 @@ public:
 	bool initialize();
 
 	///
-	void setCamera(Camera& cam);
+	void setCamera( Camera& cam );
 	const mg::Matrix4D& getViewMatrix() const { return m_vMatrix; }
 	const mg::Matrix4D& getProjectionMatrix() const { return m_pMatrix; }
 	const mg::Matrix4D& getViewProjectionMatrix() const { return m_vpMatrix; }
 
 	const mg::Vec3D& getColor() const { return m_defaultMtl.m_diffuse; }
-	void setColor(const mg::Vec3D& color) { m_defaultMtl.m_diffuse = color; }
+	void setColor( const mg::Vec3D& color ) { m_defaultMtl.m_diffuse = color; }
 
 	/// primitive draw
-	void beginDrawable(PickMode mode = PickMode::NonPickable, PickName pickName = 0);
+	void beginDrawable( PickMode mode = PickMode::NonPickable, PickName pickName = 0 );
 	void endDrawable();
 
 	void line(const mg::Vec3D& start, const mg::Vec3D& end);
