@@ -332,9 +332,9 @@ void GLRenderer::polyline(const mg::Vec3D pos[], int cnt, bool closed)
 	vbo.allocate(pos, cnt * sizeof(pos[0]));
 
 	shader->bind();
-	shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>(m_vpMatrix.data()) );
+	shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( m_vpMatrix.data() ) );
 	const auto& color = getColor();
-	shader->setUniformValue("color", color[0], color[1], color[2], 1.f);
+	shader->setUniformValue( "color", color[0], color[1], color[2] );
 
 	shader->enableAttributeArray("position");
 	shader->setAttributeBuffer("position", GL_FLOAT, 0, 3);
@@ -378,9 +378,9 @@ void GLRenderer::circle(const mg::Vec3D& center, const mg::Vec3D& normal, mg::Re
 	vbo.allocate(pos.data(), static_cast<GLsizei>(pos.size() * sizeof(pos[0])));
 
 	shader->bind();
-	shader->setUniformValue("mvp", *reinterpret_cast<const GLMatrix4x4*>(tm.data()));
+	shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( tm.data() ) );
 	const auto& color = getColor();
-	shader->setUniformValue("color", color[0], color[1], color[2], 1.f);
+	shader->setUniformValue( "color", color[0], color[1], color[2] );
 
 	shader->enableAttributeArray("position");
 	shader->setAttributeBuffer("position", GL_FLOAT, 0, 3);

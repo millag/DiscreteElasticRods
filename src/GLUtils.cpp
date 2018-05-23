@@ -390,20 +390,18 @@ bool GLDrawable::createFrom( const Hair& hair, QOpenGLShaderProgram& shader, GLD
 
 	const auto& strands =  hair.m_strands;
 	auto nVertices = 0u;
-	auto nNormals = 0u;
 	auto nPatches = 0u;
 	for( const auto& strand : strands )
 	{
 		if( strand && strand->m_ppos.size() )
 		{
 			nVertices += strand->m_ppos.size();
-			nNormals += strand->m_m1.size();
 			nPatches += ( strand->m_ppos.size() - 1 ) * 4;
 		}
 	}
 
 	std::vector<mg::Vec3D> vertices( nVertices );
-	std::vector<mg::Vec3D> normals( nNormals );
+	std::vector<mg::Vec3D> normals( nVertices );
 	std::vector<unsigned> indices( nPatches );
 
 	auto voffset = 0u;
@@ -413,12 +411,6 @@ bool GLDrawable::createFrom( const Hair& hair, QOpenGLShaderProgram& shader, GLD
 	{
 		if( strand && strand->m_ppos.size() )
 		{
-			std::copy_n( strand->m_ppos.begin(), strand->m_ppos.size(), vertices.begin() + voffset );
-			voffset += strand->m_ppos.size();
-
-			std::copy_n( strand->m_m1.begin(), strand->m_m1.size(), normals.begin() + noffset );
-			noffset += strand->m_m1.size();
-
 			const auto maxPosIdx = static_cast<unsigned>( strand->m_ppos.size() - 1 );
 			for ( auto i = 0u; i < maxPosIdx; ++i )
 			{
@@ -427,10 +419,17 @@ bool GLDrawable::createFrom( const Hair& hair, QOpenGLShaderProgram& shader, GLD
 					const auto idx = 4 * i + j;
 					assert( idx >= 0 && ( soffset + idx ) < indices.size() );
 
-					indices[idx] = std::min( static_cast<unsigned>( std::max( static_cast<int>( i + j - 1 ), 0 ) ), maxPosIdx );
+					indices[soffset + idx] = voffset + std::min( static_cast<unsigned>( std::max( static_cast<int>( i + j - 1 ), 0 ) ), maxPosIdx );
 				}
 			}
 			soffset += maxPosIdx * 4;
+
+			std::copy_n( strand->m_ppos.begin(), strand->m_ppos.size(), vertices.begin() + voffset );
+			voffset += strand->m_ppos.size();
+
+			const auto nCnt = std::min( strand->m_m1.size(), strand->m_ppos.size() );
+			std::copy_n( strand->m_m1.begin(), nCnt, normals.begin() + noffset );
+			noffset += strand->m_ppos.size();
 		}
 	}
 

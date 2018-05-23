@@ -69,16 +69,16 @@ void GLViewport::initializeGL()
 	              mg::Vec3D( 0.f, 1.f, 0.f ) );
 
 	auto shaderMan = GLShaderManager::getInstance();
-	auto constShader = shaderMan->getShader( "Constant" );
-	auto phongShader = shaderMan->getShader( "Phong" );
+	auto shader = shaderMan->getShader( "Constant" );
 
 //	reference grid
-	GLDrawable::createGrid( 10, 10, *constShader, m_refGrid );
+	GLDrawable::createGrid( 10, 10, *shader, m_refGrid );
 
 //	scene
 	if ( m_scene )
 	{
-		buildVAOs( m_scene->getMeshes(), *phongShader, m_drawList );
+		auto shader = shaderMan->getShader( "Phong" );
+		buildVAOs( m_scene->getMeshes(), *shader, m_drawList );
 	}
 
 //	m_text = new ngl::Text(QFont("Arial",13));
@@ -114,7 +114,7 @@ void GLViewport::initializeGL()
 
 void GLViewport::resizeGL( int w, int h )
 {
-	const auto aspect = static_cast<mg::Real>(w) / h;
+	const auto aspect = static_cast<mg::Real>( w ) / h;
 	m_cam.perspective( mg::Constants::pi() / 3, aspect, 0.001f, 1000.f );
 }
 
@@ -196,10 +196,17 @@ void GLViewport::paintGL()
 
 #ifdef DBUGG
 	auto shader = shaderMan->getShader( "DebugRod" );
-	gl->glLineWidth( 0.05f );
+	GLDrawable::createFrom( *hair, *shader, m_hair );
+
 	shader->bind();
-	shader->setUniformValue( "mv", *reinterpret_cast<const GLMatrix4x4*>( m_renderer.getViewMatrix().data() ) );
-	shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( m_renderer.getViewProjectionMatrix().data() ) );
+
+	gl->glLineWidth( 0.05f );
+	const mg::Matrix4D mv = m_renderer.getViewMatrix() * m_hair.getTransform();
+	const mg::Matrix4D mvp = m_renderer.getViewProjectionMatrix() * m_hair.getTransform();
+	shader->setUniformValue( "mv", *reinterpret_cast<const GLMatrix4x4*>( mv.data() ) );
+	shader->setUniformValue( "mvp", *reinterpret_cast<const GLMatrix4x4*>( mvp.data() ) );
+
+	m_hair.draw();
 #else
 	auto shader = shaderMan->getShader( "Tube" );
 	GLDrawable::createFrom( *hair, *shader, m_hair );
