@@ -92,17 +92,6 @@ set( PROJECT_SOURCES
 	src/Exporter.cpp
 )
 
-# UI forms
-set( PROJECT_UIFORMS
-	ui/MainWindow.ui
-)
-
-# other files
-file( GLOB_RECURSE PROJECT_SHADERS "shaders/*.glsl" )
-file( GLOB_RECURSE PROJECT_ASSETS "assets/*" )
-message( "CMAKE_AUTOUIC_SEARCH_PATHS = ${CMAKE_AUTOUIC_SEARCH_PATHS}" )
-#message( "PROJECT_ASSETS = ${PROJECT_ASSETS}" )
-
 add_executable( ${PROJECT_NAME}
 	${PROJECT_HEADERS}
 	${PROJECT_SOURCES}
@@ -139,8 +128,23 @@ if( OPENMP_FOUND )
 endif()
 
 add_custom_target( COPY_RUNTIME_FILES
+	COMMENT "Copying project runtime files to ${PROJECT_BINARY_DIR}"
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${PROJECT_BINARY_DIR}/shaders
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets ${PROJECT_BINARY_DIR}/assets
-	COMMENT "Copying project runtime files to ${PROJECT_BINARY_DIR}"
 )
 add_dependencies( ${PROJECT_NAME} COPY_RUNTIME_FILES )
+
+# list other files as separate target
+file( GLOB_RECURSE PROJECT_UIFORMS "ui/*.ui" )
+file( GLOB_RECURSE PROJECT_SHADERS "shaders/*.glsl" )
+file( GLOB_RECURSE PROJECT_ASSETS "assets/*" )
+
+add_library( other_files EXCLUDE_FROM_ALL
+	${PROJECT_UIFORMS}
+	${PROJECT_SHADERS}
+	${PROJECT_ASSETS}
+)
+target_link_libraries( other_files )
+set_target_properties( other_files PROPERTIES
+	LINKER_LANGUAGE CXX
+)
