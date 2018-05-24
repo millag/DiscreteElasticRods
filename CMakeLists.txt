@@ -34,32 +34,32 @@ endif()
 
 # headers
 set( PROJECT_HEADERS
-	include/MainWindow.h
-	include/GLWindow.h
-	include/GLRenderer.h
-	include/GLUtils.h
-	include/Camera.h
-	include/cml_config.h
-	include/config.h
-	include/AABB.h
-	include/Utils.h
-	include/Scene.h
-	include/Mesh.h
-	include/RenderObject.h
-	include/TransformTool.h
-	include/ElasticRod.h
-	include/Spiral.h
-	include/Hair.h
-	include/HairGenerator.h
-	include/VoxelGrid.h
-	include/ObjLoader.h
-	include/CollisionShape.h
-	include/BasicParser.h
-	include/SceneLoader.h
-	include/Exporter.h
-	include/AnimationBuffer.h
-	include/ElasticRodState.h
-	include/HairState.h
+	src/MainWindow.h
+	src/GLWindow.h
+	src/GLRenderer.h
+	src/GLUtils.h
+	src/Camera.h
+	src/cml_config.h
+	src/config.h
+	src/AABB.h
+	src/Utils.h
+	src/Scene.h
+	src/Mesh.h
+	src/RenderObject.h
+	src/TransformTool.h
+	src/ElasticRod.h
+	src/Spiral.h
+	src/Hair.h
+	src/HairGenerator.h
+	src/VoxelGrid.h
+	src/ObjLoader.h
+	src/CollisionShape.h
+	src/BasicParser.h
+	src/SceneLoader.h
+	src/Exporter.h
+	src/AnimationBuffer.h
+	src/ElasticRodState.h
+	src/HairState.h
 )
 
 # sources
@@ -93,7 +93,6 @@ add_executable( ${PROJECT_NAME}
 )
 target_include_directories( ${PROJECT_NAME}
 	PRIVATE
-		${CMAKE_SOURCE_DIR}/include
 		${CML_INCLUDE_DIR}
 		${DLIB_INCLUDE_DIR}
 )
