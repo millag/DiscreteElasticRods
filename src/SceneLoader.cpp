@@ -221,8 +221,8 @@ bool SceneLoader::loadScene( const char* filename, Scene& scene )
 		hair->m_params->m_gravity = it->second.m_netForce;
 		hair->m_params->m_drag = it->second.m_drag;
 
-		hair->m_params->m_resolveCollisions = static_cast<bool>( it->second.m_resolveCollisions );
-		hair->m_params->m_resolveSelfInterations = static_cast<bool>( it->second.m_resolveSelfInterations );
+		hair->m_params->m_resolveCollisions = it->second.m_resolveCollisions > 0;
+		hair->m_params->m_resolveSelfInterations = it->second.m_resolveSelfInterations > 0;
 		hair->m_params->m_selfInterationDist = it->second.m_selfInterationDist;
 		hair->m_params->m_selfStiction = it->second.m_selfStiction;
 		hair->m_params->m_selfRepulsion = it->second.m_selfRepulsion;
