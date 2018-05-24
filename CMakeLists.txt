@@ -32,11 +32,6 @@ else()
 	message( WARNING "OpenMP support NOT found. Multithreading might not work" )
 endif()
 
-#file(GLOB_RECURSE PROJECT_HEADERS "include/*.h" "include/*.hpp")
-#file(GLOB_RECURSE PROJECT_SOURCES "src/*.cpp")
-#message("PROJECT_HEADERS = ${PROJECT_HEADERS}")
-#message("PROJECT_SOURCES = ${PROJECT_SOURCES}")
-
 # headers
 set( PROJECT_HEADERS
 	include/MainWindow.h
@@ -128,7 +123,7 @@ if( OPENMP_FOUND )
 endif()
 
 add_custom_target( COPY_RUNTIME_FILES
-	COMMENT "Copying project runtime files to ${PROJECT_BINARY_DIR}"
+	COMMENT "Copying runtime files to ${PROJECT_BINARY_DIR}"
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${PROJECT_BINARY_DIR}/shaders
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets ${PROJECT_BINARY_DIR}/assets
 )
