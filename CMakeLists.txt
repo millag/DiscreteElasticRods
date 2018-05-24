@@ -91,10 +91,9 @@ add_executable( ${PROJECT_NAME}
 	${PROJECT_HEADERS}
 	${PROJECT_SOURCES}
 )
-target_include_directories( ${PROJECT_NAME}
-	PRIVATE
-		${CML_INCLUDE_DIR}
-		${DLIB_INCLUDE_DIR}
+target_include_directories( ${PROJECT_NAME} PRIVATE
+	${CML_INCLUDE_DIR}
+	${DLIB_INCLUDE_DIR}
 )
 target_link_libraries( ${PROJECT_NAME}
 	Qt5::Core
@@ -103,21 +102,18 @@ target_link_libraries( ${PROJECT_NAME}
 	${CML_LIBRARIES}
 	${DLIB_LIBRARIES}
 )
-set_target_properties( ${PROJECT_NAME}
-	PROPERTIES
+set_target_properties( ${PROJECT_NAME} PROPERTIES
 	AUTOUIC_SEARCH_PATHS "ui ${CMAKE_AUTOUIC_SEARCH_PATHS}"
 )
 
-target_compile_definitions( ${PROJECT_NAME}
-	PRIVATE
-		MULTI_THREAD=1
-		#DBUGG=1
+target_compile_definitions( ${PROJECT_NAME} PRIVATE
+	MULTI_THREAD=1
+	#DBUGG=1
 )
 
 if( OPENMP_FOUND )
-	target_compile_options( ${PROJECT_NAME}
-		PRIVATE
-			${OpenMP_CXX_FLAGS}
+	target_compile_options( ${PROJECT_NAME} PRIVATE
+		${OpenMP_CXX_FLAGS}
 	)
 endif()
 
