@@ -647,32 +647,31 @@ void ElasticRod::updateCurrentState()
 
 //====================================== MinimizationPImpl implementation =======================================
 
-void ElasticRod::MinimizationPImpl::extractThetaVars(const ElasticRod *rod, const ColumnVector& theta, ColumnVector& o_thetaVars)
+void ElasticRod::MinimizationPImpl::extractThetaVars( const ElasticRod* rod, const ColumnVector& theta, ColumnVector& o_thetaVars )
 {
-	o_thetaVars.set_size(theta.size() - rod->m_isClamped.size());
-	unsigned j = 0;
-	for (unsigned i = 0; i < theta.size(); ++i)
+	o_thetaVars.set_size( theta.size() - rod->m_isClamped.size() );
+	auto j = 0l;
+	for ( auto i = 0l; i < theta.size(); ++i )
 	{
-		if (rod->m_isClamped.count(i) || rod->m_isClamped.count(i + 1))
+		if ( rod->m_isClamped.count( i ) || rod->m_isClamped.count( i + 1 ) )
 		{
 			continue;
 		}
-		o_thetaVars(j) = theta(i);
+		o_thetaVars( j ) = theta( i );
 		++j;
 	}
 }
 
-void ElasticRod::MinimizationPImpl::constructTheta(const ElasticRod *rod, const ColumnVector& thetaVars, ColumnVector& o_theta)
+void ElasticRod::MinimizationPImpl::constructTheta( const ElasticRod* rod, const ColumnVector& thetaVars, ColumnVector& o_theta )
 {
-
-	unsigned j = 0;
-	for (unsigned i = 0; i < o_theta.size(); ++i)
+	auto j = 0l;
+	for ( auto i = 0l; i < o_theta.size(); ++i )
 	{
-		if (rod->m_isClamped.count(i) || rod->m_isClamped.count(i + 1))
+		if (rod->m_isClamped.count( i ) || rod->m_isClamped.count( i + 1 ) )
 		{
 			continue;
 		}
-		o_theta(i) = thetaVars(j);
+		o_theta( i ) = thetaVars( j );
 		++j;
 	}
 }
@@ -737,70 +736,70 @@ double ElasticRod::MinimizationPImpl::evaluate::operator ()(const ColumnVector& 
 	return (double)E;
 }
 
-ColumnVector ElasticRod::MinimizationPImpl::evaluateGradient::operator ()(const ColumnVector &theta) const
+ColumnVector ElasticRod::MinimizationPImpl::evaluateGradient::operator ()( const ColumnVector &theta ) const
 {
-	ColumnVector gradient(theta.size());
+	ColumnVector gradient( theta.size() );
 //    TODO FIX: can I avoid copying ?????
 	std::vector<mg::Vec3D> m1 = m_rod->m_m1;
 	std::vector<mg::Vec3D> m2 = m_rod->m_m2;
 	ColumnVector theta_full = m_rod->m_theta;
 
-	constructTheta(m_rod, theta, theta_full);
-	m_rod->computeMaterialFrame(theta_full, m1, m2);
+	constructTheta( m_rod, theta, theta_full );
+	m_rod->computeMaterialFrame( theta_full, m1, m2 );
 
 	mg::Matrix2D JB;
-	mg::matrix_rotation_2D(JB, mg::Constants::pi_over_2());
+	mg::matrix_rotation_2D( JB, mg::Constants::pi_over_2() );
 	JB *= m_rod->m_params->m_B;
 
-	mg::Real dEdQj;
-	unsigned j = 0;
-	for (unsigned i = 0; i < theta_full.size(); ++i)
+	auto j = 0ll;
+	for ( auto i = 0ll; i < theta_full.size(); ++i )
 	{
-		if (m_rod->m_isClamped.count(i) || m_rod->m_isClamped.count(i + 1))
+		if ( m_rod->m_isClamped.count( i ) || m_rod->m_isClamped.count( i + 1 ) )
 		{
 			continue;
 		}
-		m_rod->computedEdQj(i, m1[i], m2[i], theta_full, JB, dEdQj);
-		gradient(j) = dEdQj;
+		mg::Real dEdQj;
+		m_rod->computedEdQj( i, m1[i], m2[i], theta_full, JB, dEdQj );
+		gradient( j ) = dEdQj;
 		++j;
 	}
 
 	return gradient;
 }
 
-Hessian ElasticRod::MinimizationPImpl::evaluateHessian::operator ()(const ColumnVector& theta) const
+Hessian ElasticRod::MinimizationPImpl::evaluateHessian::operator ()( const ColumnVector& theta ) const
 {
-	Hessian hessian(theta.size(), theta.size());
-	hessian = dlib::zeros_matrix(hessian);
+	Hessian hessian( theta.size(), theta.size() );
+	hessian = dlib::zeros_matrix( hessian );
 //    TODO FIX: can I avoid copying ?????
 	std::vector<mg::Vec3D> m1 = m_rod->m_m1;
 	std::vector<mg::Vec3D> m2 = m_rod->m_m2;
 	ColumnVector theta_full = m_rod->m_theta;
 
-	constructTheta(m_rod, theta, theta_full);
-	m_rod->computeMaterialFrame(theta_full, m1, m2);
+	constructTheta( m_rod, theta, theta_full );
+	m_rod->computeMaterialFrame( theta_full, m1, m2 );
 
 	mg::Matrix2D J;
-	mg::matrix_rotation_2D(J, mg::Constants::pi_over_2());
-	mg::Real Hjjm1, Hjj, Hjjp1;
-	unsigned j = 0;
-	for (unsigned i = 0; i < m_rod->m_theta.size(); ++i)
+	mg::matrix_rotation_2D( J, mg::Constants::pi_over_2() );
+	auto j = 0ll;
+	for ( auto i = 0ll; i < m_rod->m_theta.size(); ++i )
 	{
-		if (m_rod->m_isClamped.count(i) || m_rod->m_isClamped.count(i + 1))
+		if ( m_rod->m_isClamped.count( i ) || m_rod->m_isClamped.count( i + 1 ) )
 		{
 			continue;
 		}
 
-		m_rod->computeHessian(i, m1[i], m2[i], J, Hjjm1, Hjj, Hjjp1);
+		mg::Real Hjjm1, Hjj, Hjjp1;
+		m_rod->computeHessian( i, m1[i], m2[i], J, Hjjm1, Hjj, Hjjp1 );
 
-		if (j > 0)
+		if ( j > 0 )
 		{
-			hessian(j, j - 1) = Hjjm1;
+			hessian( j, j - 1 ) = Hjjm1;
 		}
-		hessian(j, j) = Hjj;
-		if ((j + 1) < theta.size())
+		hessian( j, j ) = Hjj;
+		if ( ( j + 1 ) < theta.size() )
 		{
-			hessian(j, j + 1) = Hjjp1;
+			hessian( j, j + 1 ) = Hjjp1;
 		}
 		++j;
 	}
