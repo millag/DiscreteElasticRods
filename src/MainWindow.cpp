@@ -5,9 +5,6 @@
 
 #include <QFileDialog>
 
-
-static Exporter exporter;
-
 MainWindow::MainWindow( QWidget *parent ):
     QMainWindow( parent )
 {
@@ -129,6 +126,7 @@ void MainWindow::recordEvent()
 
 void MainWindow::setTimerUpdateDuration(int ms)
 {
+	UNUSED_VALUE( ms );
 	m_updateTimer.setInterval(m_ui->m_timerUpdate->value());
 }
 
@@ -151,8 +149,7 @@ void MainWindow::selectExportDirectory()
 	QString dir = QFileDialog::getExistingDirectory(this,
 	                                                "Select Directory",
 	                                                m_exportDir,
-	                                                QFileDialog::ShowDirsOnly
-	                                                | QFileDialog::DontResolveSymlinks);
+	                                                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
 	if (dir.isEmpty())
 	{
@@ -209,6 +206,8 @@ void MainWindow::exportSim()
 
 void MainWindow::exportFrame(unsigned frame)
 {
+	Exporter exporter;
+
 	QDir dir(m_exportGeoDir);
 	QString filename = dir.filePath(m_ui->m_filePrefix->text().append("geo_%1.obj").arg(frame));
 	exporter.exportGeometry(filename.toLocal8Bit(), *m_scene->getHairById(0)->m_object);
@@ -223,7 +222,7 @@ void MainWindow::updateUI()
 	m_ui->m_minimizationMethod->clear();
 	m_ui->m_minimizationMethod->addItem( QString( "NONE" ) );
 	m_ui->m_minimizationMethod->addItem( QString( "NEWTON" ) );
-	m_ui->m_minimizationMethod->addItem( QString("BFGS" ) );
+	m_ui->m_minimizationMethod->addItem( QString( "BFGS" ) );
 	m_ui->m_minimizationMethod->addItem( QString( "BFGS NUMERIC" ) );
 
 	m_ui->m_selected->clear();

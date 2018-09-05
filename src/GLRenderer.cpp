@@ -226,7 +226,7 @@ bool GLRenderer::initialize()
 	if ( m_context )
 	{
 		auto gl = m_context->extraFunctions();
-		qDebug() << "Initializing OpenGL render";
+		qDebug() << "Initializing OpenGL renderer";
 		qDebug() << "Vendor:" << reinterpret_cast<const char*>( gl->glGetString( GL_VENDOR ) );
 		qDebug() << "Renderer:" << reinterpret_cast<const char*>( gl->glGetString( GL_RENDERER ) );
 		qDebug() << "Version:" << reinterpret_cast<const char*>( gl->glGetString( GL_VERSION ) );

@@ -1,15 +1,15 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <QTimer>
-
 #include "GLWindow.h"
 #include "AnimationBuffer.h"
 
+#include <QMainWindow>
+#include <QTimer>
+
 namespace Ui
 {
-    class MainWindow;
+class MainWindow;
 }
 
 class MainWindow : public QMainWindow
