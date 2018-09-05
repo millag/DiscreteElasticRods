@@ -29,7 +29,7 @@ find_package( OpenMP )
 if( OPENMP_FOUND )
 	message( STATUS "Found OpenMP support for multithreading" )
 else()
-	message( WARNING "OpenMP support NOT found. Multithreading might not work" )
+	message( WARNING "OpenMP support NOT found. Multithreading will NOT work" )
 endif()
 
 # headers
@@ -107,11 +107,13 @@ set_target_properties( ${PROJECT_NAME} PROPERTIES
 )
 
 target_compile_definitions( ${PROJECT_NAME} PRIVATE
-	MULTI_THREAD=1
 	#DBUGG=1
 )
 
 if( OPENMP_FOUND )
+	target_compile_definitions( ${PROJECT_NAME} PRIVATE
+		MULTI_THREAD=1
+	)
 	target_compile_options( ${PROJECT_NAME} PRIVATE
 		${OpenMP_CXX_FLAGS}
 	)
