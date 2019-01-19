@@ -33,9 +33,8 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
 
 	mg::Matrix4D transform = object->getTransform();
 	mg::Matrix4D transformInv = mg::inverse(object->getTransform()).transpose();
-#ifdef MULTI_THREAD
-#pragma omp parallel for
-#endif
+
+	MULTI_THREADED
 	for ( auto i = 0ll; i < static_cast<long long>( o_hair.m_vindices.size() ); ++i )
 	{
 		unsigned idx = o_hair.m_vindices[i];
@@ -86,9 +85,8 @@ void HairGenerator::generateStraightHair(const RenderObject* object, const std::
 
 	mg::Matrix4D transform = object->getTransform();
 	mg::Matrix4D transformInv = mg::inverse(object->getTransform()).transpose();
-#ifdef MULTI_THREAD
-#pragma omp parallel for
-#endif
+
+	MULTI_THREADED
 	for ( auto i = 0ll; i < static_cast<long long>( o_hair.m_vindices.size() ); ++i )
 	{
 		unsigned idx = o_hair.m_vindices[i];

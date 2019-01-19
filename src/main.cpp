@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 
 	QApplication app(argc, argv);
 
-	qDebug() << "Multi-threading" << ((MULTI_THREAD)? "enabled" : "disabled");
+	qDebug() << "Multi-threading" << ((MULTI_THREADING_ON)? "enabled" : "disabled");
 
 	try
 	{

@@ -5,8 +5,8 @@
 #include <list>
 #include <vector>
 
-class VoxelGrid {
-
+class VoxelGrid
+{
 public:
 	VoxelGrid(const AABB& volume, unsigned divisions);
 

@@ -19,9 +19,7 @@ void VoxelGrid::reset()
 {
 	m_voxelSize = m_volume.getWidth() / (m_divisions - 1);
 
-#ifdef MULTI_THREAD
-#pragma omp parallel for
-#endif
+	MULTI_THREADED
 	for ( auto i = 0ll; i < static_cast<long long>( m_voxels.size() ); ++i )
 	{
 		m_voxels[i].m_density = 0;

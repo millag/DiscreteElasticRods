@@ -9,11 +9,10 @@ set( CMAKE_CXX_STANDARD 11 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 set( EXTERNAL_PACKAGES_DIR "${CMAKE_SOURCE_DIR}/libs/" )
+set( MULTI_THREADING_ON ON CACHE BOOL "Enable multi-threading" )
 
 # find Qt components
 find_package( Qt5 COMPONENTS Core Widgets OpenGL REQUIRED )
-
-message( "Qt5_InstallDir" ${Qt5_FOUND} )
 
 # run moc, uic, rcc automatically when needed
 set( CMAKE_AUTOMOC ON )
@@ -117,9 +116,11 @@ if( OPENMP_FOUND )
 	target_compile_options( ${PROJECT_NAME} PRIVATE
 		${OpenMP_CXX_FLAGS}
 	)
-	target_compile_definitions( ${PROJECT_NAME} PRIVATE
-		MULTI_THREAD=1
-	)
+	if( MULTI_THREADING_ON )
+		target_compile_definitions( ${PROJECT_NAME} PRIVATE
+			MULTI_THREADING_ON=1
+		)
+	endif()
 endif()
 
 add_custom_target( COPY_RUNTIME_FILES

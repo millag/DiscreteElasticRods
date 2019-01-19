@@ -139,9 +139,7 @@ void Hair::update(mg::Real dt)
 
 	const Mesh* mesh = m_object->getMesh();
 
-#ifdef MULTI_THREAD
-#pragma omp parallel for
-#endif
+	MULTI_THREADED
 	for ( auto i = 0ll; i < static_cast<long long>( m_vindices.size() ); ++i )
 	{
 		m_strands[i]->m_ppos[0] = mg::transform_point( m_object->getTransform(), mesh->m_vertices[m_vindices[i]] );

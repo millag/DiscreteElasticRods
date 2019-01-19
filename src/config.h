@@ -7,7 +7,22 @@
 #include <memory>
 #include <cassert>
 
-#define UNUSED_VALUE(name) (void)(name)
+#define UNUSED_VALUE( name ) ( void )( name )
+#define STRINGIFY( str ) #str
+
+#ifndef MULTI_THREADING_ON
+    #define MULTI_THREADING_ON 0
+#endif
+
+#if MULTI_THREADING_ON != 0
+    #ifdef _WIN32
+        #define MULTI_THREADED __pragma( omp parallel for )
+    #else
+        #define MULTI_THREADED _Pragma( STRINGIFY( omp parallel for ) )
+    #endif
+#else
+    #define MULTI_THREADED
+#endif
 
 namespace mg
 {
