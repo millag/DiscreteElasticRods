@@ -49,10 +49,10 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
 		unsigned idx = o_hair.m_vindices[i];
 		mg::Vec3D p = mg::transform_point(transform, mesh->m_vertices[ idx ]);
 		mg::Vec3D n = mg::transform_vector(transformInv, mesh->m_normals[ idx ]);
-		mg::Vec3D u = mg::EY;
+		mg::Vec3D u = mg::Oy;
 		if (fabs(1 - fabs(mg::dot(n, u))) < mg::ERR)
 		{
-			u = mg::EX;
+			u = mg::Ox;
 		}
 
 		ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams);
@@ -102,10 +102,10 @@ void HairGenerator::generateStraightHair(const RenderObject* object, const std::
 		unsigned idx = o_hair.m_vindices[i];
 		mg::Vec3D p = mg::transform_point(transform, mesh->m_vertices[ idx ]);
 		mg::Vec3D n = mg::transform_vector(transformInv, mesh->m_normals[ idx ]);
-		mg::Vec3D u = mg::EY;
+		mg::Vec3D u = mg::Oy;
 		if (fabs(1 - fabs(mg::dot(n, u))) < mg::ERR)
 		{
-			u = mg::EX;
+			u = mg::Ox;
 		}
 
 		ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams);

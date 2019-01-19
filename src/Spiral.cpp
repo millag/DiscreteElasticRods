@@ -163,7 +163,7 @@ void Spiral::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec
     {
         if (!rod.m_isClamped.count(i))
         {
-            o_forces[i] += mg::GRAVITY * rod.m_pmass[i] - 0.001 * rod.m_pvel[i];
+            o_forces[i] += mg::Gravity * rod.m_pmass[i] - 0.001 * rod.m_pvel[i];
         }
     }
 }

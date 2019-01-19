@@ -12,6 +12,9 @@ set( EXTERNAL_PACKAGES_DIR "${CMAKE_SOURCE_DIR}/libs/" )
 
 # find Qt components
 find_package( Qt5 COMPONENTS Core Widgets OpenGL REQUIRED )
+
+message( "Qt5_InstallDir" ${Qt5_FOUND} )
+
 # run moc, uic, rcc automatically when needed
 set( CMAKE_AUTOMOC ON )
 set( CMAKE_AUTOUIC ON )
@@ -111,11 +114,11 @@ target_compile_definitions( ${PROJECT_NAME} PRIVATE
 )
 
 if( OPENMP_FOUND )
-	target_compile_definitions( ${PROJECT_NAME} PRIVATE
-		MULTI_THREAD=1
-	)
 	target_compile_options( ${PROJECT_NAME} PRIVATE
 		${OpenMP_CXX_FLAGS}
+	)
+	target_compile_definitions( ${PROJECT_NAME} PRIVATE
+		MULTI_THREAD=1
 	)
 endif()
 

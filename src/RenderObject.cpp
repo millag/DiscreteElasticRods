@@ -33,9 +33,9 @@ void RenderObject::setTransform(const mg::Matrix4D &t)
 		it->updateTransform(m_transform);
 	}
 
-	m_boundingRadius = mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EX).length();
-	m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EY).length());
-	m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EZ).length());
+	m_boundingRadius = mg::transform_vector(m_transform, m_meshBoundingRadius * mg::Ox).length();
+	m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::Oy).length());
+	m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::Oz).length());
 }
 
 void RenderObject::calcBoundaries()
@@ -60,11 +60,11 @@ void RenderObject::calcBoundaries()
 		vmax[2] = std::max(vert[2], vmax[2]);
 	}
 	m_meshAABB.reshape(vmin, vmax);
-	m_meshBoundingRadius = m_meshAABB.getEnclosedRadius();
+	m_meshBoundingRadius = m_meshAABB.getBoundingRadius();
 
-	m_boundingRadius = mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EX).length();
-	m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EY).length());
-	m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::EZ).length());
+	m_boundingRadius = mg::transform_vector(m_transform, m_meshBoundingRadius * mg::Ox).length();
+	m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::Oy).length());
+	m_boundingRadius = std::max(m_boundingRadius, mg::transform_vector(m_transform, m_meshBoundingRadius * mg::Oz).length());
 }
 
 void RenderObject::addCollisionShape(const CollisionShape& shape)

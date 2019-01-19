@@ -126,7 +126,7 @@ void VoxelGrid::getInterpolatedVelocity(const mg::Vec3D& pos, mg::Vec3D& o_veloc
 unsigned VoxelGrid::findVoxel(const mg::Vec3D& pos, unsigned& o_i, unsigned& o_j, unsigned &o_k, mg::Vec3D& o_voxelPos) const
 {
 	const mg::Real maxVoxel = std::max(static_cast< mg::Real >(m_divisions) - 2.f, 0.f);
-	o_voxelPos = pos - m_volume.getVMin();
+	o_voxelPos = pos - m_volume.getMin();
 	o_i = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[0] / m_voxelSize), 0.f, maxVoxel));
 	o_j = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[1] / m_voxelSize), 0.f, maxVoxel));
 	o_k = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[2] / m_voxelSize), 0.f, maxVoxel));
