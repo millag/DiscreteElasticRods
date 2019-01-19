@@ -1,3 +1,5 @@
+#pragma once
+
 /* An example config file. */
 /* A config file is generally the way to define configuration macros.  This
  * should be done automatically, though, not by the user:

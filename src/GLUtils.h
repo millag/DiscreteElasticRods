@@ -1,14 +1,10 @@
-#ifndef GLUTILS_H
-#define GLUTILS_H
+#pragma once
 
 #include "config.h"
-
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
-
 #include <unordered_map>
-
 
 class Mesh;
 class Hair;
@@ -109,5 +105,3 @@ private:
 };
 
 typedef std::vector< std::unique_ptr< GLDrawable > > DrawList;
-
-#endif // GLUTILS_H

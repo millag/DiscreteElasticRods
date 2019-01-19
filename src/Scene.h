@@ -1,9 +1,7 @@
-#ifndef SCENE_H
-#define SCENE_H
+#pragma once
 
 #include "Hair.h"
 #include "Spiral.h"
-
 #include <vector>
 
 class Scene
@@ -30,8 +28,5 @@ private:
 	std::vector<Mesh*> m_meshes;
 
 private:
-
 	friend class SceneLoader;
 };
-
-#endif // SCENE_H

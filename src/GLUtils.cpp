@@ -1,7 +1,6 @@
 #include "GLUtils.h"
 #include "Mesh.h"
 #include "Hair.h"
-
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 

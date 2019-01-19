@@ -1,9 +1,8 @@
 #include "SceneLoader.h"
-#include <map>
-
 #include "ObjLoader.h"
 #include "HairGenerator.h"
 #include "BasicParser.h"
+#include <map>
 
 struct mesh_object
 {

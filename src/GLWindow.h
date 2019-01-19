@@ -1,11 +1,9 @@
-#ifndef __GL_WINDOW_H__
-#define __GL_WINDOW_H__
+#pragma once
 
 #include "Scene.h"
 #include "GLRenderer.h"
 #include "GLUtils.h"
 #include "TransformTool.h"
-
 #include <QOpenGLWidget>
 #include <QString>
 
@@ -91,5 +89,3 @@ private:
 /// @brief the previous y mouse value
 	int m_mouseY = 0;
 };
-
-#endif

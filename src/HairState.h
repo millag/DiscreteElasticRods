@@ -1,24 +1,21 @@
-#ifndef HAIRSTATE_H
-#define HAIRSTATE_H
+#pragma once
 
-#include <vector>
 #include "ElasticRodState.h"
+#include <vector>
 
 class Hair;
 
 struct HairState
 {
 public:
-    HairState() { clear(); }
-    ~HairState() { clear(); }
-
-    inline void clear() { m_strands.clear(); }
-
-private:
-    std::vector<ElasticRodState> m_strands;
+	inline void clear()
+	{
+		m_strands.clear();
+	}
 
 private:
-    friend class Hair;
+	std::vector<ElasticRodState> m_strands;
+
+private:
+	friend class Hair;
 };
-
-#endif // HAIRSTATE_H

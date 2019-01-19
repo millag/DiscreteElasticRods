@@ -1,12 +1,13 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #include "cml_config.h"
 #include <cml/cml.h>
 
+#include <cmath>
+#include <memory>
 #include <cassert>
 
-#define UNUSED_VALUE( name ) ( void )( name )
+#define UNUSED_VALUE(name) (void)(name)
 
 namespace mg
 {
@@ -45,5 +46,3 @@ const static mg::Vec3D Oz(0,0,1);
 
 const static mg::Vec3D Gravity(0,-9.81f,0);
 }
-
-#endif // CONFIG_H

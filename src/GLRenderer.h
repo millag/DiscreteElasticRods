@@ -1,10 +1,7 @@
-#ifndef GLRENDERER_H
-#define GLRENDERER_H
+#pragma once
 
 #include "GLUtils.h"
-
 #include <QOpenGLVertexArrayObject>
-
 #include <stack>
 
 class QOpenGLContext;
@@ -99,7 +96,4 @@ protected:
 	GLLight m_headLight;
 	/// default material
 	GLMaterial m_defaultMtl;
-
 };
-
-#endif // GLRENDERER_H

@@ -1,10 +1,6 @@
-#ifndef SCENELOADER_H
-#define SCENELOADER_H
+#pragma once
 
 #include "Scene.h"
-
-#include <memory>
-
 
 class SceneLoader
 {
@@ -20,5 +16,3 @@ private:
 	struct PImpl;
 	std::unique_ptr<PImpl> m_impl;
 };
-
-#endif // SCENELOADER_H

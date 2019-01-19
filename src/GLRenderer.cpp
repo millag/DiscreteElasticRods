@@ -8,8 +8,6 @@
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLBuffer>
 
-#include <cassert>
-
 namespace {
 
 const unsigned IdxBreak = 0xffffffff;

@@ -1,5 +1,4 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#pragma once
 
 #include "config.h"
 
@@ -42,5 +41,3 @@ private:
 	mg::Vec3D m_at;
 	mg::Vec3D m_up;
 };
-
-#endif // CAMERA_H

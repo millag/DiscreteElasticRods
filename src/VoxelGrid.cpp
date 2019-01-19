@@ -1,7 +1,4 @@
 #include "VoxelGrid.h"
-#include <cmath>
-#include <cassert>
-
 
 VoxelGrid::VoxelGrid(const AABB &volume, unsigned divisions):
     m_volume(volume),

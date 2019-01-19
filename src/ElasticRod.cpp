@@ -1,8 +1,6 @@
 #include "ElasticRod.h"
-
-#include <cmath>
-#include <dlib/optimization.h>
 #include "Utils.h"
+#include <dlib/optimization.h>
 
 typedef dlib::matrix<double> Hessian;
 

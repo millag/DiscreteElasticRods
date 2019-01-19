@@ -1,5 +1,4 @@
 #include "RenderObject.h"
-#include <cassert>
 #include "Utils.h"
 
 RenderObject::RenderObject(unsigned id, const Mesh *mesh):

@@ -1,8 +1,6 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
-
 #include "Exporter.h"
-
 #include <QFileDialog>
 
 MainWindow::MainWindow( QWidget *parent ):

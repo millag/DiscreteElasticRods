@@ -1,5 +1,4 @@
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
 #include "config.h"
 
@@ -20,7 +19,4 @@ constexpr int CountOf(T const (&)[N]) noexcept
 {
 	return N;
 }
-
 }
-
-#endif // UTILS_H

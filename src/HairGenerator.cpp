@@ -1,14 +1,6 @@
 #include "HairGenerator.h"
-#include <QElapsedTimer>
 #include "Utils.h"
-#include "config.h"
-
-
-HairGenerator::HairGenerator()
-{ }
-
-HairGenerator::~HairGenerator()
-{ }
+#include <QElapsedTimer>
 
 void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vector<unsigned>& findices, Hair& o_hair)
 {

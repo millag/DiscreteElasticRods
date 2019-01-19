@@ -1,8 +1,6 @@
-#ifndef BASICPARSER_H
-#define BASICPARSER_H
+#pragma once
 
 #include "config.h"
-
 #include <algorithm>
 #include <functional>
 #include <cctype>
@@ -128,5 +126,3 @@ public:
 		}
 	}
 };
-
-#endif // BASICPARSER_H

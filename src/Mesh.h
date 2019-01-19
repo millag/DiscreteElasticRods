@@ -1,8 +1,6 @@
-#ifndef MESH_H
-#define MESH_H
+#pragma once
 
 #include "config.h"
-
 #include <vector>
 
 class Mesh
@@ -47,5 +45,3 @@ private:
 	unsigned m_id = -1;
 	Primitive m_primitive = TRIANGLES;
 };
-
-#endif // MESH_H

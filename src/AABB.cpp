@@ -1,5 +1,4 @@
 #include "AABB.h"
-#include <cassert>
 #include "Utils.h"
 
 AABB::AABB(const mg::Vec3D& p1, const mg::Vec3D& p2):

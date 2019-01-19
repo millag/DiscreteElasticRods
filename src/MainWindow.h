@@ -1,9 +1,7 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include "GLWindow.h"
 #include "AnimationBuffer.h"
-
 #include <QMainWindow>
 #include <QTimer>
 
@@ -15,7 +13,6 @@ class MainWindow;
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
-
 public:
 	explicit MainWindow( QWidget *parent = nullptr );
 	~MainWindow();
@@ -85,5 +82,3 @@ private:
 	QTimer m_recordTimer;
 	AnimationBuffer m_animationBuffer;
 };
-
-#endif // MAINWINDOW_H

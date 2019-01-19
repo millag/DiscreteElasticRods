@@ -1,5 +1,4 @@
-#ifndef AABB_H
-#define AABB_H
+#pragma once
 
 #include "config.h"
 
@@ -56,5 +55,3 @@ protected:
 	mg::Vec3D m_vmin;
 	mg::Vec3D m_vmax;
 };
-
-#endif // AABB_H
