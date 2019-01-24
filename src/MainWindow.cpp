@@ -73,7 +73,7 @@ void MainWindow::toggleSim(bool s)
 
 void MainWindow::updateEvent()
 {
-	if (m_selectedObject != NULL)
+	if ( m_selectedObject != nullptr )
 	{
 		m_selectedObject->setTransform(m_gl->getSelectionTransform());
 	}
@@ -108,7 +108,7 @@ void MainWindow::toggleRecord(bool s)
 
 void MainWindow::recordEvent()
 {
-	if (m_scene->getHairById(0) == NULL)
+	if ( m_scene->getHairById(0) == nullptr )
 	{
 		std::cerr << "No hair object found. Skipping..." << std::endl;
 		return;
@@ -133,7 +133,7 @@ void MainWindow::selectRenderObject(int index)
 	index = index - 1;
 	if (index < 0)
 	{
-		m_selectedObject = NULL;
+		m_selectedObject = nullptr;
 		m_gl->setSelection(false);
 		return;
 	}
@@ -254,7 +254,7 @@ void MainWindow::updateUI()
 
 void MainWindow::selectMinimizationMethod(int index)
 {
-	if (m_scene->getHairById(0) == NULL)
+	if (m_scene->getHairById(0) == nullptr)
 	{
 		std::cerr << "No hair object found. Skipping..." << std::endl;
 		return;

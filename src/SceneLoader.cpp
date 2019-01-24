@@ -113,7 +113,7 @@ bool SceneLoader::loadTestScene( Scene& scene )
 	scene.m_hairs.push_back(hair);
 
 //	generate hair
-	HairGenerator::generateCurlyHair(object, fidx, *hair);
+	HairGenerator::generateCurlyHair(*object, fidx, *hair);
 
 //	add collision shape for the object
 	mg::Real radius = object->getMeshBoundingRadius() + hair->m_params->m_thickness;
@@ -122,12 +122,11 @@ bool SceneLoader::loadTestScene( Scene& scene )
 	mg::matrix_set_translation(shape, object->getMeshAABB().getCenter());
 	object->addCollisionShape(shape);
 
-	scene.m_spiral = new Spiral();
-	scene.m_spiral->init(object);
+	scene.m_spiral = std::make_unique<Spiral>();
+	scene.m_spiral->initialize( *object );
 
 	return true;
 }
-
 
 bool SceneLoader::loadScene( const char* filename, Scene& scene )
 {
@@ -238,10 +237,10 @@ bool SceneLoader::loadScene( const char* filename, Scene& scene )
 //		generate hair strands
 		if (it->second.m_type.compare("curly") == 0)
 		{
-			HairGenerator::generateCurlyHair(scene.m_renderObjects[idx], it->second.m_faceList, *hair);
+			HairGenerator::generateCurlyHair( *scene.m_renderObjects[idx], it->second.m_faceList, *hair );
 		} else
 		{
-			HairGenerator::generateStraightHair(scene.m_renderObjects[idx], it->second.m_faceList, *hair);
+			HairGenerator::generateStraightHair( *scene.m_renderObjects[idx], it->second.m_faceList, *hair );
 		}
 
 		it->second.m_id = scene.m_hairs.size();

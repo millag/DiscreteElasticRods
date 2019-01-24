@@ -10,8 +10,10 @@ ObjLoader::ObjLoader(const char *filename)
 
 bool ObjLoader::loadFile(const char *filename)
 {
-	if (filename == NULL)
+	if ( !filename || !*filename )
+	{
 		return false;
+	}
 
 	std::ifstream ifs;
 	ifs.open(filename, std::ios::in);
@@ -96,14 +98,14 @@ void ObjLoader::parseFace(std::string& s)
 		BasicParser::split(tokens[i], '/', indices);
 		assert(indices.size() > 0);
 
-		m_vindices.push_back( getVIdx(std::strtol(indices[0].c_str(), NULL, 10)) );
+		m_vindices.push_back( getVIdx(std::strtol(indices[0].c_str(), nullptr, 10)) );
 		if (indices.size() > 1 && !indices[1].empty())
 		{
-			m_vtindices.push_back( getVIdx(std::strtol(indices[1].c_str(), NULL, 10)) );
+			m_vtindices.push_back( getVIdx(std::strtol(indices[1].c_str(), nullptr, 10)) );
 		}
 		if (indices.size() > 2)
 		{
-			m_vnindices.push_back( getVIdx(std::strtol(indices[2].c_str(), NULL, 10)) );
+			m_vnindices.push_back( getVIdx(std::strtol(indices[2].c_str(), nullptr, 10)) );
 		}
 	}
 }

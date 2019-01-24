@@ -1,16 +1,7 @@
 #include "Scene.h"
 
-Scene::Scene():
-    m_spiral(NULL)
-{ }
-
 Scene::~Scene()
 {
-	if (m_spiral != NULL)
-	{
-		delete m_spiral;
-	}
-
 //    delete hair objects
 	typedef std::vector<Hair*>::const_iterator Iter;
 	for (Iter it = m_hairs.begin(); it != m_hairs.end(); ++it)

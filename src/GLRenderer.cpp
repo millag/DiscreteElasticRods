@@ -1,7 +1,6 @@
 #include "GLRenderer.h"
 #include "Utils.h"
 #include "Camera.h"
-#include "GLUtils.h"
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>

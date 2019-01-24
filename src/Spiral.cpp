@@ -2,7 +2,7 @@
 #include "Utils.h"
 
 Spiral::Spiral():
-    m_object(NULL)
+    m_object( nullptr )
 {
 	m_radius = 0.2;
 	m_lenght = 4.0;
@@ -28,10 +28,9 @@ Spiral::~Spiral()
 	m_strands.clear();
 }
 
-void Spiral::init(const RenderObject* object)
+void Spiral::initialize(const RenderObject& object)
 {
-	assert(object != NULL);
-	m_object = object;
+	m_object = &object;
 
 	std::vector<mg::Vec3D> restpos(m_nParticles);
 	std::vector<mg::Vec3D> pos(m_nParticles);
@@ -163,10 +162,9 @@ void Spiral::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec
 }
 
 
-//void Spiral::init(const RenderObject* object)
+//void Spiral::initialize(const RenderObject& object)
 //{
-//    assert(object != NULL);
-//    m_object = object;
+//    m_object = &object;
 
 //    std::vector<mg::Vec3D> restpos(m_nParticles);
 //    std::vector<mg::Vec3D> pos(m_nParticles);

@@ -7,14 +7,14 @@
 class RenderObject
 {
 public:
-	RenderObject(unsigned id = -1, const Mesh* mesh = NULL);
-	RenderObject(const Mesh* mesh, const mg::Matrix4D& transform);
-	RenderObject(unsigned id, const Mesh* mesh, const mg::Matrix4D& transform);
+	RenderObject( unsigned id = -1, const Mesh* mesh = nullptr );
+	RenderObject( const Mesh* mesh, const mg::Matrix4D& transform );
+	RenderObject( unsigned id, const Mesh* mesh, const mg::Matrix4D& transform );
 
 	inline unsigned getId() const { return m_id; }
 	inline void setId(unsigned id) { m_id = id; }
 
-	inline unsigned getMeshId() const { assert(m_mesh != NULL); return m_mesh->getId();}
+	inline unsigned getMeshId() const { assert( m_mesh != nullptr ); return m_mesh->getId();}
 	inline const Mesh* getMesh() const { return m_mesh; }
 	inline void setMesh(const Mesh* _mesh) { m_mesh = _mesh; calcBoundaries();}
 

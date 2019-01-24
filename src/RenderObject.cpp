@@ -20,9 +20,6 @@ RenderObject::RenderObject(unsigned id, const Mesh* mesh, const mg::Matrix4D& tr
 	calcBoundaries();
 }
 
-
-
-
 void RenderObject::setTransform(const mg::Matrix4D &t)
 {
 	m_transform = t;

@@ -2,8 +2,6 @@
 
 #include "AABB.h"
 #include "Utils.h"
-#include <list>
-#include <vector>
 
 class VoxelGrid
 {

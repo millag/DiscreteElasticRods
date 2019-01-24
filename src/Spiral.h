@@ -9,7 +9,7 @@ public:
 	Spiral();
 	~Spiral();
 
-	void init(const RenderObject* object);
+	void initialize(const RenderObject& object);
 	void update(mg::Real dt);
 
 public:

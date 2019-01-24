@@ -2,12 +2,12 @@
 
 #include "Hair.h"
 #include "Spiral.h"
-#include <vector>
 
 class Scene
 {
+	friend class SceneLoader;
 public:
-	Scene();
+	Scene() = default;
 	~Scene();
 
 	void initialize();
@@ -17,16 +17,14 @@ public:
 	inline const std::vector<RenderObject*>& getRenderObjects() const { return m_renderObjects; }
 	inline const std::vector<Mesh*>& getMeshes() const { return m_meshes; }
 
-	inline Hair* getHairById(unsigned id) const { return ((id < m_hairs.size())? m_hairs[id] : NULL); }
-	inline const std::vector<ElasticRod*> getStrands() const { return m_spiral->m_strands; }
+	inline Hair* getHairById(unsigned id) const { return ( ( id < m_hairs.size() )? m_hairs[id] : nullptr ); }
+
 private:
 	AABB m_boundingVolume;
 
-	Spiral* m_spiral;
 	std::vector<Hair*> m_hairs;
 	std::vector<RenderObject*> m_renderObjects;
 	std::vector<Mesh*> m_meshes;
 
-private:
-	friend class SceneLoader;
+	std::unique_ptr<Spiral> m_spiral;
 };

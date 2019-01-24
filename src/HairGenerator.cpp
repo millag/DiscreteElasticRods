@@ -2,15 +2,14 @@
 #include "Utils.h"
 #include <QElapsedTimer>
 
-void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vector<unsigned>& findices, Hair& o_hair)
+void HairGenerator::generateCurlyHair(const RenderObject& object, const std::vector<unsigned>& findices, Hair& o_hair)
 {
-	assert(object != NULL);
-	assert(object->getMesh() != NULL);
+	assert(object.getMesh() != nullptr);
 
-	const Mesh* mesh = object->getMesh();
+	auto mesh = object.getMesh();
 
 	o_hair.reset();
-	o_hair.m_object = object;
+	o_hair.m_object = &object;
 	o_hair.m_findices = findices;
 	o_hair.m_vindices.reserve( findices.size() );
 
@@ -31,8 +30,8 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
 
 	o_hair.m_strands.resize( o_hair.m_vindices.size() );
 
-	mg::Matrix4D transform = object->getTransform();
-	mg::Matrix4D transformInv = mg::inverse(object->getTransform()).transpose();
+	mg::Matrix4D transform = object.getTransform();
+	mg::Matrix4D transformInv = mg::inverse(object.getTransform()).transpose();
 
 	OMP_PARALLEL_LOOP
 	for ( auto i = 0ll; i < static_cast<long long>( o_hair.m_vindices.size() ); ++i )
@@ -54,15 +53,13 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
 	o_hair.initialize();
 }
 
-void HairGenerator::generateStraightHair(const RenderObject* object, const std::vector<unsigned>& findices, Hair& o_hair)
+void HairGenerator::generateStraightHair(const RenderObject& object, const std::vector<unsigned>& findices, Hair& o_hair)
 {
-	assert(object != NULL);
-	assert(object->getMesh() != NULL);
-
-	const Mesh* mesh = object->getMesh();
+	auto mesh = object.getMesh();
+	assert( mesh != nullptr );
 
 	o_hair.reset();
-	o_hair.m_object = object;
+	o_hair.m_object = &object;
 	o_hair.m_findices = findices;
 	o_hair.m_vindices.reserve( findices.size() );
 
@@ -83,8 +80,8 @@ void HairGenerator::generateStraightHair(const RenderObject* object, const std::
 
 	o_hair.m_strands.resize( o_hair.m_vindices.size() );
 
-	mg::Matrix4D transform = object->getTransform();
-	mg::Matrix4D transformInv = mg::inverse(object->getTransform()).transpose();
+	mg::Matrix4D transform = object.getTransform();
+	mg::Matrix4D transformInv = mg::inverse(object.getTransform()).transpose();
 
 	OMP_PARALLEL_LOOP
 	for ( auto i = 0ll; i < static_cast<long long>( o_hair.m_vindices.size() ); ++i )
@@ -107,8 +104,10 @@ void HairGenerator::generateStraightHair(const RenderObject* object, const std::
 }
 
 void HairGenerator::generateHelicalRod(const HairParams& params,
-                                    const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
-                                    ElasticRod& o_rod)
+                                       const mg::Vec3D& p,
+                                       const mg::Vec3D& n,
+                                       const mg::Vec3D& u,
+                                       ElasticRod& o_rod)
 {
 	o_rod.m_ppos.resize(params.m_nParticles);
 	o_rod.m_pvel.resize(params.m_nParticles);
@@ -157,8 +156,10 @@ void HairGenerator::generateHelicalRod(const HairParams& params,
 
 
 void HairGenerator::generateStraightRod(const HairParams& params,
-                                     const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
-                                     ElasticRod& o_rod)
+                                        const mg::Vec3D& p,
+                                        const mg::Vec3D& n,
+                                        const mg::Vec3D& u,
+                                        ElasticRod& o_rod)
 {
 	o_rod.m_ppos.resize(params.m_nParticles);
 	o_rod.m_pvel.resize(params.m_nParticles);

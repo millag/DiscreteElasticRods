@@ -69,7 +69,7 @@ private:
 	Scene* m_scene = nullptr; ///< scene to render
 	QTimer m_updateTimer; ///< update timer
 	/// @brief selected object to which transformations calculated on
-	/// mouse movement are applied if NULL camera is modified
+	/// mouse movement are applied if nullptr camera is modified
 	RenderObject* m_selectedObject = nullptr;
 
 	bool m_exporting;

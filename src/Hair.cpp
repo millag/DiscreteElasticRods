@@ -1,7 +1,7 @@
 #include "Hair.h"
 #include "Utils.h"
 
-Hair::Hair(): m_object(NULL), m_id(-1), m_grid(NULL)
+Hair::Hair(): m_object(nullptr), m_id(-1), m_grid(nullptr)
 {
 //    init default hair params
 	m_params = new HairParams();
@@ -58,7 +58,7 @@ void Hair::setState(const HairState& state)
 
 void Hair::reset()
 {
-	if (m_grid != NULL)
+	if (m_grid != nullptr)
 	{
 		delete m_grid;
 	}
@@ -70,14 +70,14 @@ void Hair::reset()
 	m_strands.clear();
 	m_findices.clear();
 	m_vindices.clear();
-	m_object = NULL;
-	m_grid = NULL;
+	m_object = nullptr;
+	m_grid = nullptr;
 }
 
 void Hair::initialize()
 {
-	assert( m_object != NULL );
-	assert( m_grid == NULL );
+	assert( m_object != nullptr );
+	assert( m_grid == nullptr );
 
 	mg::Vec3D gridCenter = m_object->getCenter();
 	mg::Vec3D offset = (m_object->getBoundingRadius() + m_params->m_length + m_params->m_lengthVariance) * mg::Vec3D(1, 1, 1);
@@ -118,8 +118,8 @@ void Hair::resetGrid()
 
 void Hair::update(mg::Real dt)
 {
-	assert( m_object != NULL );
-	assert( m_grid != NULL );
+	assert( m_object != nullptr );
+	assert( m_grid != nullptr );
 
 	if (m_params->m_resolveSelfInterations)
 	{

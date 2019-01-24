@@ -281,7 +281,7 @@ void GLViewport::mouseReleaseEvent( QMouseEvent* event )
 #ifdef DBUGG
 void GLWindow::drawHairStrand(const ElasticRod& strand)
 {
-	if (m_strandVAO != NULL)
+	if (m_strandVAO != nullptr)
 	{
 		m_strandVAO->bind();
 

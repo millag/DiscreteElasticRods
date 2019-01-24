@@ -6,7 +6,7 @@
 class ObjLoader
 {
 public:
-	ObjLoader(const char* filename = NULL);
+	ObjLoader(const char* filename = nullptr );
 
 	bool loadFile(const char* filename);
 	inline const std::vector<mg::Vec3D>& getVertices() const  { return m_v; }
