@@ -1,25 +1,44 @@
 #pragma once
 
-#include "ElasticRodState.h"
+#include "config.h"
 #include <dlib/matrix.h>
-#include <vector>
-#include <set>
+
 
 typedef dlib::matrix<double,0,1> ColumnVector;
 
+struct ElasticRodState
+{
+	friend class ElasticRod;
+public:
+	inline void clear()
+	{
+		m_ppos.clear();
+		m_pvel.clear();
+		m_u0.zero();
+	}
+
+private:
+	std::vector<mg::Vec3D> m_ppos;
+	std::vector<mg::Vec3D> m_pvel;
+	mg::Vec3D m_u0;
+};
+
 struct ElasticRodParams
 {
-public:
-	enum MINIMIZATION_STRATEGY {NONE = 0, NEWTON = 1, BFGS = 2, BFGS_NUMERIC = 3};
+	enum MINIMIZATION_STRATEGY
+	{
+		NONE = 0,
+		NEWTON = 1,
+		BFGS = 2,
+		BFGS_NUMERIC = 3
+	};
 
-public:
-
-	ElasticRodParams(mg::Real bendStiffness = 1.0,
+	ElasticRodParams( mg::Real bendStiffness = 1.0,
 	          mg::Real twistStiffness = 1.0,
 	          mg::Real maxElasticForce = 1000,
 	          MINIMIZATION_STRATEGY strategy = BFGS,
 	          double tolerance = 1e-6f,
-	          unsigned maxIter = 100):
+	          unsigned maxIter = 100 ):
 	    m_beta(twistStiffness)
 	  , m_maxElasticForce(maxElasticForce)
 	  , m_strategy(strategy)
@@ -71,18 +90,18 @@ public:
 class ElasticRod
 {
 public:
-
-	ElasticRod(const ElasticRodParams* params);
+	ElasticRod();
 	~ElasticRod();
 
 /// calculations are carried out in the coordinate space of pos - you must assure everything is in same coordinate space
-	void init(const std::vector<mg::Vec3D>& restpos,
-	          const mg::Vec3D& u0,
-	          const std::vector<mg::Vec3D>& pos,
-	          const std::vector<mg::Vec3D>& vel,
-	          const std::vector<mg::Real>& mass,
-	          const ColumnVector& theta,
-	          const std::set<unsigned>& isClamped);
+	void initialize(const ElasticRodParams& params,
+	                const std::vector<mg::Vec3D>& restpos,
+	                const mg::Vec3D& u0,
+	                const std::vector<mg::Vec3D>& pos,
+	                const std::vector<mg::Vec3D>& vel,
+	                const std::vector<mg::Real>& mass,
+	                const ColumnVector& theta,
+	                const std::set<unsigned>& isClamped);
 
 ///    apply one PBD iteration for solving internal distance constraints
 	void applyInternalConstraintsIteration();
@@ -150,15 +169,10 @@ private:
 	std::vector<mg::Vec3D> m_edges;
 
 //    contains all params that drive the rod and can be changed dynamically (animated, whatever)
-	const ElasticRodParams* m_params;
+	const ElasticRodParams* m_params = nullptr;
 
-private:
-
-	ElasticRod():m_params(NULL), m_minimization(NULL)
-	{ }
-
-	struct MinimizationPImpl;
-	MinimizationPImpl* m_minimization;
+	class MinimizationPImpl;
+	std::unique_ptr<MinimizationPImpl> m_minimization;
 
 private:
 /// Computes the edge vectors between each consequent pair of vertices.

@@ -34,7 +34,7 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
 	mg::Matrix4D transform = object->getTransform();
 	mg::Matrix4D transformInv = mg::inverse(object->getTransform()).transpose();
 
-	MULTI_THREADED
+	OMP_PARALLEL_LOOP
 	for ( auto i = 0ll; i < static_cast<long long>( o_hair.m_vindices.size() ); ++i )
 	{
 		unsigned idx = o_hair.m_vindices[i];
@@ -46,7 +46,7 @@ void HairGenerator::generateCurlyHair(const RenderObject* object, const std::vec
 			u = mg::Ox;
 		}
 
-		ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams);
+		ElasticRod* rod = new ElasticRod();
 		generateHelicalRod(*o_hair.m_params, p, n, u, *rod);
 		o_hair.m_strands[i] = rod;
 	}
@@ -86,7 +86,7 @@ void HairGenerator::generateStraightHair(const RenderObject* object, const std::
 	mg::Matrix4D transform = object->getTransform();
 	mg::Matrix4D transformInv = mg::inverse(object->getTransform()).transpose();
 
-	MULTI_THREADED
+	OMP_PARALLEL_LOOP
 	for ( auto i = 0ll; i < static_cast<long long>( o_hair.m_vindices.size() ); ++i )
 	{
 		unsigned idx = o_hair.m_vindices[i];
@@ -98,7 +98,7 @@ void HairGenerator::generateStraightHair(const RenderObject* object, const std::
 			u = mg::Ox;
 		}
 
-		ElasticRod* rod = new ElasticRod(o_hair.m_params->m_rodParams);
+		ElasticRod* rod = new ElasticRod();
 		generateStraightRod(*o_hair.m_params, p, n, u, *rod);
 		o_hair.m_strands[i] = rod;
 	}
@@ -152,7 +152,7 @@ void HairGenerator::generateHelicalRod(const HairParams& params,
 	o_rod.m_u0 = mg::cross(e0, u);
 	o_rod.m_u0 = mg::normalize( mg::cross(o_rod.m_u0, e0) );
 
-	o_rod.init(o_rod.m_ppos, o_rod.m_u0, o_rod.m_ppos, o_rod.m_pvel, o_rod.m_pmass, o_rod.m_theta, o_rod.m_isClamped);
+	o_rod.initialize( params.m_rodParams, o_rod.m_ppos, o_rod.m_u0, o_rod.m_ppos, o_rod.m_pvel, o_rod.m_pmass, o_rod.m_theta, o_rod.m_isClamped);
 }
 
 
@@ -192,5 +192,5 @@ void HairGenerator::generateStraightRod(const HairParams& params,
 	o_rod.m_u0 = mg::cross(e0, u);
 	o_rod.m_u0 = mg::normalize( mg::cross(o_rod.m_u0, e0) );
 
-	o_rod.init(o_rod.m_ppos, o_rod.m_u0, o_rod.m_ppos, o_rod.m_pvel, o_rod.m_pmass, o_rod.m_theta, o_rod.m_isClamped);
+	o_rod.initialize( params.m_rodParams, o_rod.m_ppos, o_rod.m_u0, o_rod.m_ppos, o_rod.m_pvel, o_rod.m_pmass, o_rod.m_theta, o_rod.m_isClamped);
 }

@@ -3,13 +3,9 @@
 #include "ElasticRod.h"
 #include "RenderObject.h"
 #include "VoxelGrid.h"
-#include "HairState.h"
 
 struct HairParams
 {
-	HairParams();
-	~HairParams();
-
 	mg::Real m_length;
 	mg::Real m_lengthVariance;
 	mg::Real m_helicalRadius;
@@ -35,7 +31,20 @@ struct HairParams
 ///     higher value of iterations means higher precision but is more computationally expensive
 	unsigned m_pbdIter;
 
-	ElasticRodParams* m_rodParams;
+	ElasticRodParams m_rodParams;
+};
+
+struct HairState
+{
+	friend class Hair;
+public:
+	inline void clear()
+	{
+		m_strands.clear();
+	}
+
+private:
+	std::vector<ElasticRodState> m_strands;
 };
 
 class Hair

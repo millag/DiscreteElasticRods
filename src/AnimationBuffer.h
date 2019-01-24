@@ -23,8 +23,8 @@ public:
 	inline unsigned size() const { return m_buffer.size(); }
 	inline const mg::Matrix4D& getFrame(unsigned idx) const { return m_buffer[idx]; }
 
-	inline void saveHairState(const Hair* hair) { hair->getState(m_state); }
-	inline void restoreHairState(Hair* hair) { hair->setState(m_state); }
+	inline void saveHairState(const Hair& hair) { hair.getState(m_state); }
+	inline void restoreHairState(Hair& hair) { hair.setState(m_state); }
 
 	inline void saveFrame(const mg::Matrix4D transform)
 	{

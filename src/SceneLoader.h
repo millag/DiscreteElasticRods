@@ -13,6 +13,8 @@ public:
 	bool loadMesh( const char *fileName, Mesh& mesh );
 
 private:
+	NON_COPYABLE( SceneLoader );
+
 	struct PImpl;
 	std::unique_ptr<PImpl> m_impl;
 };

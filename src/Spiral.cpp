@@ -7,18 +7,14 @@ Spiral::Spiral():
 	m_radius = 0.2;
 	m_lenght = 4.0;
 
-	m_bendStiffness = 0.4;
-	m_twistStiffness = 0.7;
-	m_maxForce = 1000;
-
 	m_offset = 3;
 
 	m_nParticles = 20;
 	m_pbdIter = 4;
 
-	m_rodParams1 = new ElasticRodParams(m_bendStiffness, m_twistStiffness, m_maxForce, ElasticRodParams::NEWTON);
-	m_rodParams2 = new ElasticRodParams(m_bendStiffness, m_twistStiffness, m_maxForce, ElasticRodParams::BFGS);
-	m_rodParams3 = new ElasticRodParams(m_bendStiffness, m_twistStiffness, m_maxForce, ElasticRodParams::NONE);
+	m_rodParams1 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::NEWTON);
+	m_rodParams2 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::BFGS);
+	m_rodParams3 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::NONE);
 	m_strands.reserve(10);
 }
 
@@ -30,9 +26,6 @@ Spiral::~Spiral()
 		delete (*it);
 	}
 	m_strands.clear();
-	delete m_rodParams1;
-	delete m_rodParams2;
-	delete m_rodParams3;
 }
 
 void Spiral::init(const RenderObject* object)
@@ -87,9 +80,9 @@ void Spiral::init(const RenderObject* object)
 		}
 	}
 
-	ElasticRod* rod = new ElasticRod(m_rodParams1);
+	ElasticRod* rod = new ElasticRod();
 //        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
-	rod->init(restpos, u0, pos, vel, mass, theta, isClamped);
+	rod->initialize( m_rodParams1, restpos, u0, pos, vel, mass, theta, isClamped );
 	m_strands.push_back(rod);
 
 	for (unsigned i = 0; i < pos.size(); ++i)
@@ -97,9 +90,9 @@ void Spiral::init(const RenderObject* object)
 		pos[i] -= m_offset * dirx;
 	}
 
-	rod = new ElasticRod(m_rodParams2);
+	rod = new ElasticRod();
 //        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
-	rod->init(restpos, u0, pos, vel, mass, theta, isClamped);
+	rod->initialize( m_rodParams2, restpos, u0, pos, vel, mass, theta, isClamped );
 	m_strands.push_back(rod);
 
 
@@ -108,9 +101,9 @@ void Spiral::init(const RenderObject* object)
 		pos[i] += 2 * m_offset * dirx;
 	}
 
-	rod = new ElasticRod(m_rodParams3);
+	rod = new ElasticRod();
 //        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
-	rod->init(restpos, u0, pos, vel, mass, theta, isClamped);
+	rod->initialize(m_rodParams3, restpos, u0, pos, vel, mass, theta, isClamped );
 	m_strands.push_back(rod);
 }
 

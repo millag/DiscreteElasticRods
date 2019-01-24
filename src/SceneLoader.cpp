@@ -79,10 +79,9 @@ public:
 	unsigned m_lineNumber;
 };
 
-SceneLoader::SceneLoader()
-{
-	m_impl = std::make_unique<PImpl>();
-}
+SceneLoader::SceneLoader():
+    m_impl( std::make_unique<PImpl>() )
+{ }
 
 SceneLoader::~SceneLoader() = default;
 
@@ -227,14 +226,14 @@ bool SceneLoader::loadScene( const char* filename, Scene& scene )
 		hair->m_params->m_selfRepulsion = it->second.m_selfRepulsion;
 
 		hair->m_params->m_pbdIter = it->second.m_pbdIter;
-		hair->m_params->m_rodParams->setBendStiffness(it->second.m_bendStiffness);
-		hair->m_params->m_rodParams->setTwistStiffness(it->second.m_twistStiffness);
-		hair->m_params->m_rodParams->m_maxElasticForce = it->second.m_maxElasticForce;
+		hair->m_params->m_rodParams.setBendStiffness(it->second.m_bendStiffness);
+		hair->m_params->m_rodParams.setTwistStiffness(it->second.m_twistStiffness);
+		hair->m_params->m_rodParams.m_maxElasticForce = it->second.m_maxElasticForce;
 
 
-		hair->m_params->m_rodParams->m_strategy = it->second.m_minimizationStrategy;
-		hair->m_params->m_rodParams->m_tolerance = it->second.m_minimizationTolerance;
-		hair->m_params->m_rodParams->m_maxIter = it->second.m_minimizationMaxIter;
+		hair->m_params->m_rodParams.m_strategy = it->second.m_minimizationStrategy;
+		hair->m_params->m_rodParams.m_tolerance = it->second.m_minimizationTolerance;
+		hair->m_params->m_rodParams.m_maxIter = it->second.m_minimizationMaxIter;
 
 //		generate hair strands
 		if (it->second.m_type.compare("curly") == 0)

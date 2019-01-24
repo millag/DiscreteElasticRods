@@ -102,7 +102,7 @@ void MainWindow::toggleRecord(bool s)
 	}
 
 	m_animationBuffer.clear();
-	m_animationBuffer.saveHairState(m_scene->getHairById(0));
+	m_animationBuffer.saveHairState( *m_scene->getHairById(0) );
 	m_recordTimer.start(m_ui->m_timerUpdate->value());
 }
 
@@ -185,7 +185,7 @@ void MainWindow::exportSim()
 		m_exportCurvDir = parentDir.filePath(m_exportCurvDir);
 	}
 
-	m_animationBuffer.restoreHairState(m_scene->getHairById(0));
+	m_animationBuffer.restoreHairState( *m_scene->getHairById(0) );
 	RenderObject* object = m_scene->getRenderObjects()[ m_scene->getHairById(0)->m_object->getId() ];
 	for (unsigned frame = 0; frame < m_animationBuffer.size(); ++frame)
 	{
@@ -236,13 +236,13 @@ void MainWindow::updateUI()
 		m_ui->m_selected->addItem( QString( "RenderObject_%1" ).arg( i ) );
 	}
 
-	m_ui->m_minimizationMethod->setCurrentIndex( m_scene->getHairById( 0 )->m_params->m_rodParams->m_strategy );
-	m_ui->m_minTolerance->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams->m_tolerance );
-	m_ui->m_minMaxIter->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams->m_maxIter );
+	m_ui->m_minimizationMethod->setCurrentIndex( m_scene->getHairById( 0 )->m_params->m_rodParams.m_strategy );
+	m_ui->m_minTolerance->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_tolerance );
+	m_ui->m_minMaxIter->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_maxIter );
 
-	m_ui->m_bendStiffness->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams->m_B( 0, 0 ) );
-	m_ui->m_twistStiffness->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams->m_beta );
-	m_ui->m_maxForce->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams->m_maxElasticForce );
+	m_ui->m_bendStiffness->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_B( 0, 0 ) );
+	m_ui->m_twistStiffness->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_beta );
+	m_ui->m_maxForce->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_maxElasticForce );
 	m_ui->m_drag->setValue( m_scene->getHairById( 0 )->m_params->m_drag);
 	m_ui->m_pbdIter->setValue( m_scene->getHairById( 0 )->m_params->m_pbdIter );
 
@@ -263,16 +263,16 @@ void MainWindow::selectMinimizationMethod(int index)
 	switch (index)
 	{
 	    case 0:
-		    m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::NONE;
+		    m_scene->getHairById(0)->m_params->m_rodParams.m_strategy = ElasticRodParams::NONE;
 		    break;
 	    case 1:
-		    m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::NEWTON;
+		    m_scene->getHairById(0)->m_params->m_rodParams.m_strategy = ElasticRodParams::NEWTON;
 		    break;
 	    case 2:
-		    m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::BFGS;
+		    m_scene->getHairById(0)->m_params->m_rodParams.m_strategy = ElasticRodParams::BFGS;
 		    break;
 	    case 3:
-		    m_scene->getHairById(0)->m_params->m_rodParams->m_strategy = ElasticRodParams::BFGS_NUMERIC;
+		    m_scene->getHairById(0)->m_params->m_rodParams.m_strategy = ElasticRodParams::BFGS_NUMERIC;
 		    break;
 	    default:
 		    break;
@@ -281,27 +281,27 @@ void MainWindow::selectMinimizationMethod(int index)
 
 void MainWindow::setMinimizationTolerance(double val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams->m_tolerance = val;
+	m_scene->getHairById(0)->m_params->m_rodParams.m_tolerance = val;
 }
 
 void MainWindow::setMinimizationMaxIter(int val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams->m_maxIter = val;
+	m_scene->getHairById(0)->m_params->m_rodParams.m_maxIter = val;
 }
 
 void MainWindow::setBendingStiffness(double val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams->setBendStiffness(val);
+	m_scene->getHairById(0)->m_params->m_rodParams.setBendStiffness(val);
 }
 
 void MainWindow::setTwistingStiffness(double val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams->setTwistStiffness(val);
+	m_scene->getHairById(0)->m_params->m_rodParams.setTwistStiffness(val);
 }
 
 void MainWindow::setMaxElasticForce(double val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams->m_maxElasticForce = val;
+	m_scene->getHairById(0)->m_params->m_rodParams.m_maxElasticForce = val;
 }
 
 void MainWindow::setDrag(double val)

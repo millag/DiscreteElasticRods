@@ -8,7 +8,7 @@
 #include <cassert>
 
 #define UNUSED_VALUE( name ) ( void )( name )
-#define STRINGIFY( str ) #str
+#define STRINGIFY( name ) #name
 
 #ifndef MULTI_THREADING_ON
     #define MULTI_THREADING_ON 0
@@ -16,13 +16,17 @@
 
 #if MULTI_THREADING_ON != 0
     #ifdef _WIN32
-        #define MULTI_THREADED __pragma( omp parallel for )
+        #define OMP_PARALLEL_LOOP __pragma( omp parallel for )
     #else
-        #define MULTI_THREADED _Pragma( STRINGIFY( omp parallel for ) )
+        #define OMP_PARALLEL_LOOP _Pragma( STRINGIFY( omp parallel for ) )
     #endif
 #else
-    #define MULTI_THREADED
+    #define OMP_PARALLEL_LOOP
 #endif
+
+#define NON_COPYABLE( TypeName ) \
+	TypeName( const TypeName& other ) = delete; \
+	TypeName& operator=( const TypeName& other ) = delete;
 
 namespace mg
 {

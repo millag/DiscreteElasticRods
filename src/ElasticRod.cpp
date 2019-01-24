@@ -6,37 +6,31 @@ typedef dlib::matrix<double> Hessian;
 
 //====================================== MinimizationPImpl definition - minimize Energy with respect to twist angle theta =======================================
 
-struct ElasticRod::MinimizationPImpl
+class ElasticRod::MinimizationPImpl
 {
 public:
-	MinimizationPImpl() { }
-	~MinimizationPImpl() { }
+	static void extractThetaVars(const ElasticRod& rod, const ColumnVector& theta, ColumnVector& o_thetaVars);
+	static void constructTheta(const ElasticRod& rod, const ColumnVector& thetaVars, ColumnVector& o_theta);
 
-	double minimize(const ElasticRod *rod, ColumnVector& io_theta);
+	double minimize(const ElasticRod& rod, ColumnVector& io_theta);
 
-public:
-
-	static void extractThetaVars(const ElasticRod* rod, const ColumnVector& theta, ColumnVector& o_thetaVars);
-	static void constructTheta(const ElasticRod* rod, const ColumnVector& thetaVars, ColumnVector& o_theta);
-
-public:
-
+private:
 	struct evaluate
 	{
 		double operator() (const ColumnVector& theta) const;
-		const ElasticRod* m_rod;
+		const ElasticRod* m_rod = nullptr;
 	};
 
 	struct evaluateGradient
 	{
 		ColumnVector operator() (const ColumnVector& theta) const;
-		const ElasticRod* m_rod;
+		const ElasticRod* m_rod = nullptr;
 	};
 
 	struct evaluateHessian
 	{
 		Hessian operator() (const ColumnVector& theta) const;
-		const ElasticRod* m_rod;
+		const ElasticRod* m_rod = nullptr;
 	};
 
 	evaluate m_evaluate;
@@ -47,32 +41,28 @@ public:
 
 //====================================== ElasticRod implementation =======================================
 
-ElasticRod::ElasticRod(const ElasticRodParams *params)
-{
-	assert( params != NULL );
-	m_params = params;
-	m_minimization = new MinimizationPImpl();
-}
+ElasticRod::ElasticRod():
+    m_minimization( std::make_unique<MinimizationPImpl>() )
+{ }
 
-ElasticRod::~ElasticRod()
-{
-	delete m_minimization;
-}
+ElasticRod::~ElasticRod() = default;
 
-void ElasticRod::init(const std::vector<mg::Vec3D>& restpos,
-                      const mg::Vec3D& u0,
-                      const std::vector<mg::Vec3D>& pos,
-                      const std::vector<mg::Vec3D>& vel,
-                      const std::vector<mg::Real>& mass,
-                      const ColumnVector& theta,
-                      const std::set<unsigned> &isClamped)
+void ElasticRod::initialize( const ElasticRodParams& params,
+                             const std::vector<mg::Vec3D>& restpos,
+                             const mg::Vec3D& u0,
+                             const std::vector<mg::Vec3D>& pos,
+                             const std::vector<mg::Vec3D>& vel,
+                             const std::vector<mg::Real>& mass,
+                             const ColumnVector& theta,
+                             const std::set<unsigned> &isClamped )
 {
 	assert( pos.size() > 2 );
 	assert( pos.size() == restpos.size() );
 	assert( pos.size() == vel.size() );
 	assert( pos.size() == mass.size() );
-	assert( (unsigned)theta.size() == (pos.size() - 1) );
+	assert( static_cast<unsigned>( theta.size() ) == pos.size() - 1 );
 
+	m_params = &params;
 	m_u0 = u0;
 	m_ppos = pos;
 	m_pvel = vel;
@@ -628,7 +618,7 @@ void ElasticRod::updateCurrentState()
 	double minE = 0;
 	if (m_params->m_strategy != ElasticRodParams::NONE)
 	{
-		minE = m_minimization->minimize(this, m_theta);
+		minE = m_minimization->minimize(*this, m_theta);
 	}
 	computeMaterialFrame(m_theta, m_m1, m_m2);
 
@@ -645,13 +635,13 @@ void ElasticRod::updateCurrentState()
 
 //====================================== MinimizationPImpl implementation =======================================
 
-void ElasticRod::MinimizationPImpl::extractThetaVars( const ElasticRod* rod, const ColumnVector& theta, ColumnVector& o_thetaVars )
+void ElasticRod::MinimizationPImpl::extractThetaVars(const ElasticRod& rod, const ColumnVector& theta, ColumnVector& o_thetaVars )
 {
-	o_thetaVars.set_size( theta.size() - rod->m_isClamped.size() );
+	o_thetaVars.set_size( theta.size() - rod.m_isClamped.size() );
 	auto j = 0l;
 	for ( auto i = 0l; i < theta.size(); ++i )
 	{
-		if ( rod->m_isClamped.count( i ) || rod->m_isClamped.count( i + 1 ) )
+		if ( rod.m_isClamped.count( i ) || rod.m_isClamped.count( i + 1 ) )
 		{
 			continue;
 		}
@@ -660,12 +650,12 @@ void ElasticRod::MinimizationPImpl::extractThetaVars( const ElasticRod* rod, con
 	}
 }
 
-void ElasticRod::MinimizationPImpl::constructTheta( const ElasticRod* rod, const ColumnVector& thetaVars, ColumnVector& o_theta )
+void ElasticRod::MinimizationPImpl::constructTheta( const ElasticRod& rod, const ColumnVector& thetaVars, ColumnVector& o_theta )
 {
 	auto j = 0l;
 	for ( auto i = 0l; i < o_theta.size(); ++i )
 	{
-		if (rod->m_isClamped.count( i ) || rod->m_isClamped.count( i + 1 ) )
+		if (rod.m_isClamped.count( i ) || rod.m_isClamped.count( i + 1 ) )
 		{
 			continue;
 		}
@@ -674,20 +664,20 @@ void ElasticRod::MinimizationPImpl::constructTheta( const ElasticRod* rod, const
 	}
 }
 
-double ElasticRod::MinimizationPImpl::minimize(const ElasticRod* rod, ColumnVector &io_theta)
+double ElasticRod::MinimizationPImpl::minimize(const ElasticRod& rod, ColumnVector& io_theta)
 {
-	m_evaluate.m_rod = rod;
-	m_evaluateGradient.m_rod = rod;
-	m_evaluateHessian.m_rod = rod;
+	m_evaluate.m_rod = &rod;
+	m_evaluateGradient.m_rod = &rod;
+	m_evaluateHessian.m_rod = &rod;
 
 	ColumnVector thetaVars;
 	extractThetaVars(rod, io_theta, thetaVars);
 
 	double minE = -1;
-	switch (rod->m_params->m_strategy) {
+	switch (rod.m_params->m_strategy) {
 	case ElasticRodParams::BFGS_NUMERIC:
 		minE = dlib::find_min(dlib::bfgs_search_strategy(),
-		                     dlib::objective_delta_stop_strategy(rod->m_params->m_tolerance, rod->m_params->m_maxIter),
+		                     dlib::objective_delta_stop_strategy(rod.m_params->m_tolerance, rod.m_params->m_maxIter),
 		                     m_evaluate,
 		                     dlib::derivative(m_evaluate),
 		                     thetaVars,
@@ -695,7 +685,7 @@ double ElasticRod::MinimizationPImpl::minimize(const ElasticRod* rod, ColumnVect
 		break;
 	case ElasticRodParams::BFGS:
 		minE = dlib::find_min(dlib::bfgs_search_strategy(),
-		                     dlib::objective_delta_stop_strategy(rod->m_params->m_tolerance, rod->m_params->m_maxIter),
+		                     dlib::objective_delta_stop_strategy(rod.m_params->m_tolerance, rod.m_params->m_maxIter),
 		                     m_evaluate,
 		                     m_evaluateGradient,
 		                     thetaVars,
@@ -703,7 +693,7 @@ double ElasticRod::MinimizationPImpl::minimize(const ElasticRod* rod, ColumnVect
 		break;
 	case ElasticRodParams::NEWTON:
 		minE = dlib::find_min(dlib::newton_search_strategy(m_evaluateHessian),
-		                     dlib::objective_delta_stop_strategy(rod->m_params->m_tolerance, rod->m_params->m_maxIter),
+		                     dlib::objective_delta_stop_strategy(rod.m_params->m_tolerance, rod.m_params->m_maxIter),
 		                     m_evaluate,
 		                     m_evaluateGradient,
 		                     thetaVars,
@@ -720,29 +710,33 @@ double ElasticRod::MinimizationPImpl::minimize(const ElasticRod* rod, ColumnVect
 
 double ElasticRod::MinimizationPImpl::evaluate::operator ()(const ColumnVector& theta) const
 {
+	assert( m_rod != nullptr );
+
 //    TODO FIX: can I avoid copying ?????
 //    keeping m1, m2 as members and copying the data gives ~ 1ms performance benefit
 	std::vector<mg::Vec3D> m1 = m_rod->m_m1;
 	std::vector<mg::Vec3D> m2 = m_rod->m_m2;
 	ColumnVector theta_full = m_rod->m_theta;
 
-	constructTheta(m_rod, theta, theta_full);
-	m_rod->computeMaterialFrame(theta_full, m1, m2);
+	constructTheta( *m_rod, theta, theta_full );
+	m_rod->computeMaterialFrame( theta_full, m1, m2 );
 
 	mg::Real E;
-	m_rod->computeEnergy(m1, m2, theta_full, E);
-	return (double)E;
+	m_rod->computeEnergy( m1, m2, theta_full, E );
+	return static_cast<double>( E );
 }
 
 ColumnVector ElasticRod::MinimizationPImpl::evaluateGradient::operator ()( const ColumnVector &theta ) const
 {
+	assert( m_rod != nullptr );
+
 	ColumnVector gradient( theta.size() );
 //    TODO FIX: can I avoid copying ?????
 	std::vector<mg::Vec3D> m1 = m_rod->m_m1;
 	std::vector<mg::Vec3D> m2 = m_rod->m_m2;
 	ColumnVector theta_full = m_rod->m_theta;
 
-	constructTheta( m_rod, theta, theta_full );
+	constructTheta( *m_rod, theta, theta_full );
 	m_rod->computeMaterialFrame( theta_full, m1, m2 );
 
 	mg::Matrix2D JB;
@@ -767,6 +761,8 @@ ColumnVector ElasticRod::MinimizationPImpl::evaluateGradient::operator ()( const
 
 Hessian ElasticRod::MinimizationPImpl::evaluateHessian::operator ()( const ColumnVector& theta ) const
 {
+	assert( m_rod != nullptr );
+
 	Hessian hessian( theta.size(), theta.size() );
 	hessian = dlib::zeros_matrix( hessian );
 //    TODO FIX: can I avoid copying ?????
@@ -774,7 +770,7 @@ Hessian ElasticRod::MinimizationPImpl::evaluateHessian::operator ()( const Colum
 	std::vector<mg::Vec3D> m2 = m_rod->m_m2;
 	ColumnVector theta_full = m_rod->m_theta;
 
-	constructTheta( m_rod, theta, theta_full );
+	constructTheta( *m_rod, theta, theta_full );
 	m_rod->computeMaterialFrame( theta_full, m1, m2 );
 
 	mg::Matrix2D J;

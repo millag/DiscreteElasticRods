@@ -19,7 +19,7 @@ void VoxelGrid::reset()
 {
 	m_voxelSize = m_volume.getWidth() / (m_divisions - 1);
 
-	MULTI_THREADED
+	OMP_PARALLEL_LOOP
 	for ( auto i = 0ll; i < static_cast<long long>( m_voxels.size() ); ++i )
 	{
 		m_voxels[i].m_density = 0;

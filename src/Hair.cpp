@@ -1,17 +1,6 @@
 #include "Hair.h"
 #include "Utils.h"
 
-HairParams::HairParams(): m_rodParams(NULL)
-{ }
-
-HairParams::~HairParams()
-{
-	if (m_rodParams != NULL)
-	{
-		delete m_rodParams;
-	}
-}
-
 Hair::Hair(): m_object(NULL), m_id(-1), m_grid(NULL)
 {
 //    init default hair params
@@ -40,7 +29,7 @@ Hair::Hair(): m_object(NULL), m_id(-1), m_grid(NULL)
 	mg::Real bendStiffness = 0.00006;
 	mg::Real twistStiffness = 0.0005;
 	mg::Real maxElasticForce = 1000;
-	m_params->m_rodParams = new ElasticRodParams(bendStiffness, twistStiffness, maxElasticForce, ElasticRodParams::NONE);
+	m_params->m_rodParams = ElasticRodParams( bendStiffness, twistStiffness, maxElasticForce, ElasticRodParams::NONE );
 }
 
 Hair::~Hair()
@@ -139,7 +128,7 @@ void Hair::update(mg::Real dt)
 
 	const Mesh* mesh = m_object->getMesh();
 
-	MULTI_THREADED
+	OMP_PARALLEL_LOOP
 	for ( auto i = 0ll; i < static_cast<long long>( m_vindices.size() ); ++i )
 	{
 		m_strands[i]->m_ppos[0] = mg::transform_point( m_object->getTransform(), mesh->m_vertices[m_vindices[i]] );
