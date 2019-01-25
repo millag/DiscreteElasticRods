@@ -6,32 +6,37 @@
 
 struct HairParams
 {
-	mg::Real m_length;
-	mg::Real m_lengthVariance;
-	mg::Real m_helicalRadius;
-	mg::Real m_helicalPitch;
-	mg::Real m_density;
-	mg::Real m_thickness;
-	unsigned m_nParticles;
+	mg::Real getMaxLength() const
+	{
+		return m_length + m_lengthVariance;
+	}
 
-	mg::Vec3D m_gravity;
-	mg::Real m_drag;
+	mg::Real m_length = 6.f;
+	mg::Real m_lengthVariance = 1.f;
+	mg::Real m_helicalRadius = 0.3f;
+	mg::Real m_helicalPitch = 0.15f;
+	mg::Real m_density = 0.001f;
+	mg::Real m_thickness = 0.07f;
+	unsigned m_nParticles = 15;
 
-	bool m_resolveCollisions;
-	mg::Real m_coulombFriction;
+	mg::Vec3D m_gravity = mg::Gravity;
+	mg::Real m_drag = 0.0000003f;
 
-	bool m_resolveSelfInterations;
-	mg::Real m_selfInterationDist;
-	mg::Real m_selfStiction;
-	mg::Real m_selfRepulsion;
+	bool m_resolveCollisions = true;
+	mg::Real m_coulombFriction = 0.2f;
+
+	bool m_resolveSelfInterations = true;
+	mg::Real m_selfInterationDist = 0.4f;
+	mg::Real m_selfStiction = 0.2f;
+	mg::Real m_selfRepulsion = 0.000005f;
 
 ///     constraints are enforced using PBD(Position Based Dynamics) framework
 ///     the parameter controls # of PBD iterations to be performed
 ///     NOTE that PBD DOES NOT GUARANTEE exact enforcement but converges towards the solution
 ///     higher value of iterations means higher precision but is more computationally expensive
-	unsigned m_pbdIter;
+	unsigned m_pbdIter = 6;
 
-	ElasticRodParams m_rodParams;
+	ElasticRodParams m_rodParams = ElasticRodParams( 0.00006, 0.0005, 1000, ElasticRodParams::MINIMIZATION_STRATEGY::NONE );
 };
 
 struct HairState
@@ -50,7 +55,6 @@ private:
 class Hair
 {
 public:
-
 	Hair();
 	~Hair();
 
@@ -65,27 +69,22 @@ public:
 	void update(mg::Real dt);
 
 public:
-
-	HairParams* m_params;
-	const RenderObject* m_object;
+	HairParams m_params;
+	const RenderObject* m_object = nullptr;
 	std::vector<unsigned> m_findices;
 	std::vector<unsigned> m_vindices;
 	std::vector<ElasticRod*> m_strands;
 
 private:
+	unsigned m_id = 0;
+	VoxelGrid m_grid;
 
-	void resetGrid();
+private:
+	void updateGrid();
 	void updateRod(ElasticRod& rod, mg::Real dt) const;
 	void accumulateExternalForces(const ElasticRod &rod, std::vector<mg::Vec3D>& o_forces) const;
 	void accumulateExternalForcesWithSelfInterations(ElasticRod &rod, std::vector<mg::Vec3D>& o_forces) const;
 	void enforceConstraints(ElasticRod& rod) const;
 	void enforceConstraintsWithCollision(ElasticRod& rod) const;
 	void applyCollisionConstraintsIteration(ElasticRod& rod) const;
-
-private:
-
-	unsigned m_id;
-
-	AABB m_volume;
-	VoxelGrid* m_grid;
 };

@@ -49,7 +49,7 @@ private slots :
 	void setDrag(double val);
 	void setPBDIter(int val);
 
-	void selectMinimizationMethod(int index);
+	void selectMinimizationMethod(int idx);
 	void setMinimizationTolerance(double val);
 	void setMinimizationMaxIter(int val);
 

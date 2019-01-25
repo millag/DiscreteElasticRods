@@ -226,111 +226,140 @@ void MainWindow::updateUI()
 	m_ui->m_selected->clear();
 	m_ui->m_selected->addItem( QString( "None" ) );
 
-	if ( !m_scene )
+	if ( m_scene )
 	{
-		return;
+		for ( auto i = 0u; i < m_scene->getRenderObjects().size(); ++i )
+		{
+			m_ui->m_selected->addItem( QString( "RenderObject_%1" ).arg( i ) );
+		}
+
+		auto hair = m_scene->getHairById(0);
+		if ( hair )
+		{
+			m_ui->m_minimizationMethod->setCurrentIndex( static_cast<int>( hair->m_params.m_rodParams.m_strategy ) );
+			m_ui->m_minTolerance->setValue( hair->m_params.m_rodParams.m_tolerance );
+			m_ui->m_minMaxIter->setValue( hair->m_params.m_rodParams.m_maxIter );
+
+			m_ui->m_bendStiffness->setValue( hair->m_params.m_rodParams.m_B( 0, 0 ) );
+			m_ui->m_twistStiffness->setValue( hair->m_params.m_rodParams.m_beta );
+			m_ui->m_maxForce->setValue( hair->m_params.m_rodParams.m_maxElasticForce );
+			m_ui->m_drag->setValue( hair->m_params.m_drag);
+			m_ui->m_pbdIter->setValue( hair->m_params.m_pbdIter );
+
+			m_ui->m_collisions->setChecked( hair->m_params.m_resolveCollisions );
+			m_ui->m_selfInteractions->setChecked( hair->m_params.m_resolveSelfInterations );
+			m_ui->m_stiction->setValue( hair->m_params.m_selfStiction );
+			m_ui->m_repulsion->setValue( hair->m_params.m_selfRepulsion );
+		}
 	}
-
-	for ( auto i = 0u; i < m_scene->getRenderObjects().size(); ++i )
-	{
-		m_ui->m_selected->addItem( QString( "RenderObject_%1" ).arg( i ) );
-	}
-
-	m_ui->m_minimizationMethod->setCurrentIndex( m_scene->getHairById( 0 )->m_params->m_rodParams.m_strategy );
-	m_ui->m_minTolerance->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_tolerance );
-	m_ui->m_minMaxIter->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_maxIter );
-
-	m_ui->m_bendStiffness->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_B( 0, 0 ) );
-	m_ui->m_twistStiffness->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_beta );
-	m_ui->m_maxForce->setValue( m_scene->getHairById( 0 )->m_params->m_rodParams.m_maxElasticForce );
-	m_ui->m_drag->setValue( m_scene->getHairById( 0 )->m_params->m_drag);
-	m_ui->m_pbdIter->setValue( m_scene->getHairById( 0 )->m_params->m_pbdIter );
-
-	m_ui->m_collisions->setChecked( m_scene->getHairById( 0 )->m_params->m_resolveCollisions );
-	m_ui->m_selfInteractions->setChecked( m_scene->getHairById( 0 )->m_params->m_resolveSelfInterations );
-	m_ui->m_stiction->setValue( m_scene->getHairById( 0 )->m_params->m_selfStiction );
-	m_ui->m_repulsion->setValue( m_scene->getHairById( 0 )->m_params->m_selfRepulsion );
 }
 
-void MainWindow::selectMinimizationMethod(int index)
+void MainWindow::selectMinimizationMethod(int idx)
 {
-	if (m_scene->getHairById(0) == nullptr)
-	{
-		std::cerr << "No hair object found. Skipping..." << std::endl;
-		return;
-	}
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
 
-	switch (index)
-	{
-	    case 0:
-		    m_scene->getHairById(0)->m_params->m_rodParams.m_strategy = ElasticRodParams::NONE;
-		    break;
-	    case 1:
-		    m_scene->getHairById(0)->m_params->m_rodParams.m_strategy = ElasticRodParams::NEWTON;
-		    break;
-	    case 2:
-		    m_scene->getHairById(0)->m_params->m_rodParams.m_strategy = ElasticRodParams::BFGS;
-		    break;
-	    case 3:
-		    m_scene->getHairById(0)->m_params->m_rodParams.m_strategy = ElasticRodParams::BFGS_NUMERIC;
-		    break;
-	    default:
-		    break;
-	}
+	hair->m_params.m_rodParams.m_strategy = ( idx < static_cast<int>( ElasticRodParams::MINIMIZATION_STRATEGY::SENTINEL ) )?
+	                                            static_cast<ElasticRodParams::MINIMIZATION_STRATEGY>( idx ) :
+	                                            ElasticRodParams::MINIMIZATION_STRATEGY::SENTINEL;
 }
 
 void MainWindow::setMinimizationTolerance(double val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams.m_tolerance = val;
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_rodParams.m_tolerance = val;
 }
 
 void MainWindow::setMinimizationMaxIter(int val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams.m_maxIter = val;
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_rodParams.m_maxIter = val;
 }
 
 void MainWindow::setBendingStiffness(double val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams.setBendStiffness(val);
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_rodParams.setBendStiffness(val);
 }
 
 void MainWindow::setTwistingStiffness(double val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams.setTwistStiffness(val);
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_rodParams.setTwistStiffness(val);
 }
 
 void MainWindow::setMaxElasticForce(double val)
 {
-	m_scene->getHairById(0)->m_params->m_rodParams.m_maxElasticForce = val;
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_rodParams.m_maxElasticForce = val;
 }
 
 void MainWindow::setDrag(double val)
 {
-	m_scene->getHairById(0)->m_params->m_drag = val;
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
 
+	hair->m_params.m_drag = val;
 }
 
 void MainWindow::setPBDIter(int val)
 {
-	m_scene->getHairById(0)->m_params->m_pbdIter = val;
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_pbdIter = val;
 }
 
 void MainWindow::toggleCollisions(bool val)
 {
-	m_scene->getHairById(0)->m_params->m_resolveCollisions = val;
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_resolveCollisions = val;
 }
 
 void MainWindow::toggleSelfInterations(bool val)
 {
-	m_scene->getHairById(0)->m_params->m_resolveSelfInterations = val;
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_resolveSelfInterations = val;
 }
 
 void MainWindow::setSelfStiction(double val)
 {
-	m_scene->getHairById(0)->m_params->m_selfStiction = val;
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_selfStiction = val;
 }
 
 void MainWindow::setSelfRepusion(double val)
 {
-	m_scene->getHairById(0)->m_params->m_selfRepulsion = val;
+	assert( m_scene != nullptr );
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+
+	hair->m_params.m_selfRepulsion = val;
 }

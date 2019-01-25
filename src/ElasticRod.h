@@ -25,18 +25,19 @@ private:
 
 struct ElasticRodParams
 {
-	enum MINIMIZATION_STRATEGY
+	enum class MINIMIZATION_STRATEGY
 	{
 		NONE = 0,
 		NEWTON = 1,
 		BFGS = 2,
-		BFGS_NUMERIC = 3
+		BFGS_NUMERIC = 3,
+		SENTINEL,
 	};
 
 	ElasticRodParams( mg::Real bendStiffness = 1.0,
 	          mg::Real twistStiffness = 1.0,
 	          mg::Real maxElasticForce = 1000,
-	          MINIMIZATION_STRATEGY strategy = BFGS,
+	          MINIMIZATION_STRATEGY strategy = MINIMIZATION_STRATEGY::BFGS,
 	          double tolerance = 1e-6f,
 	          unsigned maxIter = 100 ):
 	    m_beta(twistStiffness)

@@ -116,7 +116,7 @@ bool SceneLoader::loadTestScene( Scene& scene )
 	HairGenerator::generateCurlyHair(*object, fidx, *hair);
 
 //	add collision shape for the object
-	mg::Real radius = object->getMeshBoundingRadius() + hair->m_params->m_thickness;
+	mg::Real radius = object->getMeshBoundingRadius() + hair->m_params.m_thickness;
 	mg::Matrix4D shape;
 	mg::matrix_scale(shape, radius, radius, radius);
 	mg::matrix_set_translation(shape, object->getMeshAABB().getCenter());
@@ -207,32 +207,32 @@ bool SceneLoader::loadScene( const char* filename, Scene& scene )
 		Hair* hair = new Hair();
 
 //		assign hair props
-		hair->m_params->m_length = it->second.m_length;
-		hair->m_params->m_lengthVariance = it->second.m_lengthVariance;
-		hair->m_params->m_helicalRadius = it->second.m_helicalRadius;
-		hair->m_params->m_helicalPitch = it->second.m_helicalPitch;
-		hair->m_params->m_density = it->second.m_density;
-		hair->m_params->m_thickness = it->second.m_thickness;
-		hair->m_params->m_nParticles = it->second.m_nParticles;
+		hair->m_params.m_length = it->second.m_length;
+		hair->m_params.m_lengthVariance = it->second.m_lengthVariance;
+		hair->m_params.m_helicalRadius = it->second.m_helicalRadius;
+		hair->m_params.m_helicalPitch = it->second.m_helicalPitch;
+		hair->m_params.m_density = it->second.m_density;
+		hair->m_params.m_thickness = it->second.m_thickness;
+		hair->m_params.m_nParticles = it->second.m_nParticles;
 
-		hair->m_params->m_gravity = it->second.m_netForce;
-		hair->m_params->m_drag = it->second.m_drag;
+		hair->m_params.m_gravity = it->second.m_netForce;
+		hair->m_params.m_drag = it->second.m_drag;
 
-		hair->m_params->m_resolveCollisions = it->second.m_resolveCollisions > 0;
-		hair->m_params->m_resolveSelfInterations = it->second.m_resolveSelfInterations > 0;
-		hair->m_params->m_selfInterationDist = it->second.m_selfInterationDist;
-		hair->m_params->m_selfStiction = it->second.m_selfStiction;
-		hair->m_params->m_selfRepulsion = it->second.m_selfRepulsion;
+		hair->m_params.m_resolveCollisions = it->second.m_resolveCollisions > 0;
+		hair->m_params.m_resolveSelfInterations = it->second.m_resolveSelfInterations > 0;
+		hair->m_params.m_selfInterationDist = it->second.m_selfInterationDist;
+		hair->m_params.m_selfStiction = it->second.m_selfStiction;
+		hair->m_params.m_selfRepulsion = it->second.m_selfRepulsion;
 
-		hair->m_params->m_pbdIter = it->second.m_pbdIter;
-		hair->m_params->m_rodParams.setBendStiffness(it->second.m_bendStiffness);
-		hair->m_params->m_rodParams.setTwistStiffness(it->second.m_twistStiffness);
-		hair->m_params->m_rodParams.m_maxElasticForce = it->second.m_maxElasticForce;
+		hair->m_params.m_pbdIter = it->second.m_pbdIter;
+		hair->m_params.m_rodParams.setBendStiffness(it->second.m_bendStiffness);
+		hair->m_params.m_rodParams.setTwistStiffness(it->second.m_twistStiffness);
+		hair->m_params.m_rodParams.m_maxElasticForce = it->second.m_maxElasticForce;
 
 
-		hair->m_params->m_rodParams.m_strategy = it->second.m_minimizationStrategy;
-		hair->m_params->m_rodParams.m_tolerance = it->second.m_minimizationTolerance;
-		hair->m_params->m_rodParams.m_maxIter = it->second.m_minimizationMaxIter;
+		hair->m_params.m_rodParams.m_strategy = it->second.m_minimizationStrategy;
+		hair->m_params.m_rodParams.m_tolerance = it->second.m_minimizationTolerance;
+		hair->m_params.m_rodParams.m_maxIter = it->second.m_minimizationMaxIter;
 
 //		generate hair strands
 		if (it->second.m_type.compare("curly") == 0)
@@ -662,16 +662,16 @@ bool SceneLoader::PImpl::parseHairObject(std::ifstream& ifs, scene_object& o_sce
 		if (token.compare("minimizationMethod") == 0)
 		{
 			line.erase(0, token.length());
-			object.m_minimizationStrategy = ElasticRodParams::NONE;
+			object.m_minimizationStrategy = ElasticRodParams::MINIMIZATION_STRATEGY::NONE;
 
 			std::string word = BasicParser::parseWord(BasicParser::ltrim(line));
 			if (word.compare("newton") == 0)
 			{
-				object.m_minimizationStrategy =  ElasticRodParams::NEWTON;
+				object.m_minimizationStrategy =  ElasticRodParams::MINIMIZATION_STRATEGY::NEWTON;
 			}
 			else if (word.compare("bfgs") == 0)
 			{
-				object.m_minimizationStrategy =  ElasticRodParams::BFGS;
+				object.m_minimizationStrategy =  ElasticRodParams::MINIMIZATION_STRATEGY::BFGS;
 			}
 
 			continue;

@@ -12,9 +12,9 @@ Spiral::Spiral():
 	m_nParticles = 20;
 	m_pbdIter = 4;
 
-	m_rodParams1 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::NEWTON);
-	m_rodParams2 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::BFGS);
-	m_rodParams3 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::NONE);
+	m_rodParams1 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::MINIMIZATION_STRATEGY::NEWTON);
+	m_rodParams2 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::MINIMIZATION_STRATEGY::BFGS);
+	m_rodParams3 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::MINIMIZATION_STRATEGY::NONE);
 	m_strands.reserve(10);
 }
 

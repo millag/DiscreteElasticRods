@@ -46,7 +46,7 @@ void HairGenerator::generateCurlyHair(const RenderObject& object, const std::vec
 		}
 
 		ElasticRod* rod = new ElasticRod();
-		generateHelicalRod(*o_hair.m_params, p, n, u, *rod);
+		generateHelicalRod( o_hair.m_params, p, n, u, *rod);
 		o_hair.m_strands[i] = rod;
 	}
 
@@ -96,7 +96,7 @@ void HairGenerator::generateStraightHair(const RenderObject& object, const std::
 		}
 
 		ElasticRod* rod = new ElasticRod();
-		generateStraightRod(*o_hair.m_params, p, n, u, *rod);
+		generateStraightRod( o_hair.m_params, p, n, u, *rod );
 		o_hair.m_strands[i] = rod;
 	}
 

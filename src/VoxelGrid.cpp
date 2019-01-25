@@ -1,24 +1,32 @@
 #include "VoxelGrid.h"
 
-VoxelGrid::VoxelGrid(const AABB &volume, unsigned divisions):
-    m_volume(volume),
-    m_divisions(divisions + 1),
-    m_divisionsSqr((divisions + 1) * (divisions + 1))
+void VoxelGrid::reset(const AABB &volume, unsigned resolution )
 {
-	assert(m_divisions > 1);
-	m_voxelSize = m_volume.getWidth() / (m_divisions - 1);
+	assert( resolution > 0 );
+
+	m_volume = volume;
+	m_resolution = resolution + 1;
+	m_voxelSize = m_volume.getWidth() / ( m_resolution - 1 );
+	m_voxels.resize( m_resolution * m_resolution * m_resolution );
+
+	clear();
 }
 
-void VoxelGrid::initialize()
+void VoxelGrid::reset(const AABB &volume, mg::Real voxelSize )
 {
-	m_voxels.resize(m_divisionsSqr * m_divisions);
-	reset();
+	const auto w = volume.getWidth();
+	voxelSize = std::min( std::fabs( voxelSize ), w );
+
+	m_volume = volume;
+	m_resolution = static_cast<unsigned>( w / voxelSize ) + 1;
+	m_voxelSize = w / ( m_resolution - 1 );
+	m_voxels.resize( m_resolution * m_resolution * m_resolution );
+
+	clear();
 }
 
-void VoxelGrid::reset()
+void VoxelGrid::clear()
 {
-	m_voxelSize = m_volume.getWidth() / (m_divisions - 1);
-
 	OMP_PARALLEL_LOOP
 	for ( auto i = 0ll; i < static_cast<long long>( m_voxels.size() ); ++i )
 	{
@@ -120,7 +128,7 @@ void VoxelGrid::getInterpolatedVelocity(const mg::Vec3D& pos, mg::Vec3D& o_veloc
 
 unsigned VoxelGrid::findVoxel(const mg::Vec3D& pos, unsigned& o_i, unsigned& o_j, unsigned &o_k, mg::Vec3D& o_voxelPos) const
 {
-	const mg::Real maxVoxel = std::max(static_cast< mg::Real >(m_divisions) - 2.f, 0.f);
+	const mg::Real maxVoxel = std::max(static_cast< mg::Real >(m_resolution) - 2.f, 0.f);
 	o_voxelPos = pos - m_volume.getMin();
 	o_i = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[0] / m_voxelSize), 0.f, maxVoxel));
 	o_j = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[1] / m_voxelSize), 0.f, maxVoxel));
@@ -131,9 +139,4 @@ unsigned VoxelGrid::findVoxel(const mg::Vec3D& pos, unsigned& o_i, unsigned& o_j
 	o_voxelPos[2] = mg::clamp(std::fmod(o_voxelPos[2], m_voxelSize), 0.f, 1.f);
 
 	return getVoxelIdx(o_i, o_j, o_k);
-}
-
-unsigned VoxelGrid::getVoxelIdx(unsigned i, unsigned j, unsigned k) const
-{
-	return k * m_divisionsSqr + i * m_divisions + j;
 }

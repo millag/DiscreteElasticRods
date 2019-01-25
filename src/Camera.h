@@ -5,7 +5,7 @@
 class Camera
 {
 public:
-	enum ProjectionType
+	enum class ProjectionType
 	{
 		Perspective = 0,
 		Orthographic = 1
