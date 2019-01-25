@@ -51,7 +51,7 @@ struct hair_object
 	double m_twistStiffness;
 	double m_maxElasticForce;
 
-	ElasticRodParams::MINIMIZATION_STRATEGY m_minimizationStrategy;
+	ElasticRodParams::MinimizationStrategy m_minimizationStrategy;
 	double m_minimizationTolerance;
 	long int m_minimizationMaxIter;
 };
@@ -269,7 +269,7 @@ bool SceneLoader::loadMesh( const char* fileName, Mesh& mesh )
 	if (    loader.getNormals().size() != loader.getVertices().size()
 	     || loader.getVNIndices().size() != loader.getVIndices().size() )
 	{
-		Mesh::computeNormals( Mesh::GOURAUD, mesh );
+		Mesh::computeNormals( Mesh::ShadingMode::GOURAUD, mesh );
 	} else
 	{
 		mesh.m_normals.resize( loader.getNormals().size() );
@@ -662,16 +662,16 @@ bool SceneLoader::PImpl::parseHairObject(std::ifstream& ifs, scene_object& o_sce
 		if (token.compare("minimizationMethod") == 0)
 		{
 			line.erase(0, token.length());
-			object.m_minimizationStrategy = ElasticRodParams::MINIMIZATION_STRATEGY::NONE;
+			object.m_minimizationStrategy = ElasticRodParams::MinimizationStrategy::NONE;
 
 			std::string word = BasicParser::parseWord(BasicParser::ltrim(line));
 			if (word.compare("newton") == 0)
 			{
-				object.m_minimizationStrategy =  ElasticRodParams::MINIMIZATION_STRATEGY::NEWTON;
+				object.m_minimizationStrategy =  ElasticRodParams::MinimizationStrategy::NEWTON;
 			}
 			else if (word.compare("bfgs") == 0)
 			{
-				object.m_minimizationStrategy =  ElasticRodParams::MINIMIZATION_STRATEGY::BFGS;
+				object.m_minimizationStrategy =  ElasticRodParams::MinimizationStrategy::BFGS;
 			}
 
 			continue;

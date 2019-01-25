@@ -129,6 +129,7 @@ class BarBase
 
 class Bar
 {
+	friend class FooImplPrivate;
 public:
 	UIEventType getType() const { return m_type; }
 	const QObject* getQtEvent() const { return m_qtevent; }
@@ -151,12 +152,11 @@ private:
 	UIEventType m_type;
 	QObject* m_qtevent;
 	uint64_t m_timestamp;
-
-	friend class FooImplPrivate;
 };
 
 class Foo
 {
+	friend class FooImplPrivate;
 public:
 	static Foo* create();
 	static void destroy(Foo* foo);
@@ -170,5 +170,4 @@ private:
 
 	struct FooPImpl;
 	FooPImpl* m_pimpl;
-	friend class FooImplPrivate;
 };

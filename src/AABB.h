@@ -10,11 +10,21 @@ public:
 	  , m_vmax(0,0,0)
 	{}
 
-	AABB(const mg::Vec3D& p1,  const mg::Vec3D& p2);
+	AABB(const mg::Vec3D& p1,  const mg::Vec3D& p2):
+	    m_vmin(p1)
+	  , m_vmax(p2)
+	{
+		adjustBounds();
+	}
 
 	inline bool isEmpty() const
 	{
 		return m_vmax[0] <= m_vmin[0] || m_vmax[1] <= m_vmin[1] || m_vmax[2] <= m_vmin[2];
+	}
+
+	inline void setEmpty()
+	{
+		m_vmax = m_vmin = mg::Origin;
 	}
 
 	inline const mg::Vec3D& getMin() const { return m_vmin; }
@@ -27,7 +37,7 @@ public:
 
 	inline mg::Real getBoundingRadius() const
 	{
-		return (getSize() * 0.5f).length();
+		return getSize().length() * 0.5f;
 	}
 
 	inline mg::Real getEnclosedRadius() const
@@ -46,11 +56,24 @@ public:
 	inline mg::Vec3D getTLB() const { return mg::Vec3D(m_vmin[0], m_vmax[1], m_vmax[2]); }
 	inline mg::Vec3D getTLF() const { return mg::Vec3D(m_vmin[0], m_vmax[1], m_vmin[2]); }
 
-	void setEmpty();
-	void reshape(const mg::Vec3D& p1, const mg::Vec3D& p2);
+	inline void reshape(const mg::Vec3D& p1, const mg::Vec3D& p2)
+	{
+		m_vmin = p1;
+		m_vmax = p2;
+		adjustBounds();
+	}
 
 protected:
-	void adjustBounds();
+	inline void adjustBounds()
+	{
+		for (auto i = 0; i < 3; ++i)
+		{
+			if (m_vmax[i] < m_vmin[i])
+			{
+				std::swap(m_vmax[i], m_vmin[i]);
+			}
+		}
+	}
 
 	mg::Vec3D m_vmin;
 	mg::Vec3D m_vmax;

@@ -11,7 +11,7 @@ constexpr int CountOf(T const (&)[N]) noexcept
 	return N;
 }
 
-inline mg::Real getSign(mg::Real value)
+constexpr inline mg::Real getSign(mg::Real value)
 {
 	return static_cast<mg::Real>( (value < 0)? -1 : 1 );
 }
@@ -61,6 +61,6 @@ inline V lerp( const V& v1, const V& v2, const T& t )
 
 inline bool almostEqual( mg::Real v1, mg::Real v2, mg::Real tolerance = mg::ERR )
 {
-	return fabs( v1 - v2 ) < tolerance;
+	return std::fabs( v1 - v2 ) < tolerance;
 }
 }

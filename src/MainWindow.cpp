@@ -260,9 +260,9 @@ void MainWindow::selectMinimizationMethod(int idx)
 	auto hair = m_scene->getHairById(0);
 	assert( hair != nullptr );
 
-	hair->m_params.m_rodParams.m_strategy = ( idx < static_cast<int>( ElasticRodParams::MINIMIZATION_STRATEGY::SENTINEL ) )?
-	                                            static_cast<ElasticRodParams::MINIMIZATION_STRATEGY>( idx ) :
-	                                            ElasticRodParams::MINIMIZATION_STRATEGY::SENTINEL;
+	hair->m_params.m_rodParams.m_strategy = ( idx < static_cast<int>( ElasticRodParams::MinimizationStrategy::SENTINEL ) )?
+	                                            static_cast<ElasticRodParams::MinimizationStrategy>( idx ) :
+	                                            ElasticRodParams::MinimizationStrategy::SENTINEL;
 }
 
 void MainWindow::setMinimizationTolerance(double val)

@@ -5,13 +5,13 @@
 class Mesh
 {
 public:
-	enum ShadingMode
+	enum class ShadingMode
 	{
-		FLAT,
+		FLAT = 0,
 		GOURAUD,
 	};
 
-	enum Primitive
+	enum class Primitive
 	{
 		POINTS = 1,
 		LINES = 2,
@@ -21,7 +21,7 @@ public:
 	static Mesh* createSphere( int id, unsigned udiv = 20u, unsigned vdiv = 10u );
 	static void computeNormals( ShadingMode mode, Mesh& o_mesh );
 
-	Mesh( unsigned id = -1, Primitive primitive = TRIANGLES );
+	Mesh( unsigned id = -1, Primitive primitive = Primitive::TRIANGLES );
 	~Mesh();
 
 	unsigned getId() const { return m_id; }
@@ -42,5 +42,5 @@ public:
 
 private:
 	unsigned m_id = -1;
-	Primitive m_primitive = TRIANGLES;
+	Primitive m_primitive = Primitive::TRIANGLES;
 };

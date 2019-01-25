@@ -616,7 +616,7 @@ void ElasticRod::updateCurrentState()
 	computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
 
 	double minE = 0;
-	if (m_params->m_strategy != ElasticRodParams::MINIMIZATION_STRATEGY::NONE)
+	if (m_params->m_strategy != ElasticRodParams::MinimizationStrategy::NONE)
 	{
 		minE = m_minimization->minimize(*this, m_theta);
 	}
@@ -675,7 +675,7 @@ double ElasticRod::MinimizationPImpl::minimize(const ElasticRod& rod, ColumnVect
 
 	double minE = -1;
 	switch (rod.m_params->m_strategy) {
-	case ElasticRodParams::MINIMIZATION_STRATEGY::BFGS_NUMERIC:
+	case ElasticRodParams::MinimizationStrategy::BFGS_NUMERIC:
 		minE = dlib::find_min(dlib::bfgs_search_strategy(),
 		                     dlib::objective_delta_stop_strategy(rod.m_params->m_tolerance, rod.m_params->m_maxIter),
 		                     m_evaluate,
@@ -683,7 +683,7 @@ double ElasticRod::MinimizationPImpl::minimize(const ElasticRod& rod, ColumnVect
 		                     thetaVars,
 		                     0.0);
 		break;
-	case ElasticRodParams::MINIMIZATION_STRATEGY::BFGS:
+	case ElasticRodParams::MinimizationStrategy::BFGS:
 		minE = dlib::find_min(dlib::bfgs_search_strategy(),
 		                     dlib::objective_delta_stop_strategy(rod.m_params->m_tolerance, rod.m_params->m_maxIter),
 		                     m_evaluate,
@@ -691,7 +691,7 @@ double ElasticRod::MinimizationPImpl::minimize(const ElasticRod& rod, ColumnVect
 		                     thetaVars,
 		                     0.0);
 		break;
-	case ElasticRodParams::MINIMIZATION_STRATEGY::NEWTON:
+	case ElasticRodParams::MinimizationStrategy::NEWTON:
 		minE = dlib::find_min(dlib::newton_search_strategy(m_evaluateHessian),
 		                     dlib::objective_delta_stop_strategy(rod.m_params->m_tolerance, rod.m_params->m_maxIter),
 		                     m_evaluate,

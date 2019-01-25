@@ -36,7 +36,7 @@ struct HairParams
 ///     higher value of iterations means higher precision but is more computationally expensive
 	unsigned m_pbdIter = 6;
 
-	ElasticRodParams m_rodParams = ElasticRodParams( 0.00006, 0.0005, 1000, ElasticRodParams::MINIMIZATION_STRATEGY::NONE );
+	ElasticRodParams m_rodParams = ElasticRodParams( 0.00006, 0.0005, 1000, ElasticRodParams::MinimizationStrategy::NONE );
 };
 
 struct HairState

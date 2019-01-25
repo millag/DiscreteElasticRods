@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AABB.h"
-#include "Utils.h"
 
 /// Regularly spaced grid encompassing some volume in 3D space. Each voxel
 /// represents only a single sample point on the grid and not a volume. How
@@ -14,10 +13,9 @@
 class VoxelGrid
 {
 public:
-
-	const AABB& getVolume() const { return m_volume; }
-	unsigned getResolution() const { return m_resolution - 1; }
-	mg::Real getVolexSize() const { return m_voxelSize; }
+	constexpr const AABB& getVolume() const { return m_volume; }
+	constexpr unsigned getResolution() const { return m_resolution - 1; }
+	constexpr mg::Real getVolexSize() const { return m_voxelSize; }
 
 ///	Setsup and allocates memory for grid with the given volume and resolution
 /// Voxel values are kept on the

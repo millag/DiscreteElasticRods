@@ -25,7 +25,7 @@ private:
 
 struct ElasticRodParams
 {
-	enum class MINIMIZATION_STRATEGY
+	enum class MinimizationStrategy
 	{
 		NONE = 0,
 		NEWTON = 1,
@@ -37,7 +37,7 @@ struct ElasticRodParams
 	ElasticRodParams( mg::Real bendStiffness = 1.0,
 	          mg::Real twistStiffness = 1.0,
 	          mg::Real maxElasticForce = 1000,
-	          MINIMIZATION_STRATEGY strategy = MINIMIZATION_STRATEGY::BFGS,
+	          MinimizationStrategy strategy = MinimizationStrategy::BFGS,
 	          double tolerance = 1e-6f,
 	          unsigned maxIter = 100 ):
 	    m_beta(twistStiffness)
@@ -83,7 +83,7 @@ struct ElasticRodParams
 ///     energy minimization is implemented using dlib numeric library
 ///     the following parameters control minimization method, tolerance and max iterartion used
 ///     consult dlib documentation for reference
-	MINIMIZATION_STRATEGY m_strategy;
+	MinimizationStrategy m_strategy;
 	double m_tolerance;
 	unsigned m_maxIter;
 };

@@ -29,13 +29,13 @@ void Camera::lookAt(const mg::Vec3D& eye, const mg::Vec3D& at, const mg::Vec3D& 
 
 void Camera::ortho(mg::Real left, mg::Real right, mg::Real bottom, mg::Real top, mg::Real near, mg::Real far)
 {
-	m_projectionType = ProjectionType::Orthographic;
+	m_projectionType = ProjectionType::ORTHOGRAPHIC;
 	mg::matrix_orthographic_RH(m_projection, left, right, bottom, top, near, far, mg::z_clip_zero);
 }
 
 void Camera::perspective(mg::Real yfov, mg::Real aspect, mg::Real near, mg::Real far)
 {
-	m_projectionType = ProjectionType::Perspective;
+	m_projectionType = ProjectionType::PERSPECTIVE;
 	mg::matrix_perspective_yfov_RH(m_projection, yfov, aspect, near, far, mg::z_clip_zero);
 }
 

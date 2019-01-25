@@ -91,7 +91,7 @@ Mesh* Mesh::createSphere( int id, unsigned udiv, unsigned vdiv )
 		mesh->m_vindices.push_back( lastIdx - 1 - i % udiv );
 	}
 
-	Mesh::computeNormals( GOURAUD, *mesh );
+	Mesh::computeNormals( ShadingMode::GOURAUD, *mesh );
 
 	return mesh;
 }
