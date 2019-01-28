@@ -74,7 +74,6 @@ set( PROJECT_SOURCES
 	src/Mesh.cpp
 	src/RenderObject.cpp
 	src/TransformTool.cpp
-	src/AABB.cpp
 	src/ElasticRod.cpp
 	src/Spiral.cpp
 	src/Hair.cpp
