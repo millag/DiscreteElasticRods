@@ -12,24 +12,34 @@
 /// among the 8 surrounding voxels using again tri-linear interpolation
 class VoxelGrid
 {
+	struct Voxel
+	{
+		mg::Real m_density;
+		mg::Vec3D m_velocity;
+	};
+
+	using VoxelList = std::vector<Voxel>;
+
 public:
+	using size_type = VoxelList::size_type;
+
 	constexpr const AABB& getVolume() const { return m_volume; }
-	constexpr unsigned getResolution() const { return m_resolution - 1; }
+	constexpr size_type getResolution() const { return m_resolution - 1; }
 	constexpr mg::Real getVolexSize() const { return m_voxelSize; }
 
 ///	Setsup and allocates memory for grid with the given volume and resolution
 /// Voxel values are kept on the
-	void reset( const AABB &volume, unsigned resolution );
+	void reset( const AABB &volume, size_type resolution );
 	void reset( const AABB &volume, mg::Real voxelSize );
 
 ///	Resets values in voxels
 	void clear();
 
 ///	Inserts mass particle performing tri-linear interpolation
-	unsigned insertDensity( const mg::Vec3D& pos, mg::Real val );
+	void insertDensity( const mg::Vec3D& pos, mg::Real val );
 
 ///	Inserts mass particle velovity performing tri-linear interpolation
-	unsigned insertVelocity( const mg::Vec3D& pos, const mg::Vec3D& val );
+	void insertVelocity( const mg::Vec3D& pos, const mg::Vec3D& val );
 
 ///	Returns density at a point performing tri-linear interpolation
 	void getInterpolatedDensity( const mg::Vec3D& pos, mg::Real& o_density ) const;
@@ -38,21 +48,15 @@ public:
 	void getInterpolatedVelocity( const mg::Vec3D& pos, mg::Vec3D& o_velocity ) const;
 
 private:
-	constexpr inline unsigned getVoxelIdx( unsigned i, unsigned j, unsigned k ) const
+	constexpr inline size_type getVoxelIdx( size_type i, size_type j, size_type k ) const
 	{
 		return k * ( m_resolution * m_resolution ) + i * m_resolution + j;
 	}
 
-	unsigned findVoxel( const mg::Vec3D& pos, unsigned& o_i, unsigned& o_j, unsigned &o_k, mg::Vec3D& o_voxelPos ) const;
-
-	struct Voxel
-	{
-		mg::Real m_density;
-		mg::Vec3D m_velocity;
-	};
+	void findVoxel(const mg::Vec3D& pos, size_type& o_i, size_type& o_j, size_type &o_k, mg::Vec3D& o_localPos ) const;
 
 	AABB m_volume;
-	unsigned m_resolution;
+	size_type m_resolution;
 	mg::Real m_voxelSize;
-	std::vector<Voxel> m_voxels;
+	VoxelList m_voxels;
 };

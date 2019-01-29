@@ -1,6 +1,7 @@
 #include "VoxelGrid.h"
+#include <array>
 
-void VoxelGrid::reset(const AABB &volume, unsigned resolution )
+void VoxelGrid::reset(const AABB &volume, size_type resolution )
 {
 	assert( resolution > 0 );
 
@@ -18,7 +19,7 @@ void VoxelGrid::reset(const AABB &volume, mg::Real voxelSize )
 	voxelSize = std::min( std::fabs( voxelSize ), w );
 
 	m_volume = volume;
-	m_resolution = static_cast<unsigned>( w / voxelSize ) + 1;
+	m_resolution = static_cast<size_type>( w / voxelSize ) + 1;
 	m_voxelSize = w / ( m_resolution - 1 );
 	m_voxels.resize( m_resolution * m_resolution * m_resolution );
 
@@ -35,108 +36,109 @@ void VoxelGrid::clear()
 	}
 }
 
-unsigned VoxelGrid::insertDensity(const mg::Vec3D& pos, mg::Real val)
+void VoxelGrid::insertDensity( const mg::Vec3D& pos, mg::Real val )
 {
-	unsigned i,j,k, nidx;
-	mg::Vec3D voxelPos;
-	unsigned idx = findVoxel(pos, i, j, k, voxelPos);
-	assert(idx < m_voxels.size());
+	size_type i,j,k;
+	mg::Vec3D localPos;
+	findVoxel( pos, i, j, k, localPos );
 
-	m_voxels[ idx ].m_density += val * (1 - voxelPos[0]) * (1 - voxelPos[1]) * (1 - voxelPos[2]);
-	nidx = getVoxelIdx(i, j, k + 1);
-	m_voxels[ nidx ].m_density += val * (1 - voxelPos[0]) * (1 - voxelPos[1]) * voxelPos[2];
-	nidx = getVoxelIdx(i, j + 1, k);
-	m_voxels[ nidx ].m_density += val * (1 - voxelPos[0]) * voxelPos[1] * (1 - voxelPos[2]);
-	nidx =  getVoxelIdx(i, j + 1, k + 1);
-	m_voxels[ nidx ].m_density += val * (1 - voxelPos[0]) * voxelPos[1] * voxelPos[2];
+	assert( getVoxelIdx( i, j, k ) < m_voxels.size() );
 
-	nidx = getVoxelIdx(i + 1, j, k);
-	m_voxels[ nidx ].m_density += val * voxelPos[0] * (1 - voxelPos[1]) * (1 - voxelPos[2]);
-	nidx = getVoxelIdx(i + 1, j, k + 1);
-	m_voxels[ nidx ].m_density += val * voxelPos[0] * (1 - voxelPos[1]) * voxelPos[2];
-	nidx = getVoxelIdx(i + 1, j + 1, k);
-	m_voxels[ nidx ].m_density += val * voxelPos[0] * voxelPos[1] * (1 - voxelPos[2]);
-	nidx = getVoxelIdx(i + 1, j + 1, k + 1);
-	m_voxels[ nidx ].m_density += val * voxelPos[0] * voxelPos[1] * voxelPos[2];
-
-	return idx;
+	m_voxels[getVoxelIdx( i  , j  , k   )].m_density += (1 - localPos[2]) * (1 - localPos[1]) * (1 - localPos[0]) * val;
+	m_voxels[getVoxelIdx( i+1, j  , k   )].m_density += (1 - localPos[2]) * (1 - localPos[1]) *      localPos[0]  * val;
+	m_voxels[getVoxelIdx( i  , j+1, k   )].m_density += (1 - localPos[2]) *      localPos[1]  * (1 - localPos[0]) * val;
+	m_voxels[getVoxelIdx( i+1, j+1, k   )].m_density += (1 - localPos[2]) *      localPos[1]  *      localPos[0]  * val;
+	m_voxels[getVoxelIdx( i  , j  , k+1 )].m_density +=      localPos[2]  * (1 - localPos[1]) * (1 - localPos[0]) * val;
+	m_voxels[getVoxelIdx( i+1, j  , k+1 )].m_density +=      localPos[2]  * (1 - localPos[1]) *      localPos[0]  * val;
+	m_voxels[getVoxelIdx( i  , j+1, k+1 )].m_density +=      localPos[2]  *      localPos[1]  * (1 - localPos[0]) * val;
+	m_voxels[getVoxelIdx( i+1, j+1, k+1 )].m_density +=      localPos[2]  *      localPos[1]  *      localPos[0]  * val;
 }
 
-unsigned VoxelGrid::insertVelocity(const mg::Vec3D& pos, const mg::Vec3D& val)
+void VoxelGrid::insertVelocity( const mg::Vec3D& pos, const mg::Vec3D& val )
 {
-	unsigned i, j, k, nidx;
-	mg::Vec3D voxelPos;
-	unsigned idx = findVoxel(pos, i, j, k, voxelPos);
-	assert(idx < m_voxels.size());
+	size_type i, j, k;
+	mg::Vec3D localPos;
+	findVoxel(pos, i, j, k, localPos);
 
-	m_voxels[ idx ].m_velocity += val * (1 - voxelPos[0]) * (1 - voxelPos[1]) * (1 - voxelPos[2]);
-	nidx = getVoxelIdx(i, j, k + 1);;
-	m_voxels[ nidx ].m_velocity += val * (1 - voxelPos[0]) * (1 - voxelPos[1]) * voxelPos[2];
-	nidx = getVoxelIdx(i, j + 1, k);;
-	m_voxels[ nidx ].m_velocity += val * (1 - voxelPos[0]) * voxelPos[1] * (1 - voxelPos[2]);
-	nidx = getVoxelIdx(i, j + 1, k + 1);
-	m_voxels[ nidx ].m_velocity += val * (1 - voxelPos[0]) * voxelPos[1] * voxelPos[2];
-	nidx = getVoxelIdx(i + 1, j, k);
-	m_voxels[ nidx ].m_velocity += val * voxelPos[0] * (1 - voxelPos[1]) * (1 - voxelPos[2]);
-	nidx = getVoxelIdx(i + 1, j, k + 1);
-	m_voxels[ nidx ].m_velocity += val * voxelPos[0] * (1 - voxelPos[1]) * voxelPos[2];
-	nidx = getVoxelIdx(i + 1, j + 1, k);
-	m_voxels[ nidx ].m_velocity += val * voxelPos[0] * voxelPos[1] * (1 - voxelPos[2]);
-	nidx = getVoxelIdx(i + 1, j + 1, k + 1);
-	m_voxels[ nidx ].m_velocity += val * voxelPos[0] * voxelPos[1] * voxelPos[2];
+	assert( getVoxelIdx( i, j, k ) < m_voxels.size() );
 
-	return idx;
+	m_voxels[getVoxelIdx( i  , j  , k   )].m_velocity += (1 - localPos[2]) * (1 - localPos[1]) * (1 - localPos[0]) * val;
+	m_voxels[getVoxelIdx( i+1, j  , k   )].m_velocity += (1 - localPos[2]) * (1 - localPos[1]) *      localPos[0]  * val;
+	m_voxels[getVoxelIdx( i  , j+1, k   )].m_velocity += (1 - localPos[2]) *      localPos[1]  * (1 - localPos[0]) * val;
+	m_voxels[getVoxelIdx( i+1, j+1, k   )].m_velocity += (1 - localPos[2]) *      localPos[1]  *      localPos[0]  * val;
+	m_voxels[getVoxelIdx( i  , j  , k+1 )].m_velocity +=      localPos[2]  * (1 - localPos[1]) * (1 - localPos[0]) * val;
+	m_voxels[getVoxelIdx( i+1, j  , k+1 )].m_velocity +=      localPos[2]  * (1 - localPos[1]) *      localPos[0]  * val;
+	m_voxels[getVoxelIdx( i  , j+1, k+1 )].m_velocity +=      localPos[2]  *      localPos[1]  * (1 - localPos[0]) * val;
+	m_voxels[getVoxelIdx( i+1, j+1, k+1 )].m_velocity +=      localPos[2]  *      localPos[1]  *      localPos[0]  * val;
 }
 
 void VoxelGrid::getInterpolatedDensity(const mg::Vec3D& pos, mg::Real& o_density) const
 {
-	unsigned i,j,k;
-	mg::Vec3D voxelPos;
-	unsigned idx = findVoxel(pos, i, j, k, voxelPos);
-	assert(idx < m_voxels.size());
+	size_type i,j,k;
+	mg::Vec3D localPos;
+	findVoxel(pos, i, j, k, localPos);
+
+	assert( getVoxelIdx( i, j, k ) < m_voxels.size() );
 
 	o_density = 0;
-	o_density += m_voxels[ idx ].m_density * (1 - voxelPos[0]) * (1 - voxelPos[1]) * (1 - voxelPos[2]);
-	o_density += m_voxels[ getVoxelIdx(i, j, k + 1) ].m_density * (1 - voxelPos[0]) * (1 - voxelPos[1]) * voxelPos[2];
-	o_density += m_voxels[ getVoxelIdx(i, j + 1, k) ].m_density * (1 - voxelPos[0]) * voxelPos[1] * (1 - voxelPos[2]);
-	o_density += m_voxels[ getVoxelIdx(i, j + 1, k + 1) ].m_density * (1 - voxelPos[0]) * voxelPos[1] * voxelPos[2];
-
-	o_density += m_voxels[ getVoxelIdx(i + 1, j, k) ].m_density * voxelPos[0] * (1 - voxelPos[1]) * (1 - voxelPos[2]);
-	o_density += m_voxels[ getVoxelIdx(i + 1, j, k + 1) ].m_density * voxelPos[0] * (1 - voxelPos[1]) * voxelPos[2];
-	o_density += m_voxels[ getVoxelIdx(i + 1, j + 1, k) ].m_density * voxelPos[0] * voxelPos[1] * (1 - voxelPos[2]);
-	o_density += m_voxels[ getVoxelIdx(i + 1, j + 1, k + 1) ].m_density * voxelPos[0] * voxelPos[1] * voxelPos[2];
+	o_density += (1 - localPos[2]) * (1 - localPos[1]) * (1 - localPos[0]) * m_voxels[getVoxelIdx( i  , j  , k )].m_density;
+	o_density += (1 - localPos[2]) * (1 - localPos[1]) *      localPos[0]  * m_voxels[getVoxelIdx( i+1, j  , k )].m_density;
+	o_density += (1 - localPos[2]) *      localPos[1]  * (1 - localPos[0]) * m_voxels[getVoxelIdx( i  , j+1, k )].m_density;
+	o_density += (1 - localPos[2]) *      localPos[1]  *      localPos[0]  * m_voxels[getVoxelIdx( i+1, j+1, k )].m_density;
+	o_density +=      localPos[2]  * (1 - localPos[1]) * (1 - localPos[0]) * m_voxels[getVoxelIdx( i  , j  , k+1 )].m_density;
+	o_density +=      localPos[2]  * (1 - localPos[1]) *      localPos[0]  * m_voxels[getVoxelIdx( i+1, j  , k+1 )].m_density;
+	o_density +=      localPos[2]  *      localPos[1]  * (1 - localPos[0]) * m_voxels[getVoxelIdx( i  , j+1, k+1 )].m_density;
+	o_density +=      localPos[2]  *      localPos[1]  *      localPos[0]  * m_voxels[getVoxelIdx( i+1, j+1, k+1 )].m_density;
 }
 
 void VoxelGrid::getInterpolatedVelocity(const mg::Vec3D& pos, mg::Vec3D& o_velocity) const
 {
-	unsigned i,j,k;
-	mg::Vec3D voxelPos;
-	unsigned idx = findVoxel(pos, i, j, k, voxelPos);
-	assert(idx < m_voxels.size());
+	size_type i,j,k;
+	mg::Vec3D localPos;
+	findVoxel(pos, i, j, k, localPos);
+
+	assert( getVoxelIdx( i, j, k ) < m_voxels.size() );
 
 	o_velocity.zero();
-	o_velocity += m_voxels[ idx ].m_velocity * (1 - voxelPos[0]) * (1 - voxelPos[1]) * (1 - voxelPos[2]);
-	o_velocity += m_voxels[ getVoxelIdx(i, j, k + 1) ].m_velocity * (1 - voxelPos[0]) * (1 - voxelPos[1]) * voxelPos[2];
-	o_velocity += m_voxels[ getVoxelIdx(i, j + 1, k) ].m_velocity * (1 - voxelPos[0]) * voxelPos[1] * (1 - voxelPos[2]);
-	o_velocity += m_voxels[ getVoxelIdx(i, j + 1, k + 1) ].m_velocity * (1 - voxelPos[0]) * voxelPos[1] * voxelPos[2];
-
-	o_velocity += m_voxels[ getVoxelIdx(i + 1, j, k) ].m_velocity * voxelPos[0] * (1 - voxelPos[1]) * (1 - voxelPos[2]);
-	o_velocity += m_voxels[ getVoxelIdx(i + 1, j, k + 1) ].m_velocity * voxelPos[0] * (1 - voxelPos[1]) * voxelPos[2];
-	o_velocity += m_voxels[ getVoxelIdx(i + 1, j + 1, k) ].m_velocity * voxelPos[0] * voxelPos[1] * (1 - voxelPos[2]);
-	o_velocity += m_voxels[ getVoxelIdx(i + 1, j + 1, k + 1) ].m_velocity * voxelPos[0] * voxelPos[1] * voxelPos[2];
+	o_velocity += (1 - localPos[2]) * (1 - localPos[1]) * (1 - localPos[0]) * m_voxels[getVoxelIdx( i  , j  , k )].m_velocity;
+	o_velocity += (1 - localPos[2]) * (1 - localPos[1]) *      localPos[0]  * m_voxels[getVoxelIdx( i+1, j  , k )].m_velocity;
+	o_velocity += (1 - localPos[2]) *      localPos[1]  * (1 - localPos[0]) * m_voxels[getVoxelIdx( i  , j+1, k )].m_velocity;
+	o_velocity += (1 - localPos[2]) *      localPos[1]  *      localPos[0]  * m_voxels[getVoxelIdx( i+1, j+1, k )].m_velocity;
+	o_velocity +=      localPos[2]  * (1 - localPos[1]) * (1 - localPos[0]) * m_voxels[getVoxelIdx( i  , j  , k+1 )].m_velocity;
+	o_velocity +=      localPos[2]  * (1 - localPos[1]) *      localPos[0]  * m_voxels[getVoxelIdx( i+1, j  , k+1 )].m_velocity;
+	o_velocity +=      localPos[2]  *      localPos[1]  * (1 - localPos[0]) * m_voxels[getVoxelIdx( i  , j+1, k+1 )].m_velocity;
+	o_velocity +=      localPos[2]  *      localPos[1]  *      localPos[0]  * m_voxels[getVoxelIdx( i+1, j+1, k+1 )].m_velocity;
 }
 
-unsigned VoxelGrid::findVoxel(const mg::Vec3D& pos, unsigned& o_i, unsigned& o_j, unsigned &o_k, mg::Vec3D& o_voxelPos) const
+void VoxelGrid::findVoxel( const mg::Vec3D& pos, size_type& o_i, size_type& o_j, size_type& o_k, mg::Vec3D& o_localPos ) const
 {
-	const mg::Real maxVoxel = std::max(static_cast< mg::Real >(m_resolution) - 2.f, 0.f);
-	o_voxelPos = pos - m_volume.getMin();
-	o_i = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[0] / m_voxelSize), 0.f, maxVoxel));
-	o_j = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[1] / m_voxelSize), 0.f, maxVoxel));
-	o_k = static_cast< unsigned >(mg::clamp(std::floor(o_voxelPos[2] / m_voxelSize), 0.f, maxVoxel));
+	o_localPos = pos - m_volume.getMin();
 
-	o_voxelPos[0] = mg::clamp(std::fmod(o_voxelPos[0], m_voxelSize), 0.f, 1.f);
-	o_voxelPos[1] = mg::clamp(std::fmod(o_voxelPos[1], m_voxelSize), 0.f, 1.f);
-	o_voxelPos[2] = mg::clamp(std::fmod(o_voxelPos[2], m_voxelSize), 0.f, 1.f);
+	constexpr const auto Dim = 3;
+	std::array<mg::Real, Dim> voxelIdx;
+	for ( auto i = 0; i < Dim; ++i )
+	{
+		voxelIdx[i] = std::floor( o_localPos[i] / m_voxelSize );
+	}
 
-	return getVoxelIdx(o_i, o_j, o_k);
+	const auto maxIdx = static_cast<mg::Real>( m_resolution - 1 );
+	for ( auto i = 0; i < Dim; ++i )
+	{
+		o_localPos[i] = mg::clamp( std::fmod( o_localPos[i], m_voxelSize ) / m_voxelSize, 0.f, 1.f );
+
+		if ( voxelIdx[i] < 0.f )
+		{
+			voxelIdx[i] = 0.f;
+			o_localPos[i] = 0.f;
+		}
+		else if ( voxelIdx[i] >= maxIdx )
+		{
+			voxelIdx[i] = maxIdx - 1.f;
+			o_localPos[i] = 1.f;
+		}
+	}
+
+	o_i = static_cast< size_type >( voxelIdx[0] );
+	o_j = static_cast< size_type >( voxelIdx[1] );
+	o_k = static_cast< size_type >( voxelIdx[2] );
 }

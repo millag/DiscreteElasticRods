@@ -35,7 +35,7 @@ void Hair::reset()
 	m_findices.clear();
 	m_vindices.clear();
 	m_object = nullptr;
-	m_grid.reset( AABB(), 1u );
+	m_grid.reset( AABB(), static_cast<VoxelGrid::size_type>( 1 ) );
 }
 
 void Hair::initialize()
