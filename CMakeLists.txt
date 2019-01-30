@@ -58,7 +58,7 @@ set( PROJECT_HEADERS
 	src/SceneLoader.h
 	src/Exporter.h
 	src/AnimationBuffer.h
-	src/VoxelGrid.h
+	src/VoxelGrid.hpp
 )
 
 # sources

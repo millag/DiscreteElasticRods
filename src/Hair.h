@@ -2,7 +2,7 @@
 
 #include "ElasticRod.h"
 #include "RenderObject.h"
-#include "VoxelGrid.h"
+#include "VoxelGrid.hpp"
 
 struct HairParams
 {
