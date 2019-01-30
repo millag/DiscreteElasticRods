@@ -35,7 +35,8 @@ void Hair::reset()
 	m_findices.clear();
 	m_vindices.clear();
 	m_object = nullptr;
-	m_grid.reset( AABB(), static_cast<VoxelGrid::size_type>( 1 ) );
+	m_densityGrid.reset( AABB(), static_cast<VoxelGridR::size_type>( 1 ) );
+	m_velocityGrid.reset( AABB(), static_cast<VoxelGridVec3D::size_type>( 1 ) );
 }
 
 void Hair::initialize()
@@ -45,28 +46,31 @@ void Hair::initialize()
 	const auto gridCenter = m_object->getCenter();
 	const auto offset = mg::Vec3D(1, 1, 1) * (m_object->getBoundingRadius() + m_params.getMaxLength());
 	const AABB volume( gridCenter - offset, gridCenter + offset );
-	m_grid.reset( volume, m_params.m_selfInterationDist );
+	m_densityGrid.reset( volume, m_params.m_selfInterationDist );
+	m_densityGrid.clear( 0 );
+	m_velocityGrid.reset( volume, m_params.m_selfInterationDist );
+	m_velocityGrid.clear( mg::Vec3D(0,0,0) );
 }
 
 void Hair::updateGrid()
 {
-	m_grid.clear();
-
+	m_densityGrid.clear( 0 );
 	for ( auto it = m_strands.begin(); it != m_strands.end(); ++it )
 	{
 		const auto rod = *it;
 		for (auto i = 1u; i < rod->m_ppos.size(); ++i)
 		{
-			m_grid.insertDensity(rod->m_ppos[i], 1);
+			m_densityGrid.insertValue( rod->m_ppos[i], 1 );
 		}
 	}
 
+	m_velocityGrid.clear( mg::Vec3D(0,0,0) );
 	for ( auto it = m_strands.begin(); it != m_strands.end(); ++it )
 	{
 		const auto rod = *it;
 		for ( auto i = 1u; i < rod->m_ppos.size(); ++i )
 		{
-			m_grid.insertVelocity( rod->m_ppos[i], rod->m_pvel[i] );
+			m_velocityGrid.insertValue( rod->m_ppos[i], rod->m_pvel[i] );
 		}
 	}
 }
@@ -161,49 +165,50 @@ void Hair::applyCollisionConstraintsIteration(ElasticRod& rod) const
 
 void Hair::accumulateExternalForcesWithSelfInterations(ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const
 {
-	mg::Vec3D p1(0,0,0), p2(0,0,0), pressureGradient(0,0,0);
-	const auto dr = m_params.m_selfInterationDist;
-	mg::Real density_p1, density_p2;
+	const auto dr = m_densityGrid.getVolexSize() * 0.5;
+	const auto dr_x2 = m_densityGrid.getVolexSize();
 
-	for (unsigned i = 1; i < o_forces.size(); ++i)
+	mg::Vec3D p1, p2, forceDensity;
+	for ( auto i = 1u; i < o_forces.size(); ++i )
 	{
-//        gravity
+//		gravity
 		o_forces[i] += m_params.m_gravity * rod.m_pmass[i];
-//        drag
+//		drag
 		o_forces[i] -= m_params.m_drag * rod.m_pvel[i].length() * rod.m_pvel[i];
 
-
-//        self interactions:
-
-//        self stiction acts as averaging of the velocity for near by particles
-//        the velocity however is not direcly averaged by trilinear interpolation is used to calculate the avg. value for particle's current position
-		m_grid.getInterpolatedDensity(rod.m_ppos[i], density_p1);
-		if ( density_p1 > mg::ERR)
+//		self interactions:
+		if( m_params.m_selfStiction > mg::ERR )
 		{
-			m_grid.getInterpolatedVelocity(rod.m_ppos[i], p1);
-			rod.m_pvel[i] =  (1 - m_params.m_selfStiction) * rod.m_pvel[i] + m_params.m_selfStiction * p1 / density_p1;
+//			self stiction acts as averaging of the velocity with nearby particles
+//			the velocity however is not direcly averaged by trilinear interpolation
+//			is used to calculate the avg. value for particle's current position
+			const auto density = m_densityGrid.estimateValueAt( rod.m_ppos[i] ) ;
+			if ( density > mg::ERR )
+			{
+				const mg::Vec3D v = m_velocityGrid.estimateValueAt( rod.m_ppos[i] ) / density;
+				rod.m_pvel[i] = mg::lerp( rod.m_pvel[i], v, m_params.m_selfStiction );
+			}
 		}
 
-//        self repulsion
-		p1.set(rod.m_ppos[i][0] - dr, rod.m_ppos[i][1], rod.m_ppos[i][2]);
-		p2.set(rod.m_ppos[i][0] + dr, rod.m_ppos[i][1], rod.m_ppos[i][2]);
-		m_grid.getInterpolatedDensity(p1, density_p1);
-		m_grid.getInterpolatedDensity(p2, density_p2);
-		pressureGradient[0] = ( density_p1 - density_p2 ) * 0.5 / dr;
+		if( m_params.m_selfRepulsion > mg::ERR )
+		{
+//			self repulsion
+//			NOTE: forceDensity = -pressureGradient, where pressureGradient is estimated
+//			numerically from the density grid
+			p1.set( rod.m_ppos[i][0] - dr, rod.m_ppos[i][1], rod.m_ppos[i][2] );
+			p2.set( rod.m_ppos[i][0] + dr, rod.m_ppos[i][1], rod.m_ppos[i][2] );
+			forceDensity[0] = (m_densityGrid.estimateValueAt( p1 ) - m_densityGrid.estimateValueAt( p2 )) / dr_x2;
 
-		p1.set(rod.m_ppos[i][0], rod.m_ppos[i][1] - dr, rod.m_ppos[i][2]);
-		p2.set(rod.m_ppos[i][0], rod.m_ppos[i][1] + dr, rod.m_ppos[i][2]);
-		m_grid.getInterpolatedDensity(p1, density_p1);
-		m_grid.getInterpolatedDensity(p2, density_p2);
-		pressureGradient[1] = ( density_p1 - density_p2 ) * 0.5 / dr;
+			p1.set( rod.m_ppos[i][0], rod.m_ppos[i][1] - dr, rod.m_ppos[i][2] );
+			p2.set( rod.m_ppos[i][0], rod.m_ppos[i][1] + dr, rod.m_ppos[i][2] );
+			forceDensity[1] = (m_densityGrid.estimateValueAt( p1 ) - m_densityGrid.estimateValueAt( p2 )) / dr_x2;
 
-		p1.set(rod.m_ppos[i][0], rod.m_ppos[i][1], rod.m_ppos[i][2] - dr);
-		p2.set(rod.m_ppos[i][0], rod.m_ppos[i][1], rod.m_ppos[i][2] + dr);
-		m_grid.getInterpolatedDensity(p1, density_p1);
-		m_grid.getInterpolatedDensity(p2, density_p2);
-		pressureGradient[2] = ( density_p1 - density_p2) * 0.5 / dr;
+			p1.set( rod.m_ppos[i][0], rod.m_ppos[i][1], rod.m_ppos[i][2] - dr );
+			p2.set( rod.m_ppos[i][0], rod.m_ppos[i][1], rod.m_ppos[i][2] + dr );
+			forceDensity[2] = (m_densityGrid.estimateValueAt( p1 ) - m_densityGrid.estimateValueAt( p2 )) / dr_x2;
 
-		o_forces[i] += m_params.m_selfRepulsion * pressureGradient;
+			o_forces[i] += m_params.m_selfRepulsion * forceDensity;
+		}
 	}
 }
 

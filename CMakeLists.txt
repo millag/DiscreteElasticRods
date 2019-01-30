@@ -52,13 +52,13 @@ set( PROJECT_HEADERS
 	src/Spiral.h
 	src/Hair.h
 	src/HairGenerator.h
-	src/VoxelGrid.h
 	src/ObjLoader.h
 	src/CollisionShape.h
 	src/BasicParser.h
 	src/SceneLoader.h
 	src/Exporter.h
 	src/AnimationBuffer.h
+	src/VoxelGrid.h
 )
 
 # sources
@@ -78,7 +78,6 @@ set( PROJECT_SOURCES
 	src/Spiral.cpp
 	src/Hair.cpp
 	src/HairGenerator.cpp
-	src/VoxelGrid.cpp
 	src/ObjLoader.cpp
 	src/CollisionShape.cpp
 	src/SceneLoader.cpp

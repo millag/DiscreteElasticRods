@@ -77,7 +77,8 @@ public:
 
 private:
 	unsigned m_id = 0;
-	VoxelGrid m_grid;
+	VoxelGridR m_densityGrid;
+	VoxelGridVec3D m_velocityGrid;
 
 private:
 	void updateGrid();

@@ -10,7 +10,7 @@ public:
 	  , m_vmax(0,0,0)
 	{}
 
-	AABB(const mg::Vec3D& p1,  const mg::Vec3D& p2):
+	AABB( const mg::Vec3D& p1, const mg::Vec3D& p2 ):
 	    m_vmin(p1)
 	  , m_vmax(p2)
 	{
@@ -24,7 +24,7 @@ public:
 
 	inline void setEmpty()
 	{
-		m_vmax = m_vmin = mg::Origin;
+		m_vmax = m_vmin = mg::Vec3D(0,0,0);
 	}
 
 	inline const mg::Vec3D& getMin() const { return m_vmin; }
@@ -43,7 +43,7 @@ public:
 	inline mg::Real getEnclosedRadius() const
 	{
 		auto d = getSize();
-		return std::min(d[0], std::min(d[1], d[2])) * 0.5f;
+		return std::min( d[0], std::min( d[1], d[2] ) ) * 0.5f;
 	}
 
 	inline mg::Vec3D getBLF() const { return m_vmin; }
@@ -56,7 +56,7 @@ public:
 	inline mg::Vec3D getTLB() const { return mg::Vec3D(m_vmin[0], m_vmax[1], m_vmax[2]); }
 	inline mg::Vec3D getTLF() const { return mg::Vec3D(m_vmin[0], m_vmax[1], m_vmin[2]); }
 
-	inline void reshape(const mg::Vec3D& p1, const mg::Vec3D& p2)
+	inline void reshape( const mg::Vec3D& p1, const mg::Vec3D& p2 )
 	{
 		m_vmin = p1;
 		m_vmax = p2;
@@ -66,11 +66,12 @@ public:
 protected:
 	inline void adjustBounds()
 	{
-		for (auto i = 0; i < 3; ++i)
+		constexpr const auto Dim = 3;
+		for ( auto i = 0; i < Dim; ++i )
 		{
-			if (m_vmax[i] < m_vmin[i])
+			if ( m_vmax[i] < m_vmin[i] )
 			{
-				std::swap(m_vmax[i], m_vmin[i]);
+				std::swap( m_vmax[i], m_vmin[i] );
 			}
 		}
 	}

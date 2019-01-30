@@ -15,8 +15,25 @@ void InitializeGLDefaultSurfaceFormat()
 	QSurfaceFormat::setDefaultFormat( format );
 }
 
+void test()
+{
+	for ( auto f = 2.0; f <= 3.0; f += 0.05 )
+	{
+		std::cout << " f = " << f
+		          << " (int)(f) = " << static_cast<int>( f )
+		          << " xi = " << static_cast<int>( f + 0.5f )
+		          << " xf = " << f + 0.5f - static_cast<int>( f + 0.5f )
+		          << "\n";
+	}
+	std::cout << std::endl;
+
+}
+
 int main(int argc, char *argv[])
 {
+//	test();
+//	return 0;
+
 	InitializeGLDefaultSurfaceFormat();
 
 	QApplication app(argc, argv);
