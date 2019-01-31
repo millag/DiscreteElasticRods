@@ -29,9 +29,9 @@ unsigned Mesh::getPrimitiveOffset(unsigned primitiveIdx) const
 	return primitiveIdx * getNVerticesPerPrimitive();
 }
 
-Mesh* Mesh::createSphere( int id, unsigned udiv, unsigned vdiv )
+std::shared_ptr<Mesh> Mesh::createSphere( int id, unsigned udiv, unsigned vdiv )
 {
-	Mesh* mesh = new Mesh( id );
+	auto mesh = std::make_shared<Mesh>( id );
 
 //	north pole vertex
 	mesh->m_vertices.emplace_back( 0.f, 1.f, 0.f );

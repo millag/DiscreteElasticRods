@@ -29,7 +29,7 @@ void Hair::reset()
 	m_velocityGrid.reset( AABB(), static_cast<VoxelGridVec3D::size_type>( 1 ) );
 }
 
-void Hair::initialize(const RenderObject& skin )
+void Hair::initialize( const RenderObject& skin )
 {
 	m_skin = &skin;
 

@@ -5,13 +5,24 @@
 class HairGenerator
 {
 public:
-	static void generateCurlyHair(const RenderObject& object, const std::vector<unsigned>& findices, Hair& o_hair);
-	static void generateStraightHair(const RenderObject& object, const std::vector<unsigned>& findices, Hair& o_hair);
 
-	static void generateHelicalRod(const HairParams& params,
-	                        const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
-	                        ElasticRod& o_rod);
-	static void generateStraightRod(const HairParams& params,
-	                         const mg::Vec3D& p, const mg::Vec3D& n, const mg::Vec3D& u,
-	                         ElasticRod& o_rod);
+	void generateHair( const RenderObject& skin,
+	                   const std::vector<unsigned>& findices,
+	                   Hair& o_hair );
+
+	void generateCurlyHair( const RenderObject& skin,
+	                        const std::vector<unsigned>& findices,
+	                        Hair& o_hair );
+
+	void generateHelicalRod( const HairParams& params,
+	                         const mg::Vec3D& root,
+	                         const mg::Vec3D& n,
+	                         const mg::Vec3D& up,
+	                         ElasticRod& o_rod );
+
+	void generateStraightRod( const HairParams& params,
+	                          const mg::Vec3D& root,
+	                          const mg::Vec3D& n,
+	                          const mg::Vec3D& up,
+	                          ElasticRod& o_rod );
 };

@@ -44,33 +44,34 @@ QOpenGLShaderProgram* GLShaderManager::loadShader(const std::string& shaderName,
 		}
 	}
 
-	auto result = new QOpenGLShaderProgram();
-	std::unique_ptr< QOpenGLShaderProgram > shaderProgram(result);
-	if (!result->create())
+	auto shaderProg = std::make_unique<QOpenGLShaderProgram>();
+	if (!shaderProg->create())
 	{
 		qWarning() << "Unable to create shader program";
 		return nullptr;
 	}
 
-	if (!result->addShaderFromSourceFile(QOpenGLShader::Vertex, vertShaderPath.c_str()))
+	if (!shaderProg->addShaderFromSourceFile(QOpenGLShader::Vertex, vertShaderPath.c_str()))
 	{
 		qWarning() << "Vertex shader compilation failed";
 		return nullptr;
 	}
 
-	if (!result->addShaderFromSourceFile(QOpenGLShader::Fragment, fragShaderPath.c_str()))
+	if (!shaderProg->addShaderFromSourceFile(QOpenGLShader::Fragment, fragShaderPath.c_str()))
 	{
 		qWarning() << "Fragment shader compilation failed";
 		return nullptr;
 	}
 
-	if (!result->link())
+	if (!shaderProg->link())
 	{
 		qWarning() << "Shader program not linked";
 		return nullptr;
 	}
 
-	m_glShaderCache[ shaderName ] = std::move(shaderProgram);
+	auto result = shaderProg.get();
+	m_glShaderCache[ shaderName ] = std::move( shaderProg );
+
 	return result;
 }
 
@@ -91,54 +92,55 @@ QOpenGLShaderProgram* GLShaderManager::loadShader(const std::string& shaderName,
 		}
 	}
 
-	auto result = new QOpenGLShaderProgram();
-	std::unique_ptr< QOpenGLShaderProgram > shaderProgram(result);
-	if (!result->create())
+	auto shaderProg = std::make_unique<QOpenGLShaderProgram>();
+	if (!shaderProg->create())
 	{
 		qWarning() << "Unable to create shader program";
 		return nullptr;
 	}
 
-	if (!result->addShaderFromSourceFile(QOpenGLShader::Vertex, vertShaderPath.c_str()))
+	if (!shaderProg->addShaderFromSourceFile(QOpenGLShader::Vertex, vertShaderPath.c_str()))
 	{
 		qWarning() << "Vertex shader compilation failed";
 		return nullptr;
 	}
 
-	if (!result->addShaderFromSourceFile(QOpenGLShader::Fragment, fragShaderPath.c_str()))
+	if (!shaderProg->addShaderFromSourceFile(QOpenGLShader::Fragment, fragShaderPath.c_str()))
 	{
 		qWarning() << "Fragment shader compilation failed";
 		return nullptr;
 	}
 
 	if (   !geomShaderPath.empty()
-	    && !result->addShaderFromSourceFile(QOpenGLShader::Geometry, geomShaderPath.c_str()))
+	    && !shaderProg->addShaderFromSourceFile(QOpenGLShader::Geometry, geomShaderPath.c_str()))
 	{
 		qWarning() << "Geometry shader compilation failed";
 		return nullptr;
 	}
 
 	if (   !tessCtrlShaderPath.empty()
-	    && !result->addShaderFromSourceFile(QOpenGLShader::TessellationControl, tessCtrlShaderPath.c_str()))
+	    && !shaderProg->addShaderFromSourceFile(QOpenGLShader::TessellationControl, tessCtrlShaderPath.c_str()))
 	{
 		qWarning() << "Tesselation control shader compilation failed";
 		return nullptr;
 	}
 
 	if (   !tessEvalShaderPath.empty()
-	    && !result->addShaderFromSourceFile(QOpenGLShader::TessellationEvaluation, tessEvalShaderPath.c_str()))
+	    && !shaderProg->addShaderFromSourceFile(QOpenGLShader::TessellationEvaluation, tessEvalShaderPath.c_str()))
 	{
 		qWarning() << "Tesselation eval shader compilation failed";
 		return nullptr;
 	}
 
-	if (!result->link())
+	if (!shaderProg->link())
 	{
 		qWarning() << "Shader program not linked";
 		return nullptr;
 	}
 
-	m_glShaderCache[ shaderName ] = std::move(shaderProgram);
+	auto result = shaderProg.get();
+	m_glShaderCache[ shaderName ] = std::move(shaderProg);
+
 	return result;
 }
 

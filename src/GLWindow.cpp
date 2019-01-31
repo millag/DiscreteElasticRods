@@ -10,7 +10,7 @@
 namespace
 {
 
-static void buildVAOs( const std::vector<Mesh*>& meshList, QOpenGLShaderProgram& shader, DrawList& o_drawList )
+static void buildVAOs( const Scene::MeshList& meshList, QOpenGLShaderProgram& shader, DrawList& o_drawList )
 {
 	auto cnt = o_drawList.size();
 	o_drawList.resize( cnt + meshList.size() );

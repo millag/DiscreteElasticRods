@@ -83,10 +83,10 @@ private:
 
 private:
 	void updateGrid();
-	void updateRod(ElasticRod& rod, mg::Real dt) const;
-	void accumulateExternalForces(const ElasticRod &rod, std::vector<mg::Vec3D>& o_forces) const;
-	void accumulateExternalForcesWithSelfInterations(ElasticRod &rod, std::vector<mg::Vec3D>& o_forces) const;
-	void enforceConstraints(ElasticRod& rod) const;
-	void enforceConstraintsWithCollision(ElasticRod& rod) const;
-	void applyCollisionConstraintsIteration(ElasticRod& rod) const;
+	void updateRod( ElasticRod& rod, mg::Real dt ) const;
+	void accumulateExternalForces( const ElasticRod &rod, std::vector<mg::Vec3D>& o_forces ) const;
+	void accumulateExternalForcesWithSelfInterations( ElasticRod &rod, std::vector<mg::Vec3D>& o_forces ) const;
+	void enforceConstraints( ElasticRod& rod ) const;
+	void enforceConstraintsWithCollision( ElasticRod& rod ) const;
+	void applyCollisionConstraintsIteration( ElasticRod& rod ) const;
 };

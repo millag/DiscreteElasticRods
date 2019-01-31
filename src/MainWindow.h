@@ -70,7 +70,7 @@ private:
 	QTimer m_updateTimer; ///< update timer
 	/// @brief selected object to which transformations calculated on
 	/// mouse movement are applied if nullptr camera is modified
-	RenderObject* m_selectedObject = nullptr;
+	std::shared_ptr<RenderObject> m_selectedObject;
 
 	bool m_exporting;
 	unsigned m_frame;

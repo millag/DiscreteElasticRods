@@ -1,148 +1,112 @@
 #include "Spiral.h"
 #include "Utils.h"
 
-Spiral::Spiral():
-    m_object( nullptr )
-{
-	m_radius = 0.2;
-	m_lenght = 4.0;
-
-	m_offset = 3;
-
-	m_nParticles = 20;
-	m_pbdIter = 4;
-
-	m_rodParams1 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::NEWTON);
-	m_rodParams2 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::BFGS);
-	m_rodParams3 = ElasticRodParams(0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::NONE);
-	m_strands.reserve(10);
-}
-
-Spiral::~Spiral()
-{
-	typedef std::vector<ElasticRod*>::iterator Iter;
-	for (Iter it = m_strands.begin(); it != m_strands.end(); ++it)
-	{
-		delete (*it);
-	}
-	m_strands.clear();
-}
-
-void Spiral::initialize(const RenderObject& object)
+void Spiral::initialize( const RenderObject& object )
 {
 	m_object = &object;
 
-	std::vector<mg::Vec3D> restpos(m_nParticles);
-	std::vector<mg::Vec3D> pos(m_nParticles);
-	std::vector<mg::Vec3D> vel(m_nParticles);
-	std::vector<mg::Real> mass(m_nParticles);
-	ColumnVector theta(m_nParticles - 1);
+	m_rodParams1 = ElasticRodParams( 0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::NEWTON );
+	m_rodParams2 = ElasticRodParams( 0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::BFGS );
+	m_rodParams3 = ElasticRodParams( 0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::NONE );
+
+	std::vector<mg::Vec3D> restpos( m_params.m_nParticles );
+	std::vector<mg::Vec3D> pos( m_params.m_nParticles );
+	std::vector<mg::Vec3D> vel( m_params.m_nParticles );
+	std::vector<mg::Real> mass( m_params.m_nParticles );
+	ColumnVector theta( m_params.m_nParticles - 1);
 	std::set<unsigned> isClamped;
 
-	mg::Vec3D center(m_object->getCenter());
-	mg::Vec3D dirx(1, 0, 0);
-	mg::Vec3D diry(0, -1, 0);
-	mg::Vec3D dirz(0, 0, 1);
+	const auto center =  m_object->getCenter();
+	const auto dirx = mg::Ox;
+	const auto diry = -mg::Oy;
+	const auto dirz = mg::Oz;
 
-
-	mg::Real angle = m_lenght / ((m_nParticles - 1) * m_radius);
-	mg::Real step = 0.1;
-	mg::Real len = 0;
-	for (unsigned i = 0; i < restpos.size(); ++i)
+	const auto angle = m_params.m_lenght / ((m_params.m_nParticles - 1) * m_params.m_radius);
+	const auto step = 0.1f;
+	auto len = 0.f;
+	for (auto i = 0u; i < restpos.size(); ++i)
 	{
-		restpos[i] = (std::cos(i * angle) * dirx  + std::sin(i * angle) * dirz - dirx) * m_radius + center;
+		restpos[i] = (std::cos( i * angle ) * dirx  + std::sin( i * angle ) * dirz - dirx) * m_params.m_radius + center;
 		restpos[i] += diry * i * step;
-		if (i > 0)
+		if ( i > 0 )
 		{
-			len += mg::length(restpos[i] - restpos[i - 1]);
+			len += mg::length( restpos[i] - restpos[i - 1] );
 		}
 	}
-	isClamped.insert(0);
-//    isClamped.insert(m_nParticles - 1);
+	isClamped.insert( 0 );
 
-	mg::Vec3D u0 = mg::cross((restpos[1] - restpos[0]), dirx);
-	u0 = mg::normalize( mg::cross(u0, (restpos[1] - restpos[0])) );
+	const auto e0 = restpos[1] - restpos[0];
+	const auto u0 = mg::normalize( mg::cross( mg::cross( e0, dirx ), e0 ) );
 
-	mg::Vec3D start = restpos[0];
-	mg::Vec3D end = start + len * dirx;
-	mg::Real t = 0.0;
-	for (unsigned i = 0; i < pos.size(); ++i)
+	const auto start = restpos[0];
+	const mg::Vec3D end = start + len * dirx;
+	for ( auto i = 0u; i < pos.size(); ++i )
 	{
-		t = (mg::Real)(i) / (m_nParticles - 1);
-		pos[i] = (1 - t) * start + t * end;
+		const auto t = static_cast<mg::Real>( i ) / (m_params.m_nParticles - 1);
+		pos[i] = mg::lerp( start, end, t );
 
 		vel[i].zero();
 		mass[i] = 0.05;
-		if (i < (unsigned)theta.size())
+		if ( i < static_cast<unsigned>( theta.size() ) )
 		{
-			theta(i) = 0;
+			theta( i ) = 0;
 		}
 	}
 
-	ElasticRod* rod = new ElasticRod();
-//        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
-	rod->initialize( m_rodParams1, restpos, u0, pos, vel, mass, theta, isClamped );
-	m_strands.push_back(rod);
+	m_strands.resize( 3 );
 
-	for (unsigned i = 0; i < pos.size(); ++i)
+	m_strands[0].initialize( m_rodParams1, restpos, u0, pos, vel, mass, theta, isClamped );
+
+	for ( auto i = 0u; i < pos.size(); ++i )
 	{
-		pos[i] -= m_offset * dirx;
+		pos[i] -= m_params.m_offset * mg::Ox;
 	}
+	m_strands[1].initialize( m_rodParams1, restpos, u0, pos, vel, mass, theta, isClamped );
 
-	rod = new ElasticRod();
-//        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
-	rod->initialize( m_rodParams2, restpos, u0, pos, vel, mass, theta, isClamped );
-	m_strands.push_back(rod);
-
-
-	for (unsigned i = 0; i < pos.size(); ++i)
+	for ( auto i = 0u; i < pos.size(); ++i )
 	{
-		pos[i] += 2 * m_offset * dirx;
+		pos[i] += 2 * m_params.m_offset * mg::Ox;
 	}
-
-	rod = new ElasticRod();
-//        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
-	rod->initialize(m_rodParams3, restpos, u0, pos, vel, mass, theta, isClamped );
-	m_strands.push_back(rod);
+	m_strands[2].initialize(m_rodParams3, restpos, u0, pos, vel, mass, theta, isClamped );
 }
 
 void Spiral::update(mg::Real dt)
 {
-	mg::Vec3D center = m_object->getCenter();
+	const auto center = m_object->getCenter();
 
-	m_strands[0]->m_ppos[0] = center;
-	updateRod(*m_strands[0], dt);
+	m_strands[0].m_ppos[0] = center;
+	updateRod( m_strands[0], dt );
 
-	m_strands[1]->m_ppos[0] = center - m_offset * mg::Vec3D(1, 0, 0);
-	updateRod(*m_strands[1], dt);
+	m_strands[1].m_ppos[0] = center - m_params.m_offset * mg::Ox;
+	updateRod( m_strands[1], dt );
 
-	m_strands[2]->m_ppos[0] = center + m_offset * mg::Vec3D(1, 0, 0);
-	updateRod(*m_strands[2], dt);
+	m_strands[2].m_ppos[0] = center + m_params.m_offset * mg::Ox;
+	updateRod( m_strands[2], dt );
 }
 
 /* semi-implicit Euler with Verlet scheme for velocity update */
-void Spiral::updateRod(ElasticRod& rod, mg::Real dt) const
+void Spiral::updateRod( ElasticRod& rod, mg::Real dt ) const
 {
-	std::vector<mg::Vec3D> forces(rod.m_ppos.size(), mg::Vec3D(0,0,0));
-	rod.accumulateInternalElasticForces(forces);
-	accumulateExternalForces(rod, forces);
+	std::vector<mg::Vec3D> forces( rod.m_ppos.size(), mg::Vec3D(0,0,0) );
+	rod.accumulateInternalElasticForces( forces );
+	accumulateExternalForces( rod, forces );
 
-//    integrate centerline - semi- implicit Euler
-	std::vector<mg::Vec3D> prevPos(rod.m_ppos.size());
-	for (unsigned i = 0; i < rod.m_ppos.size(); ++i)
+//	integrate centerline - semi- implicit Euler
+	std::vector<mg::Vec3D> prevPos( rod.m_ppos.size() );
+	for ( auto i = 0u; i < rod.m_ppos.size(); ++i )
 	{
 		prevPos[i] = rod.m_ppos[i];
 		rod.m_pvel[i] += dt * forces[i] / rod.m_pmass[i];
-		rod.m_ppos[i] += rod.m_pvel[i] * dt;
+		rod.m_ppos[i] += dt * rod.m_pvel[i];
 	}
 
-	for (unsigned k = 0; k < m_pbdIter; ++k)
+	for ( auto k = 0u; k < m_params.m_pbdIter; ++k )
 	{
 		rod.applyInternalConstraintsIteration();
 	}
 
-//    velocity correction using Verlet scheme:
-	for (unsigned i = 0; i < rod.m_ppos.size(); ++i)
+//	velocity correction using Verlet scheme
+	for ( auto i = 0u; i < rod.m_ppos.size(); ++i )
 	{
 		rod.m_pvel[i] = (rod.m_ppos[i] - prevPos[i]) / dt;
 	}
@@ -150,17 +114,16 @@ void Spiral::updateRod(ElasticRod& rod, mg::Real dt) const
 	rod.updateCurrentState();
 }
 
-void Spiral::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const
+void Spiral::accumulateExternalForces( const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces ) const
 {
-	for (unsigned i = 0; i < o_forces.size(); ++i)
+	for ( auto i = 0u; i < o_forces.size(); ++i )
 	{
-		if (!rod.m_isClamped.count(i))
+		if ( !rod.m_isClamped.count( i ) )
 		{
 			o_forces[i] += mg::Gravity * rod.m_pmass[i] - 0.001 * rod.m_pvel[i];
 		}
 	}
 }
-
 
 //void Spiral::initialize(const RenderObject& object)
 //{
@@ -204,11 +167,10 @@ void Spiral::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec
 //        }
 //    }
 
-//    for (unsigned i = 0; i < 1; ++i)
+//    m_strands.resize(1);
+//    for (unsigned i = 0; i < m_strands.size(); ++i)
 //    {
-//        ElasticRod* strand = new ElasticRod(m_rodParams);
-////        strand->init(pos, diry, pos, vel, mass, theta, isClamped);
-//        strand->init(restpos, -dirz, pos, vel, mass, theta, isClamped);
-//        m_strands.push_back(strand);
+////        m_strands[i].init(pos, diry, pos, vel, mass, theta, isClamped);
+//        m_strands[i].init(restpos, -dirz, pos, vel, mass, theta, isClamped);
 //    }
 //}

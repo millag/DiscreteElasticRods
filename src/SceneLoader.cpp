@@ -87,40 +87,41 @@ SceneLoader::~SceneLoader() = default;
 
 bool SceneLoader::loadTestScene( Scene& scene )
 {
-	mg::Real size = 30;
-	scene.m_boundingVolume.reshape(mg::Vec3D(-size, -size, -size), mg::Vec3D(size, size, size));
+	const auto size = 30.f;
+	scene.m_boundingVolume.reshape( mg::Vec3D( -size, -size, -size ), mg::Vec3D( size, size, size ) );
 
-//	create mesh
-	unsigned meshId = scene.m_meshes.size();
-	Mesh* mesh = Mesh::createSphere(meshId, 20, 10);
-	scene.m_meshes.push_back(mesh);
-//	create render object
+//	mesh
+	const auto meshId = scene.m_meshes.size();
+	auto mesh = Mesh::createSphere(meshId, 20, 10);
+	scene.m_meshes.push_back( mesh );
+//	render object
 	mg::Matrix4D transform;
-	mg::matrix_uniform_scale(transform, (mg::Real)1);
-	mg::matrix_set_translation(transform, (mg::Real)0, (mg::Real)0, (mg::Real)0);
+	mg::matrix_uniform_scale( transform, 1.f );
+	mg::matrix_set_translation( transform, 0.f, 0.f, 0.f );
 
-	RenderObject* object = new RenderObject(mesh, transform);
-	scene.m_renderObjects.push_back(object);
+	auto object = std::make_shared<RenderObject>( mesh.get(), transform );
+	scene.m_renderObjects.push_back( object );
 
-	std::vector<unsigned> fidx(60);
-	for (unsigned i = 0; i < fidx.size(); ++i)
+	std::vector<unsigned> fidx( 60 );
+	for ( auto i = 0u; i < fidx.size(); ++i )
 	{
-		fidx[i] = 2 * i;
+		fidx[i] = 2*i;
 	}
 
-//	create hair object
-	Hair* hair = new Hair();
-	scene.m_hairs.push_back(hair);
+//	hair object
+	auto hair = std::make_shared<Hair>();
 
-//	generate hair
-	HairGenerator::generateCurlyHair(*object, fidx, *hair);
+	HairGenerator generator;
+	generator.generateCurlyHair( *object, fidx, *hair );
+
+	scene.m_hairs.push_back( hair );
 
 //	add collision shape for the object
-	mg::Real radius = object->getMeshBoundingRadius() + hair->m_params.m_thickness;
+	const auto radius = object->getMeshBoundingRadius() + hair->m_params.m_thickness;
 	mg::Matrix4D shape;
-	mg::matrix_scale(shape, radius, radius, radius);
-	mg::matrix_set_translation(shape, object->getMeshAABB().getCenter());
-	object->addCollisionShape(shape);
+	mg::matrix_scale( shape, radius, radius, radius );
+	mg::matrix_set_translation( shape, object->getMeshAABB().getCenter() );
+	object->addCollisionShape( shape );
 
 	scene.m_spiral = std::make_unique<Spiral>();
 	scene.m_spiral->initialize( *object );
@@ -153,17 +154,15 @@ bool SceneLoader::loadScene( const char* filename, Scene& scene )
 		return false;
 	}
 
-	mg::Real size = 30;
-	scene.m_boundingVolume.reshape(mg::Vec3D(-size, -size, -size), mg::Vec3D(size, size, size));
+	const auto size = 30.f;
+	scene.m_boundingVolume.reshape( mg::Vec3D( -size, -size, -size ), mg::Vec3D( size, size, size ) );
 
-//	create meshes
-	typedef std::map<unsigned, mesh_object>::iterator MIter;
-	for (MIter it = scene_obj.m_meshMap.begin(); it != scene_obj.m_meshMap.end(); ++it)
+//	meshes
+	for ( auto it = scene_obj.m_meshMap.begin(); it != scene_obj.m_meshMap.end(); ++it )
 	{
-		auto mesh = new Mesh();
+		auto mesh = std::make_shared<Mesh>();
 		if( !loadMesh( it->second.m_filename.c_str(), *mesh ) )
 		{
-			delete mesh;
 			it->second.m_id = -1;
 			continue;
 		}
@@ -172,39 +171,37 @@ bool SceneLoader::loadScene( const char* filename, Scene& scene )
 		scene.m_meshes.push_back( mesh );
 	}
 
-//	create render objects
-	typedef std::map<unsigned, object_3D>::iterator OIter;
-	for (OIter it = scene_obj.m_object3DMap.begin(); it != scene_obj.m_object3DMap.end(); ++it)
+//	render objects
+	for ( auto it = scene_obj.m_object3DMap.begin(); it != scene_obj.m_object3DMap.end(); ++it )
 	{
-		if (!scene_obj.m_meshMap.count(it->second.m_meshId) || scene_obj.m_meshMap[it->second.m_meshId].m_id < 0)
+		if ( !scene_obj.m_meshMap.count( it->second.m_meshId ) || scene_obj.m_meshMap[it->second.m_meshId].m_id < 0 )
 		{
 			it->second.m_id = -1;
 			continue;
 		}
 
-		unsigned idx = scene_obj.m_meshMap[it->second.m_meshId].m_id;
-		RenderObject* object = new RenderObject(scene.m_meshes[idx], it->second.m_transform);
-		for (unsigned i = 0; i < it->second.m_collisionShapes.size(); ++i)
+		const auto idx = scene_obj.m_meshMap[it->second.m_meshId].m_id;
+		auto object = std::make_shared<RenderObject>( scene.m_meshes[idx].get(), it->second.m_transform );
+		for ( auto i = 0u; i < it->second.m_collisionShapes.size(); ++i )
 		{
-			object->addCollisionShape(it->second.m_collisionShapes[i]);
+			object->addCollisionShape( it->second.m_collisionShapes[i] );
 		}
 
 		it->second.m_id = scene.m_renderObjects.size();
-		scene.m_renderObjects.push_back(object);
+		scene.m_renderObjects.push_back( object );
 	}
 
-//	create hair objects
-	typedef std::map<unsigned, hair_object>::iterator HIter;
-	for (HIter it = scene_obj.m_hairMap.begin(); it != scene_obj.m_hairMap.end(); ++it)
+//	hair objects
+	for ( auto it = scene_obj.m_hairMap.begin(); it != scene_obj.m_hairMap.end(); ++it )
 	{
-		if (!scene_obj.m_object3DMap.count(it->second.m_objId) || scene_obj.m_object3DMap[it->second.m_objId].m_id < 0)
+		if ( !scene_obj.m_object3DMap.count( it->second.m_objId ) || scene_obj.m_object3DMap[it->second.m_objId].m_id < 0 )
 		{
 			it->second.m_id = -1;
 			continue;
 		}
 
-		unsigned idx = scene_obj.m_object3DMap[it->second.m_objId].m_id;
-		Hair* hair = new Hair();
+		const auto idx = scene_obj.m_object3DMap[it->second.m_objId].m_id;
+		auto hair = std::make_shared<Hair>();
 
 //		assign hair props
 		hair->m_params.m_length = it->second.m_length;
@@ -235,16 +232,17 @@ bool SceneLoader::loadScene( const char* filename, Scene& scene )
 		hair->m_params.m_rodParams.m_maxIter = it->second.m_minimizationMaxIter;
 
 //		generate hair strands
+		HairGenerator generator;
 		if (it->second.m_type.compare("curly") == 0)
 		{
-			HairGenerator::generateCurlyHair( *scene.m_renderObjects[idx], it->second.m_faceList, *hair );
+			generator.generateCurlyHair( *scene.m_renderObjects[idx], it->second.m_faceList, *hair );
 		} else
 		{
-			HairGenerator::generateStraightHair( *scene.m_renderObjects[idx], it->second.m_faceList, *hair );
+			generator.generateHair( *scene.m_renderObjects[idx], it->second.m_faceList, *hair );
 		}
 
 		it->second.m_id = scene.m_hairs.size();
-		scene.m_hairs.push_back(hair);
+		scene.m_hairs.push_back( hair );
 	}
 
 	ifs.close();

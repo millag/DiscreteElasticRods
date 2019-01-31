@@ -18,7 +18,7 @@ public:
 		TRIANGLES = 3,
 	};
 
-	static Mesh* createSphere( int id, unsigned udiv = 20u, unsigned vdiv = 10u );
+	static std::shared_ptr<Mesh> createSphere( int id, unsigned udiv = 20u, unsigned vdiv = 10u );
 	static void computeNormals( ShadingMode mode, Mesh& o_mesh );
 
 	Mesh( unsigned id = -1, Primitive primitive = Primitive::TRIANGLES );

@@ -15,7 +15,6 @@ MainWindow::MainWindow( QWidget *parent ):
 	m_ui->s_mainWindowGridLayout->addWidget( m_gl, 0, 0, 9, 1 );
 
 	m_exportDir = "animation";
-	m_selectedObject = nullptr;
 	m_gl->setSelection( false );
 	m_animationBuffer.setCapacity( 500 );
 
@@ -73,14 +72,14 @@ void MainWindow::toggleSim(bool s)
 
 void MainWindow::updateEvent()
 {
-	if ( m_selectedObject != nullptr )
+	if ( m_selectedObject )
 	{
-		m_selectedObject->setTransform(m_gl->getSelectionTransform());
+		m_selectedObject->setTransform( m_gl->getSelectionTransform() );
 	}
 
-	for (int i = 0; i < m_ui->m_simIter->value(); ++i)
+	for ( auto i = 0; i < m_ui->m_simIter->value(); ++i )
 	{
-		m_scene->update(m_ui->m_timeStep->value());
+		m_scene->update( m_ui->m_timeStep->value() );
 	}
 
 	m_gl->update();
@@ -136,7 +135,7 @@ void MainWindow::selectRenderObject( int idx )
 	idx = idx - 1;
 	if ( idx < 0 )
 	{
-		m_selectedObject = nullptr;
+		m_selectedObject.reset();
 		m_gl->setSelection( false );
 		return;
 	}
