@@ -54,29 +54,30 @@ private:
 
 class Hair
 {
+	friend class HairGenerator;
 public:
-	Hair();
-	~Hair();
-
 	inline unsigned getId() const { return m_id; }
-	inline void setId(unsigned id) { m_id = id; }
+	inline void setId( unsigned id ) { m_id = id; }
 
-	void getState(HairState& o_state) const;
-	void setState(const HairState& state);
+	void getState( HairState& o_state ) const;
+	void setState( const HairState& state );
 
-	void initialize();
+	const RenderObject* getSkin() const { return m_skin; }
+	const std::vector<ElasticRod>& getStrands() const { return m_strands; }
+
+	void initialize( const RenderObject& skin );
 	void reset();
-	void update(mg::Real dt);
+	void update( mg::Real dt );
 
 public:
 	HairParams m_params;
-	const RenderObject* m_object = nullptr;
-	std::vector<unsigned> m_findices;
-	std::vector<unsigned> m_vindices;
-	std::vector<ElasticRod*> m_strands;
 
 private:
 	unsigned m_id = 0;
+	const RenderObject* m_skin = nullptr;
+	std::vector<unsigned> m_findices;
+	std::vector<unsigned> m_vindices;
+	std::vector<ElasticRod> m_strands;
 	VoxelGridR m_densityGrid;
 	VoxelGridVec3D m_velocityGrid;
 

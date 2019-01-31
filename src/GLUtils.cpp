@@ -389,15 +389,15 @@ bool GLDrawable::createFrom( const Hair& hair, QOpenGLShaderProgram& shader, GLD
 		return false;
 	}
 
-	const auto& strands =  hair.m_strands;
+	const auto& strands =  hair.getStrands();
 	auto nVertices = 0u;
 	auto nPatches = 0u;
-	for( const auto& strand : strands )
+	for ( const auto& strand : strands )
 	{
-		if( strand && strand->m_ppos.size() )
+		if ( strand.m_ppos.size() > 0 )
 		{
-			nVertices += strand->m_ppos.size();
-			nPatches += ( strand->m_ppos.size() - 1 ) * 4;
+			nVertices += strand.m_ppos.size();
+			nPatches += ( strand.m_ppos.size() - 1 ) * 4;
 		}
 	}
 
@@ -408,11 +408,11 @@ bool GLDrawable::createFrom( const Hair& hair, QOpenGLShaderProgram& shader, GLD
 	auto voffset = 0u;
 	auto noffset = 0u;
 	auto soffset = 0u;
-	for( const auto& strand : strands )
+	for ( const auto& strand : strands )
 	{
-		if( strand && strand->m_ppos.size() )
+		if ( strand.m_ppos.size() > 0 )
 		{
-			const auto maxPosIdx = static_cast<unsigned>( strand->m_ppos.size() - 1 );
+			const auto maxPosIdx = static_cast<unsigned>( strand.m_ppos.size() - 1 );
 			for ( auto i = 0u; i < maxPosIdx; ++i )
 			{
 				for ( auto j = 0u; j < 4; ++j )
@@ -425,12 +425,12 @@ bool GLDrawable::createFrom( const Hair& hair, QOpenGLShaderProgram& shader, GLD
 			}
 			soffset += maxPosIdx * 4;
 
-			std::copy_n( strand->m_ppos.begin(), strand->m_ppos.size(), vertices.begin() + voffset );
-			voffset += strand->m_ppos.size();
+			std::copy_n( strand.m_ppos.begin(), strand.m_ppos.size(), vertices.begin() + voffset );
+			voffset += strand.m_ppos.size();
 
-			const auto nCnt = std::min( strand->m_m1.size(), strand->m_ppos.size() );
-			std::copy_n( strand->m_m1.begin(), nCnt, normals.begin() + noffset );
-			noffset += strand->m_ppos.size();
+			const auto nCnt = std::min( strand.m_m1.size(), strand.m_ppos.size() );
+			std::copy_n( strand.m_m1.begin(), nCnt, normals.begin() + noffset );
+			noffset += strand.m_ppos.size();
 		}
 	}
 

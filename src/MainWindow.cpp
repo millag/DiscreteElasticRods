@@ -94,125 +94,135 @@ void MainWindow::toggleRecord(bool s)
 		return;
 	}
 
-	if (m_animationBuffer.size())
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+	assert( hair->getSkin() != nullptr );
+
+	if ( m_animationBuffer.size() )
 	{
-		RenderObject* object = m_scene->getRenderObjects()[ m_scene->getHairById(0)->m_object->getId() ];
-		object->setTransform(m_animationBuffer.getFrame(0));
-		m_gl->setSelectionTransform(m_animationBuffer.getFrame(0));
+		auto object = m_scene->getRenderObjects()[hair->getSkin()->getId()];
+		object->setTransform( m_animationBuffer.getFrame( 0 ) );
+		m_gl->setSelectionTransform( m_animationBuffer.getFrame( 0 ) );
 	}
 
 	m_animationBuffer.clear();
-	m_animationBuffer.saveHairState( *m_scene->getHairById(0) );
-	m_recordTimer.start(m_ui->m_timerUpdate->value());
+	m_animationBuffer.saveHairState( *hair );
+	m_recordTimer.start( m_ui->m_timerUpdate->value() );
 }
 
 void MainWindow::recordEvent()
 {
-	if ( m_scene->getHairById(0) == nullptr )
-	{
-		std::cerr << "No hair object found. Skipping..." << std::endl;
-		return;
-	}
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+	assert( hair->getSkin() != nullptr );
+
 	std::cout << "Recording frame: " << m_animationBuffer.size() << std::endl;
 
-	mg::Matrix4D transform = m_gl->getSelectionTransform();
-	RenderObject* object = m_scene->getRenderObjects()[ m_scene->getHairById(0)->m_object->getId() ];
+	const auto transform = m_gl->getSelectionTransform();
+	auto object = m_scene->getRenderObjects()[hair->getSkin()->getId()];
 
-	m_animationBuffer.saveFrame(transform);
-	object->setTransform(transform);
+	m_animationBuffer.saveFrame( transform );
+	object->setTransform( transform );
 }
 
-void MainWindow::setTimerUpdateDuration(int ms)
+void MainWindow::setTimerUpdateDuration( int ms )
 {
 	UNUSED_VALUE( ms );
-	m_updateTimer.setInterval(m_ui->m_timerUpdate->value());
+	m_updateTimer.setInterval( m_ui->m_timerUpdate->value() );
 }
 
-void MainWindow::selectRenderObject(int index)
+void MainWindow::selectRenderObject( int idx )
 {
-	index = index - 1;
-	if (index < 0)
+	idx = idx - 1;
+	if ( idx < 0 )
 	{
 		m_selectedObject = nullptr;
-		m_gl->setSelection(false);
+		m_gl->setSelection( false );
 		return;
 	}
-	m_selectedObject = m_scene->getRenderObjects()[index];
-	m_gl->setSelection(true);
-	m_gl->setSelectionTransform(m_selectedObject->getTransform());
+
+	m_selectedObject = m_scene->getRenderObjects()[idx];
+	m_gl->setSelection( true );
+	m_gl->setSelectionTransform( m_selectedObject->getTransform() );
 }
 
 void MainWindow::selectExportDirectory()
 {
-	QString dir = QFileDialog::getExistingDirectory(this,
-	                                                "Select Directory",
-	                                                m_exportDir,
-	                                                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+	QString dir = QFileDialog::getExistingDirectory( this,
+	                                                 "Select Directory",
+	                                                 m_exportDir,
+	                                                 QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
 
-	if (dir.isEmpty())
+	if ( !dir.isEmpty() )
 	{
-		return;
+		m_exportDir = dir;
 	}
-	m_exportDir = dir;
 }
 
 void MainWindow::exportSim()
 {
-	if (m_ui->m_filePrefix->text().isEmpty())
+	if ( m_ui->m_filePrefix->text().isEmpty() )
 	{
 		std::cerr << "Specify export file name" << std::endl;
 		return;
 	}
 
-	if(m_animationBuffer.size() == 0)
+	if ( m_animationBuffer.size() == 0 )
 	{
 		std::cerr << "No data to export" << std::endl;
 		return;
 	}
 
-	QDir parentDir(m_exportDir);
-	m_exportGeoDir = m_ui->m_filePrefix->text().append("geo");
-	if (!parentDir.exists(m_exportGeoDir))
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+	assert( hair->getSkin() != nullptr );
+
+	QDir parentDir( m_exportDir );
+	m_exportGeoDir = m_ui->m_filePrefix->text().append( "geo" );
+	if ( !parentDir.exists( m_exportGeoDir ) )
 	{
-		parentDir.mkdir(m_exportGeoDir);
-		m_exportGeoDir = parentDir.filePath(m_exportGeoDir);
+		parentDir.mkdir( m_exportGeoDir);
+		m_exportGeoDir = parentDir.filePath( m_exportGeoDir );
 	}
 
-	m_exportCurvDir = m_ui->m_filePrefix->text().append("curv");
-	if (!parentDir.exists(m_exportCurvDir))
+	m_exportCurvDir = m_ui->m_filePrefix->text().append( "curv" );
+	if ( !parentDir.exists (m_exportCurvDir ) )
 	{
-		parentDir.mkdir(m_exportCurvDir);
-		m_exportCurvDir = parentDir.filePath(m_exportCurvDir);
+		parentDir.mkdir( m_exportCurvDir );
+		m_exportCurvDir = parentDir.filePath( m_exportCurvDir );
 	}
 
 	m_animationBuffer.restoreHairState( *m_scene->getHairById(0) );
-	RenderObject* object = m_scene->getRenderObjects()[ m_scene->getHairById(0)->m_object->getId() ];
-	for (unsigned frame = 0; frame < m_animationBuffer.size(); ++frame)
+	auto object = m_scene->getRenderObjects()[ hair->getSkin()->getId() ];
+	for ( auto frame = 0u; frame < m_animationBuffer.size(); ++frame )
 	{
 		std::cout << "Exporting frame: " << frame << std::endl;
 
-		object->setTransform(m_animationBuffer.getFrame(frame));
-
-		for (int i = 0; i < m_ui->m_simIter->value(); ++i)
+		object->setTransform( m_animationBuffer.getFrame( frame ) );
+		for ( auto i = 0; i < m_ui->m_simIter->value(); ++i )
 		{
-			m_scene->update(m_ui->m_timeStep->value());
+			m_scene->update( m_ui->m_timeStep->value() );
 		}
 
-		exportFrame(frame);
+		exportFrame( frame );
 	}
 }
 
 void MainWindow::exportFrame(unsigned frame)
 {
+	auto hair = m_scene->getHairById(0);
+	assert( hair != nullptr );
+	assert( hair->getSkin() != nullptr );
+
+	QDir dir( m_exportGeoDir );
+	QString filename = dir.filePath( m_ui->m_filePrefix->text().append( "geo_%1.obj" ).arg( frame ) );
 	Exporter exporter;
 
-	QDir dir(m_exportGeoDir);
-	QString filename = dir.filePath(m_ui->m_filePrefix->text().append("geo_%1.obj").arg(frame));
-	exporter.exportGeometry(filename.toLocal8Bit(), *m_scene->getHairById(0)->m_object);
+	exporter.exportGeometry( filename.toLocal8Bit(), *hair->getSkin() );
 
-	dir.setPath(m_exportCurvDir);
-	filename = dir.filePath(m_ui->m_filePrefix->text().append("curv_%1.obj").arg(frame));
-	exporter.exportCurves(filename.toLocal8Bit(), m_scene->getHairById(0)->m_strands);
+	dir.setPath( m_exportCurvDir );
+	filename = dir.filePath( m_ui->m_filePrefix->text().append( "curv_%1.obj" ).arg( frame ) );
+	exporter.exportCurves( filename.toLocal8Bit(), hair->getStrands() );
 }
 
 void MainWindow::updateUI()

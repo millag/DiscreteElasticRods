@@ -38,6 +38,7 @@ public :
 
 	inline void setSelectionTransform( const mg::Matrix4D& transform )
 	{
+		UNUSED_VALUE( transform );
 //		m_selectionTransform.reset();
 //		m_selectionTransform.setTransform(transform);
 //		updateGL();
@@ -45,8 +46,7 @@ public :
 
 	inline mg::Matrix4D getSelectionTransform()
 	{
-		static mg::Matrix4D tm;
-		return tm;
+		return mg::Matrix4D();
 //		return m_selectionTransform.getTransform();
 	}
 

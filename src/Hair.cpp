@@ -1,50 +1,40 @@
 #include "Hair.h"
 #include "Utils.h"
 
-Hair::Hair() = default;
-Hair::~Hair()
+void Hair::getState( HairState& o_state ) const
 {
-	reset();
-}
-
-void Hair::getState(HairState& o_state) const
-{
-	o_state.m_strands.resize(m_strands.size());
-	for (unsigned i = 0; i < m_strands.size(); ++i)
+	o_state.m_strands.resize( m_strands.size() );
+	for ( auto i = 0u; i < m_strands.size(); ++i )
 	{
-		m_strands[i]->getState(o_state.m_strands[i]);
+		m_strands[i].getState( o_state.m_strands[i] );
 	}
 }
 
-void Hair::setState(const HairState& state)
+void Hair::setState( const HairState& state )
 {
-	assert( state.m_strands.size() == m_strands.size() );
-	for (unsigned i = 0; i < m_strands.size(); ++i)
+	m_strands.resize( state.m_strands.size() );
+	for ( auto i = 0u; i < m_strands.size(); ++i )
 	{
-		m_strands[i]->setState(state.m_strands[i]);
+		m_strands[i].setState( state.m_strands[i] );
 	}
 }
 
 void Hair::reset()
 {
-	for ( auto it = m_strands.begin(); it != m_strands.end(); ++it )
-	{
-		delete (*it);
-	}
-	m_strands.clear();
+	m_skin = nullptr;
 	m_findices.clear();
 	m_vindices.clear();
-	m_object = nullptr;
+	m_strands.clear();
 	m_densityGrid.reset( AABB(), static_cast<VoxelGridR::size_type>( 1 ) );
 	m_velocityGrid.reset( AABB(), static_cast<VoxelGridVec3D::size_type>( 1 ) );
 }
 
-void Hair::initialize()
+void Hair::initialize(const RenderObject& skin )
 {
-	assert( m_object != nullptr );
+	m_skin = &skin;
 
-	const auto gridCenter = m_object->getCenter();
-	const auto offset = mg::Vec3D(1, 1, 1) * (m_object->getBoundingRadius() + m_params.getMaxLength());
+	const auto gridCenter = m_skin->getCenter();
+	const auto offset = mg::Vec3D(1,1,1) * ( m_skin->getBoundingRadius() + m_params.getMaxLength() );
 	const AABB volume( gridCenter - offset, gridCenter + offset );
 	m_densityGrid.reset( volume, m_params.m_selfInterationDist );
 	m_densityGrid.clear( 0 );
@@ -55,78 +45,79 @@ void Hair::initialize()
 void Hair::updateGrid()
 {
 	m_densityGrid.clear( 0 );
-	for ( auto it = m_strands.begin(); it != m_strands.end(); ++it )
+	for ( const auto& rod : m_strands )
 	{
-		const auto rod = *it;
-		for (auto i = 1u; i < rod->m_ppos.size(); ++i)
+		for ( auto i = 1u; i < rod.m_ppos.size(); ++i )
 		{
-			m_densityGrid.insertValue( rod->m_ppos[i], 1 );
+			m_densityGrid.insertValue( rod.m_ppos[i], 1 );
 		}
 	}
 
 	m_velocityGrid.clear( mg::Vec3D(0,0,0) );
-	for ( auto it = m_strands.begin(); it != m_strands.end(); ++it )
+	for ( const auto& rod : m_strands )
 	{
-		const auto rod = *it;
-		for ( auto i = 1u; i < rod->m_ppos.size(); ++i )
+		for ( auto i = 1u; i < rod.m_ppos.size(); ++i )
 		{
-			m_velocityGrid.insertValue( rod->m_ppos[i], rod->m_pvel[i] );
+			m_velocityGrid.insertValue( rod.m_ppos[i], rod.m_pvel[i] );
 		}
 	}
 }
 
-void Hair::update(mg::Real dt)
+void Hair::update( mg::Real dt )
 {
-	assert( m_object != nullptr );
+	assert( m_skin != nullptr );
 
 	if (m_params.m_resolveSelfInterations)
 	{
 		updateGrid();
 	}
 
-	auto mesh = m_object->getMesh();
+	auto mesh = m_skin->getMesh();
 
 	OMP_PARALLEL_LOOP
 	for ( auto i = 0ll; i < static_cast<long long>( m_vindices.size() ); ++i )
 	{
-		m_strands[i]->m_ppos[0] = mg::transform_point( m_object->getTransform(), mesh->m_vertices[m_vindices[i]] );
-		updateRod( *m_strands[i], dt );
+		const auto idx = m_vindices[i];
+		m_strands[i].m_ppos[0] = mg::transform_point( m_skin->getTransform(), mesh->m_vertices[idx] );
+		updateRod( m_strands[i], dt );
 	}
 }
 
 // semi-implicit Euler with Verlet scheme for velocity update
-void Hair::updateRod(ElasticRod& rod, mg::Real dt) const
+void Hair::updateRod( ElasticRod& rod, mg::Real dt ) const
 {
 	std::vector<mg::Vec3D> forces( rod.m_ppos.size(), mg::Vec3D(0,0,0) );
-	rod.accumulateInternalElasticForces(forces);
+	rod.accumulateInternalElasticForces( forces );
 
-	if (m_params.m_resolveSelfInterations)
+	if ( m_params.m_resolveSelfInterations )
 	{
-		accumulateExternalForcesWithSelfInterations(rod, forces);
-	} else
+		accumulateExternalForcesWithSelfInterations( rod, forces );
+	}
+	else
 	{
-		accumulateExternalForces(rod, forces);
+		accumulateExternalForces( rod, forces );
 	}
 
-//    integrate centerline - semi- implicit Euler
-	std::vector<mg::Vec3D> prevPos(rod.m_ppos.size());
+//	integrate centerline - semi- implicit Euler
+	std::vector<mg::Vec3D> prevPos( rod.m_ppos.size() );
 	for (unsigned i = 1; i < rod.m_ppos.size(); ++i)
 	{
 		prevPos[i] = rod.m_ppos[i];
 		rod.m_pvel[i] += dt * forces[i] / rod.m_pmass[i];
-		rod.m_ppos[i] += rod.m_pvel[i] * dt;
+		rod.m_ppos[i] += dt * rod.m_pvel[i];
 	}
 
-	if (m_params.m_resolveCollisions)
+	if ( m_params.m_resolveCollisions )
 	{
-		enforceConstraintsWithCollision(rod);
-	} else
+		enforceConstraintsWithCollision( rod );
+	}
+	else
 	{
-		enforceConstraints(rod);
+		enforceConstraints( rod );
 	}
 
-//    velocity correction using Verlet scheme:
-	for (unsigned i = 1; i < rod.m_ppos.size(); ++i)
+//	velocity correction using Verlet scheme:
+	for ( auto i = 1u; i < rod.m_ppos.size(); ++i )
 	{
 		rod.m_pvel[i] = (rod.m_ppos[i] - prevPos[i]) / dt;
 	}
@@ -134,36 +125,36 @@ void Hair::updateRod(ElasticRod& rod, mg::Real dt) const
 	rod.updateCurrentState();
 }
 
-void Hair::enforceConstraints(ElasticRod& rod) const
+void Hair::enforceConstraints( ElasticRod& rod ) const
 {
-	for (auto k = 0u; k < m_params.m_pbdIter; ++k)
+	for ( auto k = 0u; k < m_params.m_pbdIter; ++k )
 	{
 		rod.applyInternalConstraintsIteration();
 	}
 }
 
-void Hair::enforceConstraintsWithCollision(ElasticRod& rod) const
+void Hair::enforceConstraintsWithCollision( ElasticRod& rod ) const
 {
-	for (auto k = 0u; k < m_params.m_pbdIter; ++k)
+	for ( auto k = 0u; k < m_params.m_pbdIter; ++k )
 	{
-		applyCollisionConstraintsIteration(rod);
+		applyCollisionConstraintsIteration( rod );
 		rod.applyInternalConstraintsIteration();
 	}
 }
 
-void Hair::applyCollisionConstraintsIteration(ElasticRod& rod) const
+void Hair::applyCollisionConstraintsIteration( ElasticRod& rod ) const
 {
 	mg::Vec3D collision_p, normal;
-	for ( unsigned i = 1; i < rod.m_ppos.size(); ++i)
+	for ( auto i = 1u; i < rod.m_ppos.size(); ++i )
 	{
-		if (m_object->isInsideObject(rod.m_ppos[i], collision_p, normal))
+		if ( m_skin->isInsideObject( rod.m_ppos[i], collision_p, normal ) )
 		{
 			rod.m_ppos[i] = collision_p;
 		}
 	}
 }
 
-void Hair::accumulateExternalForcesWithSelfInterations(ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const
+void Hair::accumulateExternalForcesWithSelfInterations( ElasticRod& rod, std::vector<mg::Vec3D>& o_forces ) const
 {
 	const auto dr = m_densityGrid.getVolexSize() * 0.5;
 	const auto dr_x2 = m_densityGrid.getVolexSize();
@@ -212,13 +203,13 @@ void Hair::accumulateExternalForcesWithSelfInterations(ElasticRod& rod, std::vec
 	}
 }
 
-void Hair::accumulateExternalForces(const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces) const
+void Hair::accumulateExternalForces( const ElasticRod& rod, std::vector<mg::Vec3D>& o_forces ) const
 {
-	for (unsigned i = 1; i < o_forces.size(); ++i)
+	for ( auto i = 1u; i < o_forces.size(); ++i )
 	{
-//        gravity
+//		gravity
 		o_forces[i] += m_params.m_gravity * rod.m_pmass[i];
-//        drag
+//		drag
 		o_forces[i] -= m_params.m_drag * rod.m_pvel[i].length() * rod.m_pvel[i];
 	}
 }

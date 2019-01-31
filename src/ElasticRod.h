@@ -94,6 +94,10 @@ public:
 	ElasticRod();
 	~ElasticRod();
 
+	ElasticRod( ElasticRod&& other );
+	ElasticRod& operator=( ElasticRod&& other );
+
+
 /// calculations are carried out in the coordinate space of pos - you must assure everything is in same coordinate space
 	void initialize(const ElasticRodParams& params,
 	                const std::vector<mg::Vec3D>& restpos,

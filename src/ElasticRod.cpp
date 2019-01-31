@@ -47,6 +47,10 @@ ElasticRod::ElasticRod():
 
 ElasticRod::~ElasticRod() = default;
 
+ElasticRod::ElasticRod( ElasticRod&& other ) = default;
+
+ElasticRod& ElasticRod::operator=( ElasticRod&& other ) = default;
+
 void ElasticRod::initialize( const ElasticRodParams& params,
                              const std::vector<mg::Vec3D>& restpos,
                              const mg::Vec3D& u0,
