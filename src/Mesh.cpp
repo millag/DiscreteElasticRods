@@ -11,10 +11,10 @@ unsigned Mesh::getNPrimitives() const
 {
 	switch ( m_primitive )
 	{
-	case Primitive::TRIANGLES:
-	case Primitive::LINES:
+	case Primitive::Triangle:
+	case Primitive::Line:
 		return static_cast<unsigned>( m_vindices.size() / getNVerticesPerPrimitive() );
-	case Primitive::POINTS:
+	case Primitive::Point:
 		return static_cast<unsigned>( m_vertices.size() );
 	default:
 		break;
@@ -91,7 +91,7 @@ std::shared_ptr<Mesh> Mesh::createSphere( int id, unsigned udiv, unsigned vdiv )
 		mesh->m_vindices.push_back( lastIdx - 1 - i % udiv );
 	}
 
-	Mesh::computeNormals( ShadingMode::GOURAUD, *mesh );
+	Mesh::computeNormals( ShadingMode::Gouraud, *mesh );
 
 	return mesh;
 }

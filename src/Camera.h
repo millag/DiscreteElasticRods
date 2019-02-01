@@ -7,9 +7,9 @@ class Camera
 public:
 	enum class ProjectionType
 	{
-		PERSPECTIVE = 0,
-		ORTHOGRAPHIC,
-		SENTINEL,
+		Perspective = 0,
+		Orthographic,
+		Sentinel,
 	};
 
 	Camera() { resetDefaults(); }

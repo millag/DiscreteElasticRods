@@ -28,7 +28,6 @@ struct hair_object
 	unsigned m_faceCnt;
 	std::vector<unsigned> m_faceList;
 
-	std::string m_type;
 	double m_length;
 	double m_lengthVariance;
 	double m_helicalRadius;
@@ -112,7 +111,7 @@ bool SceneLoader::loadTestScene( Scene& scene )
 	auto hair = std::make_shared<Hair>();
 
 	HairGenerator generator;
-	generator.generateCurlyHair( *object, fidx, *hair );
+	generator.generateHair( *object, fidx, *hair );
 
 	scene.m_hairs.push_back( hair );
 
@@ -226,20 +225,13 @@ bool SceneLoader::loadScene( const char* filename, Scene& scene )
 		hair->m_params.m_rodParams.setTwistStiffness(it->second.m_twistStiffness);
 		hair->m_params.m_rodParams.m_maxElasticForce = it->second.m_maxElasticForce;
 
-
 		hair->m_params.m_rodParams.m_strategy = it->second.m_minimizationStrategy;
 		hair->m_params.m_rodParams.m_tolerance = it->second.m_minimizationTolerance;
 		hair->m_params.m_rodParams.m_maxIter = it->second.m_minimizationMaxIter;
 
 //		generate hair strands
 		HairGenerator generator;
-		if (it->second.m_type.compare("curly") == 0)
-		{
-			generator.generateCurlyHair( *scene.m_renderObjects[idx], it->second.m_faceList, *hair );
-		} else
-		{
-			generator.generateHair( *scene.m_renderObjects[idx], it->second.m_faceList, *hair );
-		}
+		generator.generateHair( *scene.m_renderObjects[idx], it->second.m_faceList, *hair );
 
 		it->second.m_id = scene.m_hairs.size();
 		scene.m_hairs.push_back( hair );
@@ -267,7 +259,7 @@ bool SceneLoader::loadMesh( const char* fileName, Mesh& mesh )
 	if (    loader.getNormals().size() != loader.getVertices().size()
 	     || loader.getVNIndices().size() != loader.getVIndices().size() )
 	{
-		Mesh::computeNormals( Mesh::ShadingMode::GOURAUD, mesh );
+		Mesh::computeNormals( Mesh::ShadingMode::Gouraud, mesh );
 	} else
 	{
 		mesh.m_normals.resize( loader.getNormals().size() );
@@ -523,14 +515,6 @@ bool SceneLoader::PImpl::parseHairObject(std::ifstream& ifs, scene_object& o_sce
 			continue;
 		}
 
-		if (token.compare("type") == 0)
-		{
-			line.erase(0, token.length());
-			BasicParser::ltrim(line);
-			object.m_type = BasicParser::parseWord(line);
-			continue;
-		}
-
 		if (token.compare("length") == 0)
 		{
 			line.erase(0, token.length());
@@ -660,12 +644,12 @@ bool SceneLoader::PImpl::parseHairObject(std::ifstream& ifs, scene_object& o_sce
 		if (token.compare("minimizationMethod") == 0)
 		{
 			line.erase(0, token.length());
-			object.m_minimizationStrategy = ElasticRodParams::MinimizationStrategy::NONE;
+			object.m_minimizationStrategy = ElasticRodParams::MinimizationStrategy::None;
 
 			std::string word = BasicParser::parseWord(BasicParser::ltrim(line));
 			if (word.compare("newton") == 0)
 			{
-				object.m_minimizationStrategy =  ElasticRodParams::MinimizationStrategy::NEWTON;
+				object.m_minimizationStrategy =  ElasticRodParams::MinimizationStrategy::Newton;
 			}
 			else if (word.compare("bfgs") == 0)
 			{

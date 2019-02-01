@@ -5,9 +5,9 @@ void Spiral::initialize( const RenderObject& object )
 {
 	m_object = &object;
 
-	m_rodParams1 = ElasticRodParams( 0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::NEWTON );
+	m_rodParams1 = ElasticRodParams( 0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::Newton );
 	m_rodParams2 = ElasticRodParams( 0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::BFGS );
-	m_rodParams3 = ElasticRodParams( 0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::NONE );
+	m_rodParams3 = ElasticRodParams( 0.4, 0.7, 1000, ElasticRodParams::MinimizationStrategy::None );
 
 	std::vector<mg::Vec3D> restpos( m_params.m_nParticles );
 	std::vector<mg::Vec3D> pos( m_params.m_nParticles );

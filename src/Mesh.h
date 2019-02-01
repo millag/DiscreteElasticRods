@@ -7,21 +7,21 @@ class Mesh
 public:
 	enum class ShadingMode
 	{
-		FLAT = 0,
-		GOURAUD,
+		Flat = 0,
+		Gouraud,
 	};
 
 	enum class Primitive
 	{
-		POINTS = 1,
-		LINES = 2,
-		TRIANGLES = 3,
+		Point = 1,
+		Line = 2,
+		Triangle = 3,
 	};
 
 	static std::shared_ptr<Mesh> createSphere( int id, unsigned udiv = 20u, unsigned vdiv = 10u );
 	static void computeNormals( ShadingMode mode, Mesh& o_mesh );
 
-	Mesh( unsigned id = -1, Primitive primitive = Primitive::TRIANGLES );
+	Mesh( unsigned id = -1, Primitive primitive = Primitive::Triangle );
 	~Mesh();
 
 	unsigned getId() const { return m_id; }
@@ -42,5 +42,5 @@ public:
 
 private:
 	unsigned m_id = -1;
-	Primitive m_primitive = Primitive::TRIANGLES;
+	Primitive m_primitive = Primitive::Triangle;
 };

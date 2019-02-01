@@ -56,11 +56,12 @@ inline mg::Vec3D reflect( const mg::Vec3D& v, const mg::Vec3D& n )
 template <typename V, typename T>
 inline V lerp( const V& v1, const V& v2, const T& t )
 {
-	return  v1 * (1 - t) + v2 * t;
+	return (1 - t) * v1 + t * v2;
 }
 
 inline bool almostEqual( mg::Real v1, mg::Real v2, mg::Real tolerance = mg::ERR )
 {
 	return std::fabs( v1 - v2 ) < tolerance;
 }
+
 }

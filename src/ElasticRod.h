@@ -27,11 +27,11 @@ struct ElasticRodParams
 {
 	enum class MinimizationStrategy
 	{
-		NONE = 0,
-		NEWTON = 1,
+		None = 0,
+		Newton = 1,
 		BFGS = 2,
-		BFGS_NUMERIC = 3,
-		SENTINEL,
+		BFGS_Numeric = 3,
+		Sentinel,
 	};
 
 	ElasticRodParams( mg::Real bendStiffness = 1.0,

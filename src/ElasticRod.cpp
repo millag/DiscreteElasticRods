@@ -620,7 +620,7 @@ void ElasticRod::updateCurrentState()
 	computeBishopFrame(m_u0, m_edges, m_kb, m_m1, m_m2);
 
 	double minE = 0;
-	if (m_params->m_strategy != ElasticRodParams::MinimizationStrategy::NONE)
+	if (m_params->m_strategy != ElasticRodParams::MinimizationStrategy::None)
 	{
 		minE = m_minimization->minimize(*this, m_theta);
 	}
@@ -679,7 +679,7 @@ double ElasticRod::MinimizationPImpl::minimize(const ElasticRod& rod, ColumnVect
 
 	double minE = -1;
 	switch (rod.m_params->m_strategy) {
-	case ElasticRodParams::MinimizationStrategy::BFGS_NUMERIC:
+	case ElasticRodParams::MinimizationStrategy::BFGS_Numeric:
 		minE = dlib::find_min(dlib::bfgs_search_strategy(),
 		                     dlib::objective_delta_stop_strategy(rod.m_params->m_tolerance, rod.m_params->m_maxIter),
 		                     m_evaluate,
@@ -695,7 +695,7 @@ double ElasticRod::MinimizationPImpl::minimize(const ElasticRod& rod, ColumnVect
 		                     thetaVars,
 		                     0.0);
 		break;
-	case ElasticRodParams::MinimizationStrategy::NEWTON:
+	case ElasticRodParams::MinimizationStrategy::Newton:
 		minE = dlib::find_min(dlib::newton_search_strategy(m_evaluateHessian),
 		                     dlib::objective_delta_stop_strategy(rod.m_params->m_tolerance, rod.m_params->m_maxIter),
 		                     m_evaluate,

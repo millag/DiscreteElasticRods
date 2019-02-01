@@ -10,11 +10,11 @@ static inline GLenum ToGLPrimitive( Mesh::Primitive type )
 {
 	switch ( type )
 	{
-	case Mesh::Primitive::TRIANGLES:
+	case Mesh::Primitive::Triangle:
 		return GL_TRIANGLES;
-	case Mesh::Primitive::LINES:
+	case Mesh::Primitive::Line:
 		return GL_LINE;
-	case Mesh::Primitive::POINTS:
+	case Mesh::Primitive::Point:
 		return GL_POINTS;
 	default:
 		break;
