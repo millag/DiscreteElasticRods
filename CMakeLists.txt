@@ -1,10 +1,10 @@
-cmake_minimum_required( VERSION 3.9 FATAL_ERROR )
+cmake_minimum_required( VERSION 3.13 FATAL_ERROR )
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 project( DiscreteElasticRods )
 
-set( CMAKE_CXX_STANDARD 11 )
+set( CMAKE_CXX_STANDARD 14 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 set( EXTERNAL_PACKAGES_DIR "${CMAKE_SOURCE_DIR}/libs/" )
@@ -28,100 +28,102 @@ find_package( DLIB REQUIRED )
 # check for OpenMP support
 find_package( OpenMP )
 if( OPENMP_FOUND )
-	message( STATUS "Found OpenMP support for multithreading" )
+    message( STATUS "OpenMP supported. Multithreading is ${MULTI_THREADING_ON}" )
 else()
-	message( WARNING "OpenMP support NOT found. Multithreading will NOT work" )
+    set( MULTI_THREADING_ON OFF )
+    message( WARNING "OpenMP *NOT* supported. Multithreading is ${MULTI_THREADING_ON}." )
 endif()
 
 # headers
 set( PROJECT_HEADERS
-	src/MainWindow.h
-	src/GLWindow.h
-	src/GLRenderer.h
-	src/GLUtils.h
-	src/Camera.h
-	src/cml_config.h
-	src/config.h
-	src/AABB.h
-	src/Utils.h
-	src/Scene.h
-	src/Mesh.h
-	src/RenderObject.h
-	src/TransformTool.h
-	src/ElasticRod.h
-	src/Spiral.h
-	src/Hair.h
-	src/HairGenerator.h
-	src/ObjLoader.h
-	src/CollisionShape.h
-	src/BasicParser.h
-	src/SceneLoader.h
-	src/Exporter.h
-	src/AnimationBuffer.h
-	src/VoxelGrid.hpp
+    src/MainWindow.h
+    src/GLWindow.h
+    src/GLRenderer.h
+    src/GLUtils.h
+    src/Camera.h
+    src/cml_config.h
+    src/config.h
+    src/AABB.h
+    src/Utils.h
+    src/Scene.h
+    src/Mesh.h
+    src/RenderObject.h
+    src/TransformTool.h
+    src/ElasticRod.h
+    src/Spiral.h
+    src/Hair.h
+    src/HairGenerator.h
+    src/ObjLoader.h
+    src/CollisionShape.h
+    src/BasicParser.h
+    src/SceneLoader.h
+    src/Exporter.h
+    src/AnimationBuffer.h
+    src/VoxelGrid.hpp
 )
 
 # sources
 set( PROJECT_SOURCES
-	src/main.cpp
-	src/MainWindow.cpp
-	src/GLWindow.cpp
-	src/GLRenderer.cpp
-	src/GLUtils.cpp
-	src/Camera.cpp
-	src/Utils.cpp
-	src/Scene.cpp
-	src/Mesh.cpp
-	src/RenderObject.cpp
-	src/TransformTool.cpp
-	src/ElasticRod.cpp
-	src/Spiral.cpp
-	src/Hair.cpp
-	src/HairGenerator.cpp
-	src/ObjLoader.cpp
-	src/CollisionShape.cpp
-	src/SceneLoader.cpp
-	src/Exporter.cpp
+    src/main.cpp
+    src/MainWindow.cpp
+    src/GLWindow.cpp
+    src/GLRenderer.cpp
+    src/GLUtils.cpp
+    src/Camera.cpp
+    src/Utils.cpp
+    src/Scene.cpp
+    src/Mesh.cpp
+    src/RenderObject.cpp
+    src/TransformTool.cpp
+    src/ElasticRod.cpp
+    src/Spiral.cpp
+    src/Hair.cpp
+    src/HairGenerator.cpp
+    src/ObjLoader.cpp
+    src/CollisionShape.cpp
+    src/SceneLoader.cpp
+    src/Exporter.cpp
 )
 
 add_executable( ${PROJECT_NAME}
-	${PROJECT_HEADERS}
-	${PROJECT_SOURCES}
+    ${PROJECT_HEADERS}
+    ${PROJECT_SOURCES}
 )
 target_include_directories( ${PROJECT_NAME} PRIVATE
-	${CML_INCLUDE_DIR}
-	${DLIB_INCLUDE_DIR}
+    ${CML_INCLUDE_DIR}
+    ${DLIB_INCLUDE_DIR}
 )
 target_link_libraries( ${PROJECT_NAME}
-	Qt5::Core
-	Qt5::Widgets
-	Qt5::OpenGL
-	${CML_LIBRARIES}
-	${DLIB_LIBRARIES}
+    Qt5::Core
+    Qt5::Widgets
+    Qt5::OpenGL
+    ${CML_LIBRARIES}
+    ${DLIB_LIBRARIES}
 )
 set_target_properties( ${PROJECT_NAME} PROPERTIES
-	AUTOUIC_SEARCH_PATHS "ui ${CMAKE_AUTOUIC_SEARCH_PATHS}"
+    AUTOUIC_SEARCH_PATHS "ui${CMAKE_AUTOUIC_SEARCH_PATHS}"
 )
 
 target_compile_definitions( ${PROJECT_NAME} PRIVATE
-	#DBUGG=1
+    #DBUGG=1
 )
 
 if( OPENMP_FOUND )
-	target_compile_options( ${PROJECT_NAME} PRIVATE
-		${OpenMP_CXX_FLAGS}
-	)
-	if( MULTI_THREADING_ON )
-		target_compile_definitions( ${PROJECT_NAME} PRIVATE
-			MULTI_THREADING_ON=1
-		)
-	endif()
+    target_link_options( ${PROJECT_NAME} PRIVATE
+        ${OpenMP_CXX_FLAGS}
+    )
+endif()
+
+if( MULTI_THREADING_ON )
+    target_compile_definitions( ${PROJECT_NAME} PRIVATE
+        MULTI_THREADING_ON=1
+    )
 endif()
 
 add_custom_target( COPY_RUNTIME_FILES
-	COMMENT "Copying runtime files to ${PROJECT_BINARY_DIR}"
-	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${PROJECT_BINARY_DIR}/shaders
-	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets ${PROJECT_BINARY_DIR}/assets
+    COMMENT "Copying runtime files to ${PROJECT_BINARY_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${PROJECT_BINARY_DIR}/shaders
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets ${PROJECT_BINARY_DIR}/assets
 )
 add_dependencies( ${PROJECT_NAME} COPY_RUNTIME_FILES )
 
@@ -131,11 +133,11 @@ file( GLOB_RECURSE PROJECT_SHADERS "shaders/*.glsl" )
 file( GLOB_RECURSE PROJECT_ASSETS "assets/*" )
 
 add_library( other_files EXCLUDE_FROM_ALL
-	${PROJECT_UIFORMS}
-	${PROJECT_SHADERS}
-	${PROJECT_ASSETS}
+    ${PROJECT_UIFORMS}
+    ${PROJECT_SHADERS}
+    ${PROJECT_ASSETS}
 )
 target_link_libraries( other_files )
 set_target_properties( other_files PROPERTIES
-	LINKER_LANGUAGE CXX
+    LINKER_LANGUAGE CXX
 )
