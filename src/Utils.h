@@ -8,22 +8,28 @@ namespace mg
 template <typename T, int N>
 constexpr int CountOf(T const (&)[N]) noexcept
 {
-	return N;
+    return N;
 }
 
-constexpr inline mg::Real getSign(mg::Real value)
+constexpr bool isString(const char* const str) noexcept
 {
-	return static_cast<mg::Real>( (value < 0)? -1 : 1 );
+    return str && *str;
+}
+
+template <typename T>
+constexpr T getSign(T v) noexcept
+{
+    return T( (v < 0)? -1 : 1 );
 }
 
 inline mg::Real randf(mg::Real min = 0.0, mg::Real max = 1.0)
 {
-	return min + (max - min) * ((mg::Real)std::rand() / RAND_MAX);
+    return min + (max - min) * ((mg::Real)std::rand() / RAND_MAX);
 }
 
 inline mg::Vec3D genRandPointInBox(mg::Real bBoxMin = -1.0, mg::Real bBoxMax = 1.0)
 {
-	return mg::Vec3D(randf(bBoxMin, bBoxMax), randf(bBoxMin, bBoxMax), randf(bBoxMin, bBoxMax));
+    return mg::Vec3D(randf(bBoxMin, bBoxMax), randf(bBoxMin, bBoxMax), randf(bBoxMin, bBoxMax));
 }
 
 /// Generate random point on sphere with uniform distribution
@@ -34,34 +40,34 @@ mg::Vec3D genRandPointOnDisk(mg::Real radius = 1.0, const mg::Vec3D& center = mg
 
 inline void truncate(mg::Vec3D& io_v, mg::Real maxLength)
 {
-	if ( io_v.length_squared() > maxLength * maxLength )
-	{
-		io_v.normalize();
-		io_v *= maxLength;
-	}
+    if ( io_v.length_squared() > maxLength * maxLength )
+    {
+        io_v.normalize();
+        io_v *= maxLength;
+    }
 }
 
 inline mg::Vec3D faceforward( const mg::Vec3D& v, const mg::Vec3D& n )
 {
-	return ( mg::dot( v, n ) > 0 )? -n : n;
+    return ( mg::dot( v, n ) > 0 )? -n : n;
 }
 
 inline mg::Vec3D reflect( const mg::Vec3D& v, const mg::Vec3D& n )
 {
-	mg::Vec3D normal = faceforward( v, n );
-	normal.normalize();
-	return v - normal * 2 * mg::dot( v, normal );
+    mg::Vec3D normal = faceforward( v, n );
+    normal.normalize();
+    return v - normal * 2 * mg::dot( v, normal );
 }
 
 template <typename V, typename T>
-inline V lerp( const V& v1, const V& v2, const T& t )
+constexpr inline V lerp( const V& v1, const V& v2, const T& t )
 {
-	return (1 - t) * v1 + t * v2;
+    return (1 - t) * v1 + t * v2;
 }
 
-inline bool almostEqual( mg::Real v1, mg::Real v2, mg::Real tolerance = mg::ERR )
+constexpr inline bool almostEqual( mg::Real v1, mg::Real v2, mg::Real tolerance = mg::ERR )
 {
-	return std::fabs( v1 - v2 ) < tolerance;
+    return std::fabs( v1 - v2 ) < tolerance;
 }
 
 }

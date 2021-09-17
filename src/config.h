@@ -25,8 +25,8 @@
 #endif
 
 #define NON_COPYABLE( TypeName ) \
-	TypeName( const TypeName& other ) = delete; \
-	TypeName& operator=( const TypeName& other ) = delete;
+    TypeName( const TypeName& other ) = delete; \
+    TypeName& operator=( const TypeName& other ) = delete;
 
 namespace mg
 {
