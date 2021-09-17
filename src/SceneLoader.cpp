@@ -280,6 +280,10 @@ inline std::string &SceneLoader::PImpl::stripComment(std::string& s)
 
 bool SceneLoader::PImpl::parseScene(std::ifstream &ifs, scene_object &o_scene)
 {
+    // we require the standart "C" locale for numeric strings
+    // otherwise parsing real numbers may fail depending on the machine setup
+    char* savedLocale = std::setlocale(LC_NUMERIC, "C");
+
 	bool success = true;
 
 	std::string token;
@@ -330,6 +334,9 @@ bool SceneLoader::PImpl::parseScene(std::ifstream &ifs, scene_object &o_scene)
 		std::cerr << "Unknown token[" << token << "] found at line "<< m_lineNumber << std::endl;
 		break;
 	}
+
+    // restore locale
+    setlocale(LC_NUMERIC, savedLocale);
 
 	return success;
 }

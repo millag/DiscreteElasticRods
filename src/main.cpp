@@ -36,15 +36,15 @@ int main(int argc, char *argv[])
 
     try
     {
+        InitGLDefaultSurfaceFormat();
+        QApplication app(argc, argv);
+
         // create our scene
         Scene scene;
         SceneLoader loader;
         // loader.loadTestScene( scene );
         loader.loadScene( "assets/scene1_long_curly.mg", scene );
         scene.initialize();
-
-        InitGLDefaultSurfaceFormat();
-        QApplication app(argc, argv);
 
         MainWindow window;
         window.setScene( scene );
